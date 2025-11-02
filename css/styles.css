@@ -340,6 +340,7 @@ body {
 }
 
 .archetype-display {
+    display: none; /* Hidden - archetype is still calculated but not shown to player */
     font-size: clamp(10px, 2.5vw, 14px);
     padding: clamp(4px, 1vh, 5px) clamp(10px, 3vw, 15px);
     background: var(--secondary);
