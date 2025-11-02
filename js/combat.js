@@ -7,11 +7,13 @@ class CombatEngine {
     constructor() {
         this.playerAttackTimer = 0;
         this.enemyAttackTimer = 0;
+        this.floatingTexts = []; // Store active floating text
     }
 
     reset() {
         this.playerAttackTimer = 0;
         this.enemyAttackTimer = 0;
+        this.floatingTexts = [];
     }
 
     /**
@@ -28,13 +30,16 @@ class CombatEngine {
 
         // Player attacks
         if (this.playerAttackTimer <= 0) {
-            const damage = this.calculateDamage(
+            const damageInfo = this.calculateDamage(
                 player.attack,
                 player.critChance,
                 enemy.defense,
                 enemy.evasion
             );
-            enemy.currentHp -= damage;
+            enemy.currentHp -= damageInfo.damage;
+
+            // Add floating text for enemy
+            this.addFloatingText(damageInfo, 'enemy');
 
             // Reset timer: 1 / attackSpeed
             this.playerAttackTimer = 1 / player.attackSpeed;
@@ -46,13 +51,16 @@ class CombatEngine {
 
         // Enemy attacks
         if (this.enemyAttackTimer <= 0) {
-            const damage = this.calculateDamage(
+            const damageInfo = this.calculateDamage(
                 enemy.attack,
                 enemy.critChance,
                 player.defense,
                 player.evasion
             );
-            player.currentHp -= damage;
+            player.currentHp -= damageInfo.damage;
+
+            // Add floating text for player
+            this.addFloatingText(damageInfo, 'player');
 
             // Reset timer: 1 / attackSpeed
             this.enemyAttackTimer = 1 / enemy.attackSpeed;
@@ -62,7 +70,29 @@ class CombatEngine {
             }
         }
 
+        // Update floating texts
+        this.floatingTexts = this.floatingTexts.filter(text => {
+            text.lifetime -= deltaTime;
+            text.y -= 50 * deltaTime; // Move up
+            text.opacity = Math.max(0, text.lifetime / 1.0); // Fade out
+            return text.lifetime > 0;
+        });
+
         return 'ongoing';
+    }
+
+    addFloatingText(damageInfo, target) {
+        this.floatingTexts.push({
+            text: damageInfo.text,
+            damage: damageInfo.damage,
+            isCrit: damageInfo.isCrit,
+            isMiss: damageInfo.isMiss,
+            target: target, // 'player' or 'enemy'
+            x: 0, // Will be set by render function
+            y: 0, // Will be set by render function
+            lifetime: 1.0, // seconds
+            opacity: 1.0
+        });
     }
 
     /**
@@ -75,7 +105,12 @@ class CombatEngine {
     calculateDamage(attack, critChance, targetDefense, targetEvasion) {
         // 1. Evasion check
         if (Math.random() < targetEvasion) {
-            return 0; // Miss
+            return {
+                damage: 0,
+                isMiss: true,
+                isCrit: false,
+                text: 'MISS!'
+            };
         }
 
         // 2. Critical check
@@ -85,7 +120,14 @@ class CombatEngine {
             : attack - targetDefense;
 
         // 3. Minimum damage is 1
-        return Math.max(1, rawDamage);
+        const finalDamage = Math.max(1, rawDamage);
+        
+        return {
+            damage: finalDamage,
+            isMiss: false,
+            isCrit: isCrit,
+            text: isCrit ? `${finalDamage} CRIT!` : `${finalDamage}`
+        };
     }
 }
 

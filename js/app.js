@@ -105,13 +105,18 @@ function updateStatsScreen() {
     const title = document.getElementById('stats-title');
     title.textContent = game.currentFloor === 1 ? 'Initial Build' : `Floor ${game.currentFloor} - Level Up!`;
     
+    // Take snapshot if we haven't yet
+    if (!game.baseStatsSnapshot) {
+        game.snapshotBaseStats();
+    }
+    
     document.getElementById('points-available').textContent = game.availablePoints;
     
     // Update stat displays
     updateStatDisplay('attackSpeed', game.player.attackSpeed.toFixed(1), game.player.attackSpeed >= 5.0);
     updateStatDisplay('attack', game.player.attack, false);
     updateStatDisplay('crit', Math.round(game.player.critChance * 100), game.player.critChance >= 0.75);
-    updateStatDisplay('evasion', Math.round(game.player.evasion * 100), game.player.evasion >= 0.25);
+    updateStatDisplay('evasion', Math.round(game.player.evasion * 100), game.player.evasion >= 0.35);
     updateStatDisplay('defense', game.player.defense, false);
     updateStatDisplay('hp', game.player.maxHp, false);
     
@@ -135,10 +140,37 @@ function updateStatDisplay(stat, value, isMax) {
         maxEl.textContent = isMax ? '(MAX)' : '';
     }
     
-    // Update button state
-    const btn = document.querySelector(`.btn-stat[data-stat="${stat}"]`);
-    if (btn) {
-        btn.disabled = isMax || game.availablePoints === 0;
+    // Update plus button state
+    const plusBtn = document.querySelector(`.btn-stat-plus[data-stat="${stat}"]`);
+    if (plusBtn) {
+        plusBtn.disabled = isMax || game.availablePoints === 0;
+    }
+    
+    // Update minus button state - only enable if we have points to remove
+    const minusBtn = document.querySelector(`.btn-stat-minus[data-stat="${stat}"]`);
+    if (minusBtn && game.baseStatsSnapshot) {
+        let canRemove = false;
+        switch (stat) {
+            case 'attackSpeed':
+                canRemove = game.player.attackSpeed > game.baseStatsSnapshot.attackSpeed;
+                break;
+            case 'attack':
+                canRemove = game.player.attack > game.baseStatsSnapshot.attack;
+                break;
+            case 'crit':
+                canRemove = game.player.critChance > game.baseStatsSnapshot.critChance;
+                break;
+            case 'evasion':
+                canRemove = game.player.evasion > game.baseStatsSnapshot.evasion;
+                break;
+            case 'defense':
+                canRemove = game.player.defense > game.baseStatsSnapshot.defense;
+                break;
+            case 'hp':
+                canRemove = game.player.maxHp > game.baseStatsSnapshot.maxHp;
+                break;
+        }
+        minusBtn.disabled = !canRemove;
     }
 }
 
@@ -153,11 +185,19 @@ function allocateStatPoint(statType) {
     }
 }
 
+function removeStatPoint(statType) {
+    const removed = game.removeStatPoint(statType);
+    if (removed) {
+        game.availablePoints++;
+        updateStatsScreen();
+    }
+}
+
 function checkStatCap(statType) {
     switch (statType) {
         case 'attackSpeed': return game.player.attackSpeed < 5.0;
         case 'crit': return game.player.critChance < 0.75;
-        case 'evasion': return game.player.evasion < 0.25;
+        case 'evasion': return game.player.evasion < 0.35;
         default: return true;
     }
 }
@@ -281,6 +321,46 @@ function renderBattle() {
         const enemyY = verticalCenter - enemyH / 2;
         ctx.drawImage(game.sprites.enemy, enemyX, enemyY, enemyW, enemyH);
     }
+    
+    // Draw floating combat text
+    if (game.combat && game.combat.floatingTexts) {
+        game.combat.floatingTexts.forEach(floatText => {
+            // Set position based on target
+            const baseX = floatText.target === 'player' ? heroXPos : enemyXPos;
+            const baseY = verticalCenter - 100;
+            
+            // Add some random offset for variety
+            if (floatText.x === 0 && floatText.y === 0) {
+                floatText.x = baseX + (Math.random() - 0.5) * 40;
+                floatText.y = baseY;
+            }
+            
+            // Set font and style
+            const fontSize = floatText.isCrit ? 28 : 20;
+            ctx.font = `${fontSize}px 'Press Start 2P', monospace`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Draw text shadow for better visibility
+            ctx.globalAlpha = floatText.opacity * 0.5;
+            ctx.fillStyle = '#000000';
+            ctx.fillText(floatText.text, floatText.x + 2, floatText.y + 2);
+            
+            // Draw main text
+            ctx.globalAlpha = floatText.opacity;
+            if (floatText.isMiss) {
+                ctx.fillStyle = '#9e9e9e';
+            } else if (floatText.isCrit) {
+                ctx.fillStyle = '#ffeb3b';
+            } else {
+                ctx.fillStyle = '#f44336';
+            }
+            ctx.fillText(floatText.text, floatText.x, floatText.y);
+            
+            // Reset alpha
+            ctx.globalAlpha = 1.0;
+        });
+    }
 }
 
 function handleBattleWin() {
@@ -356,10 +436,19 @@ function setupEventListeners() {
         showScreen('stats');
     });
     
+    document.getElementById('btn-how-to-play').addEventListener('click', () => {
+        const panel = document.getElementById('how-to-play-panel');
+        panel.classList.toggle('hidden');
+        // Close other panels
+        document.getElementById('top-runs-panel').classList.add('hidden');
+    });
+    
     document.getElementById('btn-top-runs').addEventListener('click', () => {
         const panel = document.getElementById('top-runs-panel');
         panel.classList.toggle('hidden');
         updateTopRunsDisplay();
+        // Close other panels
+        document.getElementById('how-to-play-panel').classList.add('hidden');
     });
     
     // Difficulty buttons
@@ -372,9 +461,15 @@ function setupEventListeners() {
     });
     
     // Stat allocation
-    document.querySelectorAll('.btn-stat').forEach(btn => {
+    document.querySelectorAll('.btn-stat-plus').forEach(btn => {
         btn.addEventListener('click', () => {
             allocateStatPoint(btn.dataset.stat);
+        });
+    });
+    
+    document.querySelectorAll('.btn-stat-minus').forEach(btn => {
+        btn.addEventListener('click', () => {
+            removeStatPoint(btn.dataset.stat);
         });
     });
     
@@ -389,6 +484,11 @@ function setupEventListeners() {
     });
     
     // Result screen
+    document.getElementById('btn-restart').addEventListener('click', () => {
+        game.resetRun();
+        showScreen('stats');
+    });
+    
     document.getElementById('btn-back-menu').addEventListener('click', () => {
         showScreen('menu');
     });

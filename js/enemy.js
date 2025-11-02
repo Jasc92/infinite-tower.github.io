@@ -49,19 +49,22 @@ class EnemyGenerator {
 
         // Scale for each floor from 2 to current floor
         for (let f = 2; f <= floor; f++) {
-            // HP scaling: HP += HP * (0.055 * diffMult * bias)
-            hp += hp * (0.055 * difficultyMult * bias.hp);
+            // Softer scaling for early floors (1-15)
+            const earlyGameMult = f <= 15 ? 0.85 : 1.0;
             
-            // Defense scaling: Def += max(1, round(Def * 0.045 * diffMult * bias))
-            const defIncrease = Math.max(1, Math.round(def * 0.045 * difficultyMult * bias.defense));
+            // HP scaling: HP += HP * (0.055 * diffMult * bias * earlyMult)
+            hp += hp * (0.055 * difficultyMult * bias.hp * earlyGameMult);
+            
+            // Defense scaling: Def += max(1, round(Def * 0.045 * diffMult * bias * earlyMult))
+            const defIncrease = Math.max(1, Math.round(def * 0.045 * difficultyMult * bias.defense * earlyGameMult));
             def += defIncrease;
             
-            // Attack scaling: Atk += max(1, round(Atk * 0.040 * diffMult * bias))
-            const atkIncrease = Math.max(1, Math.round(atk * 0.040 * difficultyMult * bias.attack));
+            // Attack scaling: Atk += max(1, round(Atk * 0.040 * diffMult * bias * earlyMult))
+            const atkIncrease = Math.max(1, Math.round(atk * 0.040 * difficultyMult * bias.attack * earlyGameMult));
             atk += atkIncrease;
             
-            // Attack Speed scaling: AtkSpd = min(4.0, AtkSpd + (0.01 * diffMult * bias))
-            atkSpd = Math.min(4.0, atkSpd + (0.01 * difficultyMult * bias.attackSpeed));
+            // Attack Speed scaling: AtkSpd = min(4.0, AtkSpd + (0.01 * diffMult * bias * earlyMult))
+            atkSpd = Math.min(4.0, atkSpd + (0.01 * difficultyMult * bias.attackSpeed * earlyGameMult));
             
             // Critical scaling: Every 10 floors, +0.5% (max 35%)
             if (f % 10 === 0 && crit < 0.35) {

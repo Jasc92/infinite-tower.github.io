@@ -31,6 +31,9 @@ class GameManager {
         this.floorsUntilArchetypeCheck = 3;
         this.battleSpeed = 1.0;
         
+        // Stat allocation tracking
+        this.baseStatsSnapshot = null;
+        
         // Battle state
         this.battleActive = false;
         this.lastFrameTime = 0;
@@ -76,13 +79,29 @@ class GameManager {
     }
 
     /**
+     * Take a snapshot of base stats before allocation
+     */
+    snapshotBaseStats() {
+        this.baseStatsSnapshot = {
+            attackSpeed: this.player.attackSpeed,
+            attack: this.player.attack,
+            critChance: this.player.critChance,
+            evasion: this.player.evasion,
+            defense: this.player.defense,
+            maxHp: this.player.maxHp,
+            currentHp: this.player.currentHp
+        };
+    }
+
+    /**
      * Apply stat point to player
      */
     applyStatPoint(statType) {
         switch (statType) {
             case 'attackSpeed':
                 if (this.player.attackSpeed < 5.0) {
-                    this.player.attackSpeed += 0.1;
+                    // Improved: +0.15 per point (was 0.1)
+                    this.player.attackSpeed += 0.15;
                     if (this.player.attackSpeed > 5.0) this.player.attackSpeed = 5.0;
                 }
                 break;
@@ -96,9 +115,10 @@ class GameManager {
                 }
                 break;
             case 'evasion':
-                if (this.player.evasion < 0.25) {
-                    this.player.evasion += 0.01;
-                    if (this.player.evasion > 0.25) this.player.evasion = 0.25;
+                if (this.player.evasion < 0.35) {
+                    // Improved: +1.5% per point (was 1%), max 35% (was 25%)
+                    this.player.evasion += 0.015;
+                    if (this.player.evasion > 0.35) this.player.evasion = 0.35;
                 }
                 break;
             case 'defense':
@@ -109,6 +129,63 @@ class GameManager {
                 this.player.currentHp += 10;
                 break;
         }
+    }
+
+    /**
+     * Remove stat point from player
+     */
+    removeStatPoint(statType) {
+        if (!this.baseStatsSnapshot) return false;
+        
+        switch (statType) {
+            case 'attackSpeed':
+                if (this.player.attackSpeed > this.baseStatsSnapshot.attackSpeed) {
+                    this.player.attackSpeed -= 0.15;
+                    if (this.player.attackSpeed < this.baseStatsSnapshot.attackSpeed) {
+                        this.player.attackSpeed = this.baseStatsSnapshot.attackSpeed;
+                    }
+                    return true;
+                }
+                break;
+            case 'attack':
+                if (this.player.attack > this.baseStatsSnapshot.attack) {
+                    this.player.attack -= 2;
+                    return true;
+                }
+                break;
+            case 'crit':
+                if (this.player.critChance > this.baseStatsSnapshot.critChance) {
+                    this.player.critChance -= 0.01;
+                    if (this.player.critChance < this.baseStatsSnapshot.critChance) {
+                        this.player.critChance = this.baseStatsSnapshot.critChance;
+                    }
+                    return true;
+                }
+                break;
+            case 'evasion':
+                if (this.player.evasion > this.baseStatsSnapshot.evasion) {
+                    this.player.evasion -= 0.015;
+                    if (this.player.evasion < this.baseStatsSnapshot.evasion) {
+                        this.player.evasion = this.baseStatsSnapshot.evasion;
+                    }
+                    return true;
+                }
+                break;
+            case 'defense':
+                if (this.player.defense > this.baseStatsSnapshot.defense) {
+                    this.player.defense -= 2;
+                    return true;
+                }
+                break;
+            case 'hp':
+                if (this.player.maxHp > this.baseStatsSnapshot.maxHp) {
+                    this.player.maxHp -= 10;
+                    this.player.currentHp -= 10;
+                    return true;
+                }
+                break;
+        }
+        return false;
     }
 
     /**
@@ -162,7 +239,8 @@ class GameManager {
         
         // Check for stat points (every 5 floors)
         if (this.currentFloor % 5 === 0) {
-            this.availablePoints = 3;
+            this.availablePoints = 5;
+            this.baseStatsSnapshot = null; // Reset snapshot for new allocation
             return true; // Needs stat allocation
         }
         

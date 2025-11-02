@@ -15,6 +15,11 @@
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="apple-touch-icon" href="icon-192.png">
     
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    
     <!-- Styles -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -38,20 +43,51 @@
                     <h3>Difficulty</h3>
                     <div class="difficulty-buttons">
                         <button class="btn btn-difficulty" data-difficulty="easy">
-                            Easy<br><span class="small">0.90x</span>
+                            Easy
                         </button>
                         <button class="btn btn-difficulty active" data-difficulty="normal">
-                            Normal<br><span class="small">1.00x</span>
+                            Normal
                         </button>
                         <button class="btn btn-difficulty" data-difficulty="hard">
-                            Hard<br><span class="small">1.12x</span>
+                            Hard
                         </button>
                     </div>
                 </div>
                 
+                <button id="btn-how-to-play" class="btn btn-secondary">
+                    📖 How to Play
+                </button>
+                
                 <button id="btn-top-runs" class="btn btn-secondary">
                     🏆 Top 3 Runs
                 </button>
+                
+                <!-- How to Play Panel -->
+                <div id="how-to-play-panel" class="panel hidden">
+                    <h3>How to Play</h3>
+                    <div class="guide-content">
+                        <h4>⚔️ Combat</h4>
+                        <p>This is an auto-battler. Your hero fights automatically. Watch them clash!</p>
+                        
+                        <h4>📊 Stats</h4>
+                        <p><strong>Attack:</strong> Base damage per hit<br>
+                        <strong>Attack Speed:</strong> Attacks per second (max 5.0)<br>
+                        <strong>Critical:</strong> Chance to deal double damage (max 75%)<br>
+                        <strong>Evasion:</strong> Chance to dodge attacks (max 25%)<br>
+                        <strong>Defense:</strong> Reduces incoming damage<br>
+                        <strong>HP:</strong> Health points - reach 0 and you lose</p>
+                        
+                        <h4>🗼 Floors & Progression</h4>
+                        <p>Start with 5 stat points. Every 5 floors, gain 5 more points to improve your build.</p>
+                        <p>Enemies get stronger each floor. Adaptive AI counters your strategy!</p>
+                        
+                        <h4>💀 Permadeath</h4>
+                        <p>One life per run. If you lose, your run ends. Top 3 runs are saved!</p>
+                        
+                        <h4>🎯 Goal</h4>
+                        <p>Climb as high as you can. Build wisely, adapt, and reach the top!</p>
+                    </div>
+                </div>
                 
                 <!-- Top Runs Panel -->
                 <div id="top-runs-panel" class="panel hidden">
@@ -74,64 +110,88 @@
                 <div class="stat-row" data-stat="attackSpeed">
                     <div class="stat-info">
                         <div class="stat-name">⚡ Attack Speed</div>
+                        <div class="stat-description">Attacks per second. More attacks = more damage over time. Max: 5.0</div>
                         <div class="stat-value">
                             <span id="stat-attackSpeed">1.0</span>/s
                             <span class="stat-max"></span>
                         </div>
                     </div>
-                    <button class="btn btn-stat" data-stat="attackSpeed">+</button>
+                    <div class="stat-buttons">
+                        <button class="btn btn-stat btn-stat-minus" data-stat="attackSpeed">−</button>
+                        <button class="btn btn-stat btn-stat-plus" data-stat="attackSpeed">+</button>
+                    </div>
                 </div>
                 
                 <div class="stat-row" data-stat="attack">
                     <div class="stat-info">
                         <div class="stat-name">⚔️ Attack</div>
+                        <div class="stat-description">Base damage per hit. Higher attack means stronger hits.</div>
                         <div class="stat-value">
                             <span id="stat-attack">10</span>
                         </div>
                     </div>
-                    <button class="btn btn-stat" data-stat="attack">+</button>
+                    <div class="stat-buttons">
+                        <button class="btn btn-stat btn-stat-minus" data-stat="attack">−</button>
+                        <button class="btn btn-stat btn-stat-plus" data-stat="attack">+</button>
+                    </div>
                 </div>
                 
                 <div class="stat-row" data-stat="crit">
                     <div class="stat-info">
                         <div class="stat-name">💥 Critical</div>
+                        <div class="stat-description">Chance to deal double damage. High risk, high reward! Max: 75%</div>
                         <div class="stat-value">
                             <span id="stat-crit">5</span>%
                             <span class="stat-max"></span>
                         </div>
                     </div>
-                    <button class="btn btn-stat" data-stat="crit">+</button>
+                    <div class="stat-buttons">
+                        <button class="btn btn-stat btn-stat-minus" data-stat="crit">−</button>
+                        <button class="btn btn-stat btn-stat-plus" data-stat="crit">+</button>
+                    </div>
                 </div>
                 
                 <div class="stat-row" data-stat="evasion">
                     <div class="stat-info">
                         <div class="stat-name">🌪️ Evasion</div>
+                        <div class="stat-description">Chance to completely dodge enemy attacks. Max: 35%</div>
                         <div class="stat-value">
                             <span id="stat-evasion">0</span>%
                             <span class="stat-max"></span>
                         </div>
                     </div>
-                    <button class="btn btn-stat" data-stat="evasion">+</button>
+                    <div class="stat-buttons">
+                        <button class="btn btn-stat btn-stat-minus" data-stat="evasion">−</button>
+                        <button class="btn btn-stat btn-stat-plus" data-stat="evasion">+</button>
+                    </div>
                 </div>
                 
                 <div class="stat-row" data-stat="defense">
                     <div class="stat-info">
                         <div class="stat-name">🛡️ Defense</div>
+                        <div class="stat-description">Reduces damage from each hit. Essential for survival.</div>
                         <div class="stat-value">
                             <span id="stat-defense">5</span>
                         </div>
                     </div>
-                    <button class="btn btn-stat" data-stat="defense">+</button>
+                    <div class="stat-buttons">
+                        <button class="btn btn-stat btn-stat-minus" data-stat="defense">−</button>
+                        <button class="btn btn-stat btn-stat-plus" data-stat="defense">+</button>
+                    </div>
                 </div>
                 
                 <div class="stat-row" data-stat="hp">
                     <div class="stat-info">
                         <div class="stat-name">❤️ Max HP</div>
+                        <div class="stat-description">Health points. When it reaches 0, you lose. Stay alive!</div>
                         <div class="stat-value">
                             <span id="stat-hp">100</span>
                         </div>
                     </div>
-                    <button class="btn btn-stat" data-stat="hp">+</button>
+                    <div class="stat-buttons">
+                        <button class="btn btn-stat btn-stat-minus" data-stat="hp">−</button>
+                        <button class="btn btn-stat btn-stat-plus" data-stat="hp">+</button>
+                    </div>
                 </div>
             </div>
             
@@ -232,9 +292,14 @@
                 </div>
             </div>
             
-            <button id="btn-back-menu" class="btn btn-primary btn-large">
-                BACK TO MENU
-            </button>
+            <div class="result-actions">
+                <button id="btn-restart" class="btn btn-primary btn-large">
+                    🔄 RESTART
+                </button>
+                <button id="btn-back-menu" class="btn btn-secondary btn-large">
+                    BACK TO MENU
+                </button>
+            </div>
         </div>
         
     </div>
