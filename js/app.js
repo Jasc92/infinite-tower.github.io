@@ -230,9 +230,30 @@ function renderBattle() {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Draw background scaled to fill entire canvas
+    // Draw background with proper aspect ratio (cover effect)
     if (game.sprites.background.complete) {
-        ctx.drawImage(game.sprites.background, 0, 0, canvas.width, canvas.height);
+        const bgWidth = game.sprites.background.width;
+        const bgHeight = game.sprites.background.height;
+        const canvasRatio = canvas.width / canvas.height;
+        const bgRatio = bgWidth / bgHeight;
+        
+        let drawWidth, drawHeight, offsetX, offsetY;
+        
+        if (canvasRatio > bgRatio) {
+            // Canvas is wider than background - fit to width
+            drawWidth = canvas.width;
+            drawHeight = canvas.width / bgRatio;
+            offsetX = 0;
+            offsetY = (canvas.height - drawHeight) / 2;
+        } else {
+            // Canvas is taller than background - fit to height
+            drawWidth = canvas.height * bgRatio;
+            drawHeight = canvas.height;
+            offsetX = (canvas.width - drawWidth) / 2;
+            offsetY = 0;
+        }
+        
+        ctx.drawImage(game.sprites.background, offsetX, offsetY, drawWidth, drawHeight);
     } else {
         ctx.fillStyle = '#1a1a2e';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
