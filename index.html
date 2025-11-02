@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="description" content="Infinite Tower - Roguelike Auto-Battler">
+    
+    <title>Infinite Tower</title>
+    
+    <!-- PWA manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Game Container -->
+    <div id="game-container">
+        
+        <!-- Main Menu Screen -->
+        <div id="screen-menu" class="screen active">
+            <div class="title-container">
+                <h1 class="game-title">INFINITE TOWER</h1>
+                <div class="subtitle">Roguelike Auto-Battler</div>
+            </div>
+            
+            <div class="menu-content">
+                <button id="btn-play" class="btn btn-primary btn-large">
+                    ⚔️ PLAY
+                </button>
+                
+                <div class="difficulty-section">
+                    <h3>Difficulty</h3>
+                    <div class="difficulty-buttons">
+                        <button class="btn btn-difficulty" data-difficulty="easy">
+                            Easy<br><span class="small">0.90x</span>
+                        </button>
+                        <button class="btn btn-difficulty active" data-difficulty="normal">
+                            Normal<br><span class="small">1.00x</span>
+                        </button>
+                        <button class="btn btn-difficulty" data-difficulty="hard">
+                            Hard<br><span class="small">1.12x</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <button id="btn-top-runs" class="btn btn-secondary">
+                    🏆 Top 3 Runs
+                </button>
+                
+                <!-- Top Runs Panel -->
+                <div id="top-runs-panel" class="panel hidden">
+                    <h3>Best 3 Runs</h3>
+                    <div id="top-runs-list"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stat Allocation Screen -->
+        <div id="screen-stats" class="screen">
+            <div class="screen-header">
+                <h2 id="stats-title">Initial Build</h2>
+                <div class="points-display">
+                    Points: <span id="points-available">5</span>
+                </div>
+            </div>
+            
+            <div class="stats-content">
+                <div class="stat-row" data-stat="attackSpeed">
+                    <div class="stat-info">
+                        <div class="stat-name">⚡ Attack Speed</div>
+                        <div class="stat-value">
+                            <span id="stat-attackSpeed">1.0</span>/s
+                            <span class="stat-max"></span>
+                        </div>
+                    </div>
+                    <button class="btn btn-stat" data-stat="attackSpeed">+</button>
+                </div>
+                
+                <div class="stat-row" data-stat="attack">
+                    <div class="stat-info">
+                        <div class="stat-name">⚔️ Attack</div>
+                        <div class="stat-value">
+                            <span id="stat-attack">10</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-stat" data-stat="attack">+</button>
+                </div>
+                
+                <div class="stat-row" data-stat="crit">
+                    <div class="stat-info">
+                        <div class="stat-name">💥 Critical</div>
+                        <div class="stat-value">
+                            <span id="stat-crit">5</span>%
+                            <span class="stat-max"></span>
+                        </div>
+                    </div>
+                    <button class="btn btn-stat" data-stat="crit">+</button>
+                </div>
+                
+                <div class="stat-row" data-stat="evasion">
+                    <div class="stat-info">
+                        <div class="stat-name">🌪️ Evasion</div>
+                        <div class="stat-value">
+                            <span id="stat-evasion">0</span>%
+                            <span class="stat-max"></span>
+                        </div>
+                    </div>
+                    <button class="btn btn-stat" data-stat="evasion">+</button>
+                </div>
+                
+                <div class="stat-row" data-stat="defense">
+                    <div class="stat-info">
+                        <div class="stat-name">🛡️ Defense</div>
+                        <div class="stat-value">
+                            <span id="stat-defense">5</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-stat" data-stat="defense">+</button>
+                </div>
+                
+                <div class="stat-row" data-stat="hp">
+                    <div class="stat-info">
+                        <div class="stat-name">❤️ Max HP</div>
+                        <div class="stat-value">
+                            <span id="stat-hp">100</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-stat" data-stat="hp">+</button>
+                </div>
+            </div>
+            
+            <button id="btn-start-battle" class="btn btn-primary btn-large" disabled>
+                Allocate all points first
+            </button>
+        </div>
+        
+        <!-- Battle Screen -->
+        <div id="screen-battle" class="screen">
+            <div class="battle-header">
+                <div class="floor-display">Floor <span id="current-floor">1</span></div>
+                <div class="archetype-display">
+                    <span id="archetype-name">Balanced</span>
+                </div>
+                <button id="btn-speed-toggle" class="btn btn-speed">1x</button>
+            </div>
+            
+            <div class="battle-arena">
+                <!-- Canvas for battle rendering -->
+                <canvas id="battle-canvas"></canvas>
+                
+                <!-- Player Stats -->
+                <div class="fighter-panel player-panel">
+                    <div class="fighter-title">HERO</div>
+                    <div class="hp-bar-container">
+                        <div class="hp-bar">
+                            <div id="player-hp-fill" class="hp-fill player-hp"></div>
+                        </div>
+                        <div class="hp-text">
+                            <span id="player-hp-current">100</span> / <span id="player-hp-max">100</span>
+                        </div>
+                    </div>
+                    <div class="fighter-stats">
+                        <div>ATK: <span id="player-atk">10</span></div>
+                        <div>SPD: <span id="player-spd">1.0</span>/s</div>
+                        <div>CRT: <span id="player-crt">5</span>%</div>
+                        <div>DEF: <span id="player-def">5</span></div>
+                        <div>EVA: <span id="player-eva">0</span>%</div>
+                    </div>
+                </div>
+                
+                <!-- Enemy Stats -->
+                <div class="fighter-panel enemy-panel">
+                    <div class="fighter-title">ENEMY</div>
+                    <div class="hp-bar-container">
+                        <div class="hp-bar">
+                            <div id="enemy-hp-fill" class="hp-fill enemy-hp"></div>
+                        </div>
+                        <div class="hp-text">
+                            <span id="enemy-hp-current">85</span> / <span id="enemy-hp-max">85</span>
+                        </div>
+                    </div>
+                    <div class="fighter-stats">
+                        <div>ATK: <span id="enemy-atk">8</span></div>
+                        <div>SPD: <span id="enemy-spd">0.9</span>/s</div>
+                        <div>CRT: <span id="enemy-crt">2</span>%</div>
+                        <div>DEF: <span id="enemy-def">4</span></div>
+                        <div>EVA: <span id="enemy-eva">0</span>%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="battle-status">
+                <div id="battle-message">Auto-battle in progress...</div>
+            </div>
+        </div>
+        
+        <!-- Result Screen -->
+        <div id="screen-result" class="screen">
+            <div class="result-header">
+                <h2>💀 RUN ENDED</h2>
+            </div>
+            
+            <div class="result-content">
+                <div class="result-card">
+                    <div class="result-label">Floor Reached</div>
+                    <div class="result-value floor-value" id="result-floor">1</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-label">Duration</div>
+                    <div class="result-value" id="result-duration">0s</div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-label">Difficulty</div>
+                    <div class="result-value" id="result-difficulty">Normal</div>
+                </div>
+                
+                <div id="top-run-badge" class="top-run-badge hidden">
+                    🏆 TOP 3! 🏆
+                </div>
+                
+                <div class="final-build">
+                    <h3>Final Build</h3>
+                    <div class="build-stats" id="final-build-stats"></div>
+                </div>
+            </div>
+            
+            <button id="btn-back-menu" class="btn btn-primary btn-large">
+                BACK TO MENU
+            </button>
+        </div>
+        
+    </div>
+    
+    <!-- Install prompt -->
+    <div id="install-prompt" class="install-prompt hidden">
+        <div class="install-content">
+            <p>📱 Install Infinite Tower on your device?</p>
+            <button id="btn-install" class="btn btn-primary">Install</button>
+            <button id="btn-dismiss" class="btn btn-secondary">Later</button>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="js/combat.js"></script>
+    <script src="js/enemy.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
+
