@@ -260,6 +260,9 @@ function checkStatCap(statType) {
 // ========================================
 
 function updateRelicScreen() {
+    console.log('=== UPDATE RELIC SCREEN ===');
+    console.log('Active relics:', game.relicManager.activeRelics.length);
+    
     // Update relic counter
     document.getElementById('relic-count').textContent = game.relicManager.activeRelics.length;
     
@@ -267,11 +270,20 @@ function updateRelicScreen() {
     container.innerHTML = '';
     
     const isReplaceMode = game.relicManager.activeRelics.length >= 3;
+    console.log('Replace mode:', isReplaceMode);
     
     // Get 3 random relics
     const relicOptions = game.relicManager.getRandomRelics(3);
+    console.log('Relic options:', relicOptions.length, relicOptions);
+    
+    if (relicOptions.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: #f4e4c1; padding: 20px;">No relics available</div>';
+        return;
+    }
     
     relicOptions.forEach((relic, index) => {
+        console.log(`Creating card ${index} for relic:`, relic.name);
+        
         const card = document.createElement('div');
         card.className = 'relic-card' + (isReplaceMode ? ' replace-mode' : '');
         card.innerHTML = `
@@ -283,6 +295,8 @@ function updateRelicScreen() {
         `;
         
         card.addEventListener('click', () => {
+            console.log('Relic clicked:', relic.name);
+            
             if (isReplaceMode) {
                 // Show replace selection (for now, replace first)
                 game.relicManager.replaceRelic(0, relic);
@@ -290,12 +304,17 @@ function updateRelicScreen() {
                 game.relicManager.addRelic(relic);
             }
             
+            console.log('Active relics after selection:', game.relicManager.activeRelics.length);
+            
             // Continue to battle
             setTimeout(() => startBattleScreen(), 300);
         });
         
         container.appendChild(card);
+        console.log(`Card ${index} appended to container`);
     });
+    
+    console.log('Total cards in container:', container.children.length);
     
     // Always show skip button with appropriate text
     const skipBtn = document.getElementById('btn-skip-relic');
@@ -306,6 +325,8 @@ function updateRelicScreen() {
     } else {
         skipBtn.textContent = 'Skip (Continue Without Relic)';
     }
+    
+    console.log('=== RELIC SCREEN READY ===');
 }
 
 // ========================================
