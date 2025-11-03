@@ -63,33 +63,6 @@
                     🏆 Top 3 Runs
                 </button>
                 
-                <!-- How to Play Panel -->
-                <div id="how-to-play-panel" class="panel hidden">
-                    <h3>How to Play</h3>
-                    <div class="guide-content">
-                        <h4>⚔️ Combat</h4>
-                        <p>This is an auto-battler. Your hero fights automatically. Watch them clash!</p>
-                        
-                        <h4>📊 Stats</h4>
-                        <p><strong>Attack:</strong> Base damage per hit (+2 per point)<br>
-                        <strong>Attack Speed:</strong> Attacks per second (+0.15 per point, max 7.0)<br>
-                        <strong>Critical:</strong> Double damage chance (+2% per point, max 75%)<br>
-                        <strong>Evasion:</strong> Dodge attacks (+1.5% per point, max 50%)<br>
-                        <strong>Defense:</strong> Reduces incoming damage (+2 per point)<br>
-                        <strong>HP:</strong> Health points (+10 per point)</p>
-                        
-                        <h4>🗼 Floors & Progression</h4>
-                        <p>Start with 5 stat points. Every 5 floors, gain 5 more points to improve your build.</p>
-                        <p>Enemies get stronger each floor. Adaptive AI counters your strategy!</p>
-                        
-                        <h4>💀 Permadeath</h4>
-                        <p>One life per run. If you lose, your run ends. Top 3 runs are saved!</p>
-                        
-                        <h4>🎯 Goal</h4>
-                        <p>Climb as high as you can. Build wisely, adapt, and reach the top!</p>
-                    </div>
-                </div>
-                
                 <!-- Top Runs Panel -->
                 <div id="top-runs-panel" class="panel hidden">
                     <h3>Best 3 Runs</h3>
@@ -225,6 +198,40 @@
                     </div>
                 </div>
             </div>
+        </div>
+        
+        <!-- How to Play Modal -->
+        <div id="how-to-play-modal" class="modal hidden">
+            <div class="modal-content modal-guide">
+                <button id="btn-close-guide" class="btn-close-modal">✖</button>
+                <h2>📖 How to Play</h2>
+                <div class="guide-content">
+                    <h4>⚔️ Combat</h4>
+                    <p>This is an auto-battler. Your hero fights automatically. Watch them clash!</p>
+                    
+                    <h4>📊 Stats</h4>
+                    <p><strong>Attack:</strong> Base damage per hit (+2 per point)<br>
+                    <strong>Attack Speed:</strong> Attacks per second (+0.15 per point, max 7.0)<br>
+                    <strong>Critical:</strong> Double damage chance (+2% per point, max 75%)<br>
+                    <strong>Evasion:</strong> Dodge attacks (+1.5% per point, max 50%)<br>
+                    <strong>Defense:</strong> Reduces incoming damage (+2 per point)<br>
+                    <strong>HP:</strong> Health points (+10 per point)</p>
+                    
+                    <h4>🗼 Floors & Progression</h4>
+                    <p>Start with 5 stat points. Every 5 floors, gain 5 more points to improve your build.</p>
+                    <p>Enemies get stronger each floor. Adaptive AI counters your strategy!</p>
+                    
+                    <h4>💀 Permadeath</h4>
+                    <p>One life per run. If you lose, your run ends. Top 3 runs are saved!</p>
+                    
+                    <h4>🎯 Goal</h4>
+                    <p>Climb as high as you can. Build wisely, adapt, and reach the top!</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Battle Screen -->
+        <div id="screen-battle" class="screen">
             
             <div class="battle-arena">
                 <!-- Canvas for battle rendering -->

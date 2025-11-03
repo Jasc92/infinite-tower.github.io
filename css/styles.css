@@ -751,6 +751,70 @@ body {
     }
 }
 
+/* How to Play Modal */
+.modal-guide {
+    max-width: 600px;
+    width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+    text-align: left;
+    position: relative;
+}
+
+.modal-guide h2 {
+    font-size: clamp(16px, 5vw, 22px);
+    color: #f4e4c1;
+    margin-bottom: clamp(16px, 3vh, 20px);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    text-align: center;
+}
+
+.btn-close-modal {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    border: 2px solid #8b7355;
+    color: #f4e4c1;
+    font-size: 18px;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-close-modal:hover {
+    background: rgba(139, 115, 85, 0.3);
+    transform: scale(1.1);
+}
+
+.guide-content {
+    font-size: clamp(10px, 2.8vw, 13px);
+    line-height: 1.7;
+}
+
+.guide-content h4 {
+    font-size: clamp(12px, 3.5vw, 15px);
+    color: var(--primary-light);
+    margin-top: clamp(12px, 2.5vh, 16px);
+    margin-bottom: clamp(8px, 1.5vh, 10px);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.guide-content p {
+    color: var(--text);
+    margin-bottom: clamp(12px, 2vh, 14px);
+    line-height: 1.7;
+}
+
+.guide-content strong {
+    color: var(--primary-light);
+}
+
 /* ========================================
    INSTALL PROMPT
    ======================================== */

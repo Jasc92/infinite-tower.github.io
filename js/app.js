@@ -534,18 +534,24 @@ function setupEventListeners() {
     });
     
     document.getElementById('btn-how-to-play').addEventListener('click', () => {
-        const panel = document.getElementById('how-to-play-panel');
-        panel.classList.toggle('hidden');
-        // Close other panels
-        document.getElementById('top-runs-panel').classList.add('hidden');
+        document.getElementById('how-to-play-modal').classList.remove('hidden');
+    });
+    
+    document.getElementById('btn-close-guide').addEventListener('click', () => {
+        document.getElementById('how-to-play-modal').classList.add('hidden');
+    });
+    
+    // Close modal when clicking outside content
+    document.getElementById('how-to-play-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'how-to-play-modal') {
+            document.getElementById('how-to-play-modal').classList.add('hidden');
+        }
     });
     
     document.getElementById('btn-top-runs').addEventListener('click', () => {
         const panel = document.getElementById('top-runs-panel');
         panel.classList.toggle('hidden');
         updateTopRunsDisplay();
-        // Close other panels
-        document.getElementById('how-to-play-panel').classList.add('hidden');
     });
     
     // Difficulty buttons
