@@ -322,44 +322,49 @@ function renderBattle() {
         ctx.drawImage(game.sprites.enemy, enemyX, enemyY, enemyW, enemyH);
     }
     
-    // Draw floating combat text
+    // Draw floating combat text (render last so it's on top)
     if (game.combat && game.combat.floatingTexts) {
+        // Save context state
+        ctx.save();
+        
         game.combat.floatingTexts.forEach(floatText => {
-            // Set position based on target
+            // Set position based on target - position relative to sprite
             const baseX = floatText.target === 'player' ? heroXPos : enemyXPos;
-            const baseY = verticalCenter - 100;
+            const baseY = verticalCenter - 60; // Position above sprite center
             
-            // Add some random offset for variety
+            // Initialize position only once
             if (floatText.x === 0 && floatText.y === 0) {
-                floatText.x = baseX + (Math.random() - 0.5) * 40;
+                floatText.x = baseX + (Math.random() - 0.5) * 60;
                 floatText.y = baseY;
             }
             
-            // Set font and style
-            const fontSize = floatText.isCrit ? 28 : 20;
+            // Set font and style - reduced size for better visibility
+            const fontSize = floatText.isCrit ? 20 : 16;
             ctx.font = `${fontSize}px 'Press Start 2P', monospace`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             
-            // Draw text shadow for better visibility
-            ctx.globalAlpha = floatText.opacity * 0.5;
-            ctx.fillStyle = '#000000';
-            ctx.fillText(floatText.text, floatText.x + 2, floatText.y + 2);
-            
-            // Draw main text
+            // Draw text with strong outline for visibility
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = 'rgba(0, 0, 0, ' + (floatText.opacity * 0.8) + ')';
             ctx.globalAlpha = floatText.opacity;
-            if (floatText.isMiss) {
-                ctx.fillStyle = '#9e9e9e';
-            } else if (floatText.isCrit) {
-                ctx.fillStyle = '#ffeb3b';
-            } else {
-                ctx.fillStyle = '#f44336';
-            }
-            ctx.fillText(floatText.text, floatText.x, floatText.y);
             
-            // Reset alpha
-            ctx.globalAlpha = 1.0;
+            // Set color based on type
+            if (floatText.isMiss) {
+                ctx.fillStyle = '#bdbdbd';
+            } else if (floatText.isCrit) {
+                ctx.fillStyle = '#ffd700';
+            } else {
+                ctx.fillStyle = '#ff5252';
+            }
+            
+            // Draw outline then fill
+            ctx.strokeText(floatText.text, floatText.x, floatText.y);
+            ctx.fillText(floatText.text, floatText.x, floatText.y);
         });
+        
+        // Restore context state
+        ctx.restore();
     }
 }
 
