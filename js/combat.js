@@ -176,7 +176,9 @@ class CombatEngine {
             // Thick Skin (damage reduction)
             const thickSkin = this.relics.find(r => r.id === 'thick_skin');
             if (thickSkin) {
+                const originalDamage = damageInfo.damage;
                 damageInfo.damage = Math.round(damageInfo.damage * (1 - thickSkin.damageReduction));
+                console.log(`🐘 Thick Skin: ${originalDamage} → ${damageInfo.damage} (-${Math.round((1 - (damageInfo.damage / originalDamage)) * 100)}%)`);
             }
             
             // Second Wind check

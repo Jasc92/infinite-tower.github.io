@@ -296,8 +296,15 @@ class GameManager {
         // Restore player HP
         this.player.currentHp = this.player.maxHp;
         
-        // Check for stat points (every 5 floors)
+        // Boss floor bonus points (11, 21, 31, ...)
+        // Boss floors: every 10 floors + 1 (11, 21, 31...)
+        if ((this.currentFloor - 1) % 10 === 0 && this.currentFloor > 1) {
+            this.availablePoints += 3; // Bonus points from boss
+        }
+        
+        // Check for relic selection FIRST (every 5 floors)
         if (this.currentFloor % 5 === 0) {
+            // We'll return relic first, but prepare for stats after
             this.availablePoints = 5;
             this.baseStatsSnapshot = null; // Reset snapshot for new allocation
             
@@ -311,18 +318,7 @@ class GameManager {
                 maxHp: this.player.maxHp
             };
             
-            return 'stats'; // Needs stat allocation
-        }
-        
-        // Boss floor bonus points (11, 21, 31, ...)
-        // Boss floors: every 10 floors + 1 (11, 21, 31...)
-        if ((this.currentFloor - 1) % 10 === 0 && this.currentFloor > 1) {
-            this.availablePoints += 3; // Bonus points from boss
-        }
-        
-        // Check if need relic (every 5 floors)
-        if (this.currentFloor % 5 === 0) {
-            return 'relic'; // Needs relic selection
+            return 'relic'; // Relic selection FIRST
         }
         
         return 'battle'; // Continue to next battle

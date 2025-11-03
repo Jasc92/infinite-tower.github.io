@@ -380,12 +380,12 @@ function updateRelicScreen() {
             }
             
             console.log('Active relics after selection:', game.relicManager.activeRelics.length);
-            console.log('Navigating to battle in 300ms...');
+            console.log('Navigating to stats in 300ms...');
             
-            // Continue to battle
+            // Continue to stats allocation
             setTimeout(() => {
-                console.log('Calling showScreen(battle)...');
-                showScreen('battle');
+                console.log('Calling showScreen(stats)...');
+                showScreen('stats');
             }, 300);
         };
         
@@ -758,6 +758,26 @@ function updateResultScreen() {
         <div>HP: ${build.hp}</div>
     `;
     
+    // Show final relics
+    const slots = document.querySelectorAll('.final-relic-slot');
+    const relics = game.relicManager.activeRelics;
+    
+    slots.forEach((slot, index) => {
+        slot.classList.remove('active', 'empty');
+        slot.onclick = null;
+        
+        if (index < relics.length) {
+            const relic = relics[index];
+            slot.textContent = relic.icon;
+            slot.classList.add('active');
+            slot.title = relic.name;
+            slot.onclick = () => showRelicTooltip(relic);
+        } else {
+            slot.textContent = '';
+            slot.classList.add('empty');
+        }
+    });
+    
     console.log('Result screen updated');
 }
 
@@ -816,7 +836,7 @@ function setupEventListeners() {
     });
     
     document.getElementById('btn-start-battle').addEventListener('click', () => {
-        showScreen('relic');
+        showScreen('battle');
     });
     
     document.getElementById('btn-stats-back-menu').addEventListener('click', () => {
@@ -825,7 +845,7 @@ function setupEventListeners() {
     
     // Relic screen
     document.getElementById('btn-skip-relic').addEventListener('click', () => {
-        startBattleScreen();
+        showScreen('stats');
     });
     
     // Relic tooltip overlay
