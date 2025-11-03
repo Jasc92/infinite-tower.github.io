@@ -115,6 +115,9 @@ function showScreen(screenName) {
             case 'stats':
                 updateStatsScreen();
                 break;
+            case 'relic':
+                updateRelicScreen();
+                break;
             case 'battle':
                 startBattleScreen();
                 break;
@@ -249,6 +252,57 @@ function checkStatCap(statType) {
         case 'crit': return game.player.critChance < 0.75;
         case 'lifesteal': return game.player.lifesteal < 0.40;
         default: return true;
+    }
+}
+
+// ========================================
+// RELIC SELECTION SCREEN
+// ========================================
+
+function updateRelicScreen() {
+    // Update relic counter
+    document.getElementById('relic-count').textContent = game.relicManager.activeRelics.length;
+    
+    const container = document.getElementById('relic-options');
+    container.innerHTML = '';
+    
+    const isReplaceMode = game.relicManager.activeRelics.length >= 3;
+    
+    // Get 3 random relics
+    const relicOptions = game.relicManager.getRandomRelics(3);
+    
+    relicOptions.forEach((relic, index) => {
+        const card = document.createElement('div');
+        card.className = 'relic-card' + (isReplaceMode ? ' replace-mode' : '');
+        card.innerHTML = `
+            <div class="relic-card-header">
+                <div class="relic-icon">${relic.icon}</div>
+                <div class="relic-name">${relic.name}</div>
+            </div>
+            <div class="relic-description">${relic.description}</div>
+        `;
+        
+        card.addEventListener('click', () => {
+            if (isReplaceMode) {
+                // Show replace selection (for now, replace first)
+                game.relicManager.replaceRelic(0, relic);
+            } else {
+                game.relicManager.addRelic(relic);
+            }
+            
+            // Continue to battle
+            setTimeout(() => startBattleScreen(), 300);
+        });
+        
+        container.appendChild(card);
+    });
+    
+    // Show/hide skip button
+    const skipBtn = document.getElementById('btn-skip-relic');
+    if (isReplaceMode) {
+        skipBtn.style.display = 'block';
+    } else {
+        skipBtn.style.display = 'none';
     }
 }
 
@@ -490,11 +544,14 @@ function renderBattle() {
 function handleBattleWin() {
     cancelAnimationFrame(animationFrame);
     
-    const needsStats = game.nextFloor();
+    const nextAction = game.nextFloor();
     
-    if (needsStats) {
+    if (nextAction === 'stats') {
         // Every 5 floors: stat allocation
         setTimeout(() => showScreen('stats'), 500);
+    } else if (nextAction === 'relic') {
+        // Every 5 floors (after stats): relic selection
+        setTimeout(() => showScreen('relic'), 500);
     } else {
         // Continue to next floor
         setTimeout(() => startBattleScreen(), 500);
@@ -604,11 +661,16 @@ function setupEventListeners() {
     });
     
     document.getElementById('btn-start-battle').addEventListener('click', () => {
-        showScreen('battle');
+        showScreen('relic');
     });
     
     document.getElementById('btn-stats-back-menu').addEventListener('click', () => {
         showScreen('menu');
+    });
+    
+    // Relic screen
+    document.getElementById('btn-skip-relic').addEventListener('click', () => {
+        startBattleScreen();
     });
     
     // Battle screen

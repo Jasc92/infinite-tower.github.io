@@ -260,16 +260,7 @@ class GameManager {
         if (this.currentFloor % 5 === 0) {
             this.availablePoints = 5;
             this.baseStatsSnapshot = null; // Reset snapshot for new allocation
-            
-            // Grant random relic
-            if (this.relicManager.activeRelics.length < 3) {
-                const options = this.relicManager.getRandomRelics(1);
-                if (options.length > 0) {
-                    this.relicManager.addRelic(options[0]);
-                }
-            }
-            
-            return true; // Needs stat allocation
+            return 'stats'; // Needs stat allocation
         }
         
         // Boss floor bonus points (11, 21, 31, ...)
@@ -278,7 +269,12 @@ class GameManager {
             this.availablePoints += 3; // Bonus points from boss
         }
         
-        return false; // Continue to next battle
+        // Check if need relic (every 5 floors)
+        if (this.currentFloor % 5 === 0) {
+            return 'relic'; // Needs relic selection
+        }
+        
+        return 'battle'; // Continue to next battle
     }
 
     /**
