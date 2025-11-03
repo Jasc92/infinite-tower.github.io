@@ -789,7 +789,7 @@ function setupEventListeners() {
     // Menu screen
     document.getElementById('btn-play').addEventListener('click', () => {
         game.resetRun();
-        showScreen('stats');
+        showScreen('relic'); // Start with relic selection first
     });
     
     document.getElementById('btn-how-to-play').addEventListener('click', () => {
@@ -895,7 +895,7 @@ function setupEventListeners() {
     // Result screen
     document.getElementById('btn-restart').addEventListener('click', () => {
         game.resetRun();
-        showScreen('stats');
+        showScreen('relic'); // Start with relic selection first
     });
     
     document.getElementById('btn-back-menu').addEventListener('click', () => {
