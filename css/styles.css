@@ -599,26 +599,32 @@ body {
     background: linear-gradient(180deg, rgba(42, 31, 24, 0.95) 0%, rgba(26, 19, 14, 0.95) 100%);
     border: 3px solid #8b7355;
     border-radius: 8px;
-    padding: clamp(15px, 3vh, 20px);
+    padding: clamp(18px, 4vh, 24px);
     cursor: pointer;
     transition: all 0.2s;
     box-shadow: inset 0 1px 0 rgba(139, 115, 85, 0.2), 0 4px 12px rgba(0, 0, 0, 0.6);
     user-select: none;
-    -webkit-tap-highlight-color: rgba(212, 175, 55, 0.3);
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
     position: relative;
     z-index: 1;
+    min-height: 80px;
 }
 
-.relic-card:hover {
+.relic-card:hover,
+.relic-card.touching {
     border-color: #d4af37;
     box-shadow: inset 0 1px 0 rgba(212, 175, 55, 0.3), 0 6px 20px rgba(212, 175, 55, 0.4);
     transform: translateY(-2px);
     background: linear-gradient(180deg, rgba(52, 41, 34, 0.95) 0%, rgba(36, 29, 24, 0.95) 100%);
 }
 
-.relic-card:active {
+.relic-card:active,
+.relic-card.touching:active {
     transform: translateY(0px);
     box-shadow: inset 0 1px 0 rgba(212, 175, 55, 0.3), 0 2px 8px rgba(212, 175, 55, 0.6);
+    border-color: #ffcc00;
 }
 
 .relic-card-header {

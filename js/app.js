@@ -294,8 +294,11 @@ function updateRelicScreen() {
             <div class="relic-description">${relic.description}</div>
         `;
         
-        card.addEventListener('click', () => {
-            console.log('Relic clicked:', relic.name);
+        // Handler function
+        const selectRelic = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Relic selected:', relic.name);
             
             if (isReplaceMode) {
                 // Show replace selection (for now, replace first)
@@ -308,7 +311,20 @@ function updateRelicScreen() {
             
             // Continue to battle
             setTimeout(() => startBattleScreen(), 300);
+        };
+        
+        // Add both touch and click events for mobile compatibility
+        card.addEventListener('touchstart', (e) => {
+            console.log('Touch detected on:', relic.name);
+            card.classList.add('touching');
         });
+        
+        card.addEventListener('touchend', (e) => {
+            card.classList.remove('touching');
+            selectRelic(e);
+        });
+        
+        card.addEventListener('click', selectRelic);
         
         container.appendChild(card);
         console.log(`Card ${index} appended to container`);
