@@ -577,6 +577,88 @@ body {
     color: var(--primary-light);
 }
 
+.current-relics {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 12px 0;
+    min-height: 50px;
+}
+
+.current-relic-icon {
+    font-size: clamp(32px, 9vw, 48px);
+    cursor: pointer;
+    transition: transform 0.2s;
+    padding: 8px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+}
+
+.current-relic-icon:hover,
+.current-relic-icon:active {
+    transform: scale(1.15);
+    border-color: #d4af37;
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.relic-tooltip {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(180deg, rgba(42, 31, 24, 0.98) 0%, rgba(26, 19, 14, 0.98) 100%);
+    border: 3px solid #d4af37;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 90%;
+    width: 300px;
+    z-index: 1000;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+}
+
+.relic-tooltip.visible {
+    display: block;
+}
+
+.relic-tooltip-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 999;
+}
+
+.relic-tooltip-overlay.visible {
+    display: block;
+}
+
+.relic-tooltip-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.relic-tooltip-icon {
+    font-size: 36px;
+}
+
+.relic-tooltip-name {
+    font-size: clamp(14px, 4vw, 18px);
+    color: #d4af37;
+    font-weight: bold;
+}
+
+.relic-tooltip-description {
+    font-size: clamp(11px, 3vw, 14px);
+    color: var(--text);
+    line-height: 1.6;
+}
+
 .relic-selection-content {
     flex: 1;
     display: flex;

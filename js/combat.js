@@ -42,14 +42,14 @@ class CombatEngine {
                 const healAmount = Math.round(damageInfo.damage * player.lifesteal);
                 player.currentHp = Math.min(player.maxHp, player.currentHp + healAmount);
                 
-                // Add heal floating text
+                // Add heal floating text with heart icon
                 if (healAmount > 0) {
                     this.addFloatingText({
                         damage: healAmount,
                         isMiss: false,
                         isCrit: false,
                         isHeal: true,
-                        text: `+${healAmount}`
+                        text: `💚 +${healAmount}`
                     }, 'player');
                 }
             }

@@ -32,7 +32,7 @@
             <div class="title-container">
                 <h1 class="game-title">INFINITE TOWER</h1>
                 <div class="subtitle">Roguelike Auto-Battler</div>
-                <div class="version">v1.8.4</div>
+                <div class="version">v1.9.0</div>
             </div>
             
             <div class="menu-content">
@@ -185,6 +185,12 @@
                 <div class="relic-counter">
                     Relics: <span id="relic-count">0</span>/3
                 </div>
+                
+                <!-- Current Relics Display -->
+                <div id="current-relics" class="current-relics">
+                    <!-- Current relic icons will be shown here -->
+                </div>
+                
                 <p style="font-size: clamp(11px, 3vw, 14px); color: #ffcc00; margin-top: 8px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
                     👆 TAP ANY CARD TO SELECT
                 </p>
@@ -199,6 +205,16 @@
                     Skip
                 </button>
             </div>
+        </div>
+        
+        <!-- Relic Tooltip -->
+        <div id="relic-tooltip-overlay" class="relic-tooltip-overlay"></div>
+        <div id="relic-tooltip" class="relic-tooltip">
+            <div class="relic-tooltip-header">
+                <div id="tooltip-icon" class="relic-tooltip-icon"></div>
+                <div id="tooltip-name" class="relic-tooltip-name"></div>
+            </div>
+            <div id="tooltip-description" class="relic-tooltip-description"></div>
         </div>
         
         <!-- How to Play Modal -->

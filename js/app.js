@@ -144,7 +144,7 @@ function updateTopRunsDisplay() {
                 <h4>#${index + 1} - Floor ${run.floor}</h4>
                 <p>Difficulty: ${capitalize(run.difficulty)}</p>
                 <p>Duration: ${run.durationSec}s</p>
-                <p>ATK: ${run.build.atk} | SPD: ${run.build.atkSpd} | CRT: ${Math.round(run.build.crit * 100)}%</p>
+                <p>ATK: ${run.build.atk} | SPD: ${run.build.atkSpd} | CRT: ${Math.round(run.build.crit * 100)}% | LS: ${Math.round((run.build.lifesteal || 0) * 100)}%</p>
             </div>
         `).join('');
     }
@@ -259,12 +259,50 @@ function checkStatCap(statType) {
 // RELIC SELECTION SCREEN
 // ========================================
 
+function showRelicTooltip(relic) {
+    const tooltip = document.getElementById('relic-tooltip');
+    const overlay = document.getElementById('relic-tooltip-overlay');
+    
+    document.getElementById('tooltip-icon').textContent = relic.icon;
+    document.getElementById('tooltip-name').textContent = relic.name;
+    document.getElementById('tooltip-description').textContent = relic.description;
+    
+    tooltip.classList.add('visible');
+    overlay.classList.add('visible');
+}
+
+function hideRelicTooltip() {
+    document.getElementById('relic-tooltip').classList.remove('visible');
+    document.getElementById('relic-tooltip-overlay').classList.remove('visible');
+}
+
 function updateRelicScreen() {
     console.log('=== UPDATE RELIC SCREEN ===');
     console.log('Active relics:', game.relicManager.activeRelics.length);
     
     // Update relic counter
     document.getElementById('relic-count').textContent = game.relicManager.activeRelics.length;
+    
+    // Show current relics
+    const currentRelicsContainer = document.getElementById('current-relics');
+    currentRelicsContainer.innerHTML = '';
+    
+    if (game.relicManager.activeRelics.length > 0) {
+        game.relicManager.activeRelics.forEach((relic) => {
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'current-relic-icon';
+            iconDiv.textContent = relic.icon;
+            iconDiv.title = relic.name;
+            
+            // Show tooltip on tap/click
+            iconDiv.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showRelicTooltip(relic);
+            });
+            
+            currentRelicsContainer.appendChild(iconDiv);
+        });
+    }
     
     const container = document.getElementById('relic-options');
     container.innerHTML = '';
@@ -635,8 +673,15 @@ function resizeCanvas() {
 // ========================================
 
 function updateResultScreen() {
+    console.log('=== UPDATE RESULT SCREEN ===');
+    console.log('Current floor:', game.currentFloor);
+    console.log('Run start time:', game.runStartTime);
+    console.log('Current time:', Date.now());
+    
     const floor = game.currentFloor;
     const duration = game.getRunDuration();
+    console.log('Duration:', duration);
+    
     const isTop = topRuns.isTopRun(floor, duration);
     
     // Save if top run
@@ -656,14 +701,18 @@ function updateResultScreen() {
     
     // Show final build
     const build = game.createBuildSnapshot();
+    console.log('Build snapshot:', build);
+    
     document.getElementById('final-build-stats').innerHTML = `
         <div>Attack: ${build.atk}</div>
         <div>Attack Speed: ${build.atkSpd}/s</div>
         <div>Critical: ${Math.round(build.crit * 100)}%</div>
-        <div>Evasion: ${Math.round(build.evade * 100)}%</div>
+        <div>Lifesteal: ${Math.round(build.lifesteal * 100)}%</div>
         <div>Defense: ${build.def}</div>
         <div>HP: ${build.hp}</div>
     `;
+    
+    console.log('Result screen updated');
 }
 
 // ========================================
@@ -731,6 +780,16 @@ function setupEventListeners() {
     // Relic screen
     document.getElementById('btn-skip-relic').addEventListener('click', () => {
         startBattleScreen();
+    });
+    
+    // Relic tooltip overlay
+    document.getElementById('relic-tooltip-overlay').addEventListener('click', () => {
+        hideRelicTooltip();
+    });
+    
+    document.getElementById('relic-tooltip').addEventListener('click', (e) => {
+        e.stopPropagation();
+        hideRelicTooltip();
     });
     
     // Battle screen

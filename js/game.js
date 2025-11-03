@@ -79,6 +79,16 @@ class GameManager {
         this.battleSpeed = 1.0;
         this.battleActive = false;
         this.relicManager.reset();
+        
+        // Save base stats (before any relic effects) for clean relic application
+        this.basePlayerStats = {
+            attack: this.player.attack,
+            attackSpeed: this.player.attackSpeed,
+            critChance: this.player.critChance,
+            lifesteal: this.player.lifesteal,
+            defense: this.player.defense,
+            maxHp: this.player.maxHp
+        };
     }
 
     /**
@@ -208,6 +218,17 @@ class GameManager {
         const isBoss = this.isBossFloor();
         this.enemy = this.enemyGen.generateEnemy(this.currentFloor, diffMult, this.currentArchetype, isBoss);
         
+        // Restore base stats before applying relic effects to prevent compounding
+        if (this.basePlayerStats) {
+            this.player.attack = this.basePlayerStats.attack;
+            this.player.attackSpeed = this.basePlayerStats.attackSpeed;
+            this.player.critChance = this.basePlayerStats.critChance;
+            this.player.lifesteal = this.basePlayerStats.lifesteal;
+            this.player.defense = this.basePlayerStats.defense;
+            this.player.maxHp = this.basePlayerStats.maxHp;
+            this.player.currentHp = this.player.maxHp; // Full HP for new battle
+        }
+        
         // Apply relic stat effects (creates a combat snapshot with bonuses)
         this.relicManager.applyStatEffects(this.player);
         
@@ -260,6 +281,17 @@ class GameManager {
         if (this.currentFloor % 5 === 0) {
             this.availablePoints = 5;
             this.baseStatsSnapshot = null; // Reset snapshot for new allocation
+            
+            // Update base player stats after stat allocation
+            this.basePlayerStats = {
+                attack: this.player.attack,
+                attackSpeed: this.player.attackSpeed,
+                critChance: this.player.critChance,
+                lifesteal: this.player.lifesteal,
+                defense: this.player.defense,
+                maxHp: this.player.maxHp
+            };
+            
             return 'stats'; // Needs stat allocation
         }
         
@@ -292,7 +324,7 @@ class GameManager {
             atk: this.player.attack,
             atkSpd: parseFloat(this.player.attackSpeed.toFixed(1)),
             crit: parseFloat(this.player.critChance.toFixed(2)),
-            evade: parseFloat(this.player.evasion.toFixed(2)),
+            lifesteal: parseFloat(this.player.lifesteal.toFixed(2)),
             def: this.player.defense,
             hp: this.player.maxHp
         };
