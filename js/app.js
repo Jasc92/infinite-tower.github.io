@@ -281,6 +281,9 @@ function updateRelicScreen() {
         return;
     }
     
+    // Flag to prevent multiple selections
+    let isSelecting = false;
+    
     relicOptions.forEach((relic, index) => {
         console.log(`Creating card ${index} for relic:`, relic.name);
         
@@ -296,9 +299,21 @@ function updateRelicScreen() {
         
         // Handler function
         const selectRelic = (e) => {
+            if (isSelecting) {
+                console.log('Already selecting, ignoring');
+                return;
+            }
+            
+            isSelecting = true;
             e.preventDefault();
             e.stopPropagation();
             console.log('Relic selected:', relic.name);
+            
+            // Disable all cards
+            document.querySelectorAll('.relic-card').forEach(c => {
+                c.style.pointerEvents = 'none';
+                c.style.opacity = '0.5';
+            });
             
             if (isReplaceMode) {
                 // Show replace selection (for now, replace first)
@@ -308,15 +323,21 @@ function updateRelicScreen() {
             }
             
             console.log('Active relics after selection:', game.relicManager.activeRelics.length);
+            console.log('Navigating to battle in 300ms...');
             
             // Continue to battle
-            setTimeout(() => startBattleScreen(), 300);
+            setTimeout(() => {
+                console.log('Calling showScreen(battle)...');
+                showScreen('battle');
+            }, 300);
         };
         
         // Add both touch and click events for mobile compatibility
         card.addEventListener('touchstart', (e) => {
-            console.log('Touch detected on:', relic.name);
-            card.classList.add('touching');
+            if (!isSelecting) {
+                console.log('Touch detected on:', relic.name);
+                card.classList.add('touching');
+            }
         });
         
         card.addEventListener('touchend', (e) => {
