@@ -494,8 +494,15 @@ function setupEventListeners() {
     });
     
     document.getElementById('btn-abandon-confirm').addEventListener('click', () => {
-        // Hide modal and end run
+        // Hide modal
         document.getElementById('abandon-modal').classList.add('hidden');
+        // Force end battle properly
+        if (animationFrame) {
+            cancelAnimationFrame(animationFrame);
+            animationFrame = null;
+        }
+        game.battleActive = false;
+        // Go to result screen
         showScreen('result');
     });
     
