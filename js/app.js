@@ -113,10 +113,10 @@ function updateStatsScreen() {
     document.getElementById('points-available').textContent = game.availablePoints;
     
     // Update stat displays
-    updateStatDisplay('attackSpeed', game.player.attackSpeed.toFixed(1), game.player.attackSpeed >= 5.0);
+    updateStatDisplay('attackSpeed', game.player.attackSpeed.toFixed(1), game.player.attackSpeed >= 7.0);
     updateStatDisplay('attack', game.player.attack, false);
     updateStatDisplay('crit', Math.round(game.player.critChance * 100), game.player.critChance >= 0.75);
-    updateStatDisplay('evasion', Math.round(game.player.evasion * 100), game.player.evasion >= 0.35);
+    updateStatDisplay('evasion', Math.round(game.player.evasion * 100), game.player.evasion >= 0.50);
     updateStatDisplay('defense', game.player.defense, false);
     updateStatDisplay('hp', game.player.maxHp, false);
     
@@ -195,9 +195,9 @@ function removeStatPoint(statType) {
 
 function checkStatCap(statType) {
     switch (statType) {
-        case 'attackSpeed': return game.player.attackSpeed < 5.0;
+        case 'attackSpeed': return game.player.attackSpeed < 7.0;
         case 'crit': return game.player.critChance < 0.75;
-        case 'evasion': return game.player.evasion < 0.35;
+        case 'evasion': return game.player.evasion < 0.50;
         default: return true;
     }
 }

@@ -99,10 +99,10 @@ class GameManager {
     applyStatPoint(statType) {
         switch (statType) {
             case 'attackSpeed':
-                if (this.player.attackSpeed < 5.0) {
-                    // Improved: +0.15 per point (was 0.1)
+                if (this.player.attackSpeed < 7.0) {
+                    // Improved: +0.15 per point, max 7.0
                     this.player.attackSpeed += 0.15;
-                    if (this.player.attackSpeed > 5.0) this.player.attackSpeed = 5.0;
+                    if (this.player.attackSpeed > 7.0) this.player.attackSpeed = 7.0;
                 }
                 break;
             case 'attack':
@@ -110,15 +110,16 @@ class GameManager {
                 break;
             case 'crit':
                 if (this.player.critChance < 0.75) {
-                    this.player.critChance += 0.01;
+                    // Improved: +2% per point (was 1%)
+                    this.player.critChance += 0.02;
                     if (this.player.critChance > 0.75) this.player.critChance = 0.75;
                 }
                 break;
             case 'evasion':
-                if (this.player.evasion < 0.35) {
-                    // Improved: +1.5% per point (was 1%), max 35% (was 25%)
+                if (this.player.evasion < 0.50) {
+                    // Improved: +1.5% per point, max 50%
                     this.player.evasion += 0.015;
-                    if (this.player.evasion > 0.35) this.player.evasion = 0.35;
+                    if (this.player.evasion > 0.50) this.player.evasion = 0.50;
                 }
                 break;
             case 'defense':
@@ -155,7 +156,7 @@ class GameManager {
                 break;
             case 'crit':
                 if (this.player.critChance > this.baseStatsSnapshot.critChance) {
-                    this.player.critChance -= 0.01;
+                    this.player.critChance -= 0.02;
                     if (this.player.critChance < this.baseStatsSnapshot.critChance) {
                         this.player.critChance = this.baseStatsSnapshot.critChance;
                     }

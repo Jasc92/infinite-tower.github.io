@@ -70,12 +70,12 @@
                         <p>This is an auto-battler. Your hero fights automatically. Watch them clash!</p>
                         
                         <h4>📊 Stats</h4>
-                        <p><strong>Attack:</strong> Base damage per hit<br>
-                        <strong>Attack Speed:</strong> Attacks per second (max 5.0)<br>
-                        <strong>Critical:</strong> Chance to deal double damage (max 75%)<br>
-                        <strong>Evasion:</strong> Chance to dodge attacks (max 25%)<br>
-                        <strong>Defense:</strong> Reduces incoming damage<br>
-                        <strong>HP:</strong> Health points - reach 0 and you lose</p>
+                        <p><strong>Attack:</strong> Base damage per hit (+2 per point)<br>
+                        <strong>Attack Speed:</strong> Attacks per second (+0.15 per point, max 7.0)<br>
+                        <strong>Critical:</strong> Double damage chance (+2% per point, max 75%)<br>
+                        <strong>Evasion:</strong> Dodge attacks (+1.5% per point, max 50%)<br>
+                        <strong>Defense:</strong> Reduces incoming damage (+2 per point)<br>
+                        <strong>HP:</strong> Health points (+10 per point)</p>
                         
                         <h4>🗼 Floors & Progression</h4>
                         <p>Start with 5 stat points. Every 5 floors, gain 5 more points to improve your build.</p>
@@ -110,7 +110,7 @@
                 <div class="stat-row" data-stat="attackSpeed">
                     <div class="stat-info">
                         <div class="stat-name">⚡ Attack Speed</div>
-                        <div class="stat-description">Attacks per second. More attacks = more damage over time. Max: 5.0</div>
+                        <div class="stat-description">Attacks per second. More attacks = more damage over time. Max: 7.0</div>
                         <div class="stat-value">
                             <span id="stat-attackSpeed">1.0</span>/s
                             <span class="stat-max"></span>
@@ -139,7 +139,7 @@
                 <div class="stat-row" data-stat="crit">
                     <div class="stat-info">
                         <div class="stat-name">💥 Critical</div>
-                        <div class="stat-description">Chance to deal double damage. High risk, high reward! Max: 75%</div>
+                        <div class="stat-description">Chance to deal double damage (+2% per point). Max: 75%</div>
                         <div class="stat-value">
                             <span id="stat-crit">5</span>%
                             <span class="stat-max"></span>
@@ -154,7 +154,7 @@
                 <div class="stat-row" data-stat="evasion">
                     <div class="stat-info">
                         <div class="stat-name">🌪️ Evasion</div>
-                        <div class="stat-description">Chance to completely dodge enemy attacks. Max: 35%</div>
+                        <div class="stat-description">Chance to completely dodge enemy attacks. Max: 50%</div>
                         <div class="stat-value">
                             <span id="stat-evasion">0</span>%
                             <span class="stat-max"></span>
