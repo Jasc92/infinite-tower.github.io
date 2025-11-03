@@ -100,6 +100,14 @@ body {
     line-height: 1.4;
 }
 
+.version {
+    font-size: clamp(8px, 1.8vw, 10px);
+    color: var(--primary-light);
+    margin-top: 8px;
+    opacity: 0.7;
+    letter-spacing: 1px;
+}
+
 .menu-content {
     flex: 1;
     display: flex;
