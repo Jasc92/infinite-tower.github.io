@@ -297,12 +297,14 @@ function updateRelicScreen() {
         container.appendChild(card);
     });
     
-    // Show/hide skip button
+    // Always show skip button with appropriate text
     const skipBtn = document.getElementById('btn-skip-relic');
+    skipBtn.style.display = 'block';
+    
     if (isReplaceMode) {
-        skipBtn.style.display = 'block';
+        skipBtn.textContent = 'Skip (Keep Current 3)';
     } else {
-        skipBtn.style.display = 'none';
+        skipBtn.textContent = 'Skip (Continue Without Relic)';
     }
 }
 
