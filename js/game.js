@@ -13,9 +13,9 @@ class GameManager {
         // Game state
         this.difficulty = 'normal';
         this.difficultyMultipliers = {
-            easy: 0.90,
-            normal: 1.00,
-            hard: 1.12
+            easy: 0.85,   // Softer enemies
+            normal: 1.00, // Balanced
+            hard: 1.15    // Harder enemies
         };
         
         // Player stats (base)

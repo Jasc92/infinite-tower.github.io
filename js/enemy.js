@@ -54,8 +54,8 @@ class EnemyGenerator {
 
         // Scale for each floor from 2 to current floor
         for (let f = 2; f <= floor; f++) {
-            // Softer scaling for early floors (1-15)
-            const earlyGameMult = f <= 15 ? 0.85 : 1.0;
+            // Improved early game scaling (1-15)
+            const earlyGameMult = f <= 15 ? 0.90 : 1.0;
             
             // HP scaling: HP += HP * (0.055 * diffMult * bias * earlyMult)
             hp += hp * (0.055 * difficultyMult * bias.hp * earlyGameMult);
