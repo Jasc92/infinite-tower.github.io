@@ -66,6 +66,13 @@ class CombatEngine {
 
         // Player attacks
         if (this.playerAttackTimer <= 0) {
+            // Check Adrenaline for attack speed boost
+            let effectivePlayerSpeed = player.attackSpeed;
+            const adrenaline = this.relics.find(r => r.id === 'adrenaline');
+            if (adrenaline && (player.currentHp / player.maxHp) < adrenaline.threshold) {
+                effectivePlayerSpeed *= (1 + adrenaline.speedBoost);
+            }
+            
             const damageInfo = this.calculateDamage(
                 player.attack,
                 player.critChance,
@@ -121,8 +128,8 @@ class CombatEngine {
             
             this.firstHit = false; // Mark first hit as done
 
-            // Reset timer: 1 / attackSpeed
-            this.playerAttackTimer = 1 / player.attackSpeed;
+            // Reset timer: 1 / attackSpeed (with adrenaline bonus if applicable)
+            this.playerAttackTimer = 1 / effectivePlayerSpeed;
 
             if (enemy.currentHp <= 0) {
                 return 'player_win';
@@ -150,6 +157,13 @@ class CombatEngine {
 
         // Enemy attacks
         if (this.enemyAttackTimer <= 0) {
+            // Check Adrenaline: boost attack speed below 50% HP
+            let effectiveAttackSpeed = player.attackSpeed;
+            const adrenaline = this.relics.find(r => r.id === 'adrenaline');
+            if (adrenaline && (player.currentHp / player.maxHp) < adrenaline.threshold) {
+                effectiveAttackSpeed *= (1 + adrenaline.speedBoost);
+            }
+            
             let damageInfo = this.calculateDamage(
                 enemy.attack,
                 enemy.critChance,

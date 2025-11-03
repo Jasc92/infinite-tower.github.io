@@ -52,24 +52,31 @@ class EnemyGenerator {
         let atkSpd = base.attackSpeed;
         let crit = base.critChance;
 
-        // Scale for each floor from 2 to current floor
+        // Scale for each floor from 2 to current floor (REBALANCED v2.1)
         for (let f = 2; f <= floor; f++) {
-            // Improved early game scaling (1-15)
-            const earlyGameMult = f <= 15 ? 0.90 : 1.0;
+            // Improved early game scaling reduction
+            let earlyGameMult = 1.0;
+            if (f <= 10) {
+                earlyGameMult = 0.70; // Much gentler floors 1-10
+            } else if (f <= 20) {
+                earlyGameMult = 0.80; // Still easier floors 11-20
+            } else if (f <= 30) {
+                earlyGameMult = 0.90; // Moderate floors 21-30
+            }
             
-            // HP scaling: HP += HP * (0.055 * diffMult * bias * earlyMult)
-            hp += hp * (0.055 * difficultyMult * bias.hp * earlyGameMult);
+            // Reduced HP scaling: HP += HP * (0.040 * diffMult * bias * earlyMult)
+            hp += hp * (0.040 * difficultyMult * bias.hp * earlyGameMult);
             
-            // Defense scaling: Def += max(1, round(Def * 0.045 * diffMult * bias * earlyMult))
-            const defIncrease = Math.max(1, Math.round(def * 0.045 * difficultyMult * bias.defense * earlyGameMult));
+            // Reduced Defense scaling: Def += max(1, round(Def * 0.030 * diffMult * bias * earlyMult))
+            const defIncrease = Math.max(1, Math.round(def * 0.030 * difficultyMult * bias.defense * earlyGameMult));
             def += defIncrease;
             
-            // Attack scaling: Atk += max(1, round(Atk * 0.040 * diffMult * bias * earlyMult))
-            const atkIncrease = Math.max(1, Math.round(atk * 0.040 * difficultyMult * bias.attack * earlyGameMult));
+            // Reduced Attack scaling: Atk += max(1, round(Atk * 0.035 * diffMult * bias * earlyMult))
+            const atkIncrease = Math.max(1, Math.round(atk * 0.035 * difficultyMult * bias.attack * earlyGameMult));
             atk += atkIncrease;
             
-            // Attack Speed scaling: AtkSpd = min(4.0, AtkSpd + (0.01 * diffMult * bias * earlyMult))
-            atkSpd = Math.min(4.0, atkSpd + (0.01 * difficultyMult * bias.attackSpeed * earlyGameMult));
+            // Reduced Attack Speed scaling: AtkSpd = min(4.0, AtkSpd + (0.008 * diffMult * bias * earlyMult))
+            atkSpd = Math.min(4.0, atkSpd + (0.008 * difficultyMult * bias.attackSpeed * earlyGameMult));
             
             // Critical scaling: Every 10 floors, +0.5% (max 35%)
             if (f % 10 === 0 && crit < 0.35) {
@@ -78,12 +85,12 @@ class EnemyGenerator {
             }
         }
 
-        // Apply boss multipliers
+        // Apply boss multipliers (rebalanced)
         if (isBoss) {
-            hp *= 1.4;
-            atk *= 1.25;
-            def *= 1.3;
-            atkSpd *= 1.2;
+            hp *= 1.3;  // Reduced from 1.4
+            atk *= 1.15; // Reduced from 1.25
+            def *= 1.2;  // Reduced from 1.3
+            atkSpd *= 1.1; // Reduced from 1.2
         }
 
         return {
