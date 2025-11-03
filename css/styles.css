@@ -39,6 +39,7 @@ body {
     padding: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile browsers */
     position: fixed;
 }
 
@@ -49,6 +50,7 @@ body {
 #game-container {
     width: 100vw;
     height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile browsers */
     position: relative;
     overflow: hidden;
     background: rgba(10, 10, 20, 0.85);
