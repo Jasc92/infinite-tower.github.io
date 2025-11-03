@@ -230,10 +230,28 @@ class GameManager {
         }
         
         // Apply relic stat effects (creates a combat snapshot with bonuses)
+        console.log('=== APPLYING RELIC EFFECTS ===');
+        console.log('Active relics:', this.relicManager.activeRelics.length);
+        console.log('Player stats BEFORE relics:', {
+            atk: this.player.attack,
+            hp: this.player.maxHp,
+            def: this.player.defense,
+            lifesteal: this.player.lifesteal
+        });
+        
         this.relicManager.applyStatEffects(this.player);
+        
+        console.log('Player stats AFTER relics:', {
+            atk: this.player.attack,
+            hp: this.player.maxHp,
+            def: this.player.defense,
+            lifesteal: this.player.lifesteal
+        });
         
         this.combat.reset();
         this.combat.relics = this.relicManager.activeRelics; // Pass relics to combat engine
+        console.log('Relics passed to combat engine:', this.combat.relics.length);
+        
         this.battleActive = true;
         this.battleResult = null; // Reset battle result
         this.lastFrameTime = performance.now();

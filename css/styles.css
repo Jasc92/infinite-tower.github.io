@@ -568,6 +568,43 @@ body {
     color: var(--text-dim);
 }
 
+.battle-relics {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: linear-gradient(180deg, rgba(42, 31, 24, 0.95) 0%, rgba(26, 19, 14, 0.95) 100%);
+    border-top: 3px solid #8b7355;
+    box-shadow: inset 0 1px 0 rgba(139, 115, 85, 0.2), 0 -4px 12px rgba(0, 0, 0, 0.6);
+}
+
+.battle-relic-slot {
+    width: clamp(50px, 15vw, 70px);
+    height: clamp(50px, 15vw, 70px);
+    border: 3px solid #8b7355;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(20, 15, 10, 0.9) 0%, rgba(35, 26, 18, 0.9) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(28px, 8vw, 40px);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+.battle-relic-slot.active {
+    border-color: #d4af37;
+    background: linear-gradient(135deg, rgba(30, 22, 12, 0.9) 0%, rgba(42, 31, 18, 0.9) 100%);
+    box-shadow: inset 0 0 8px rgba(212, 175, 55, 0.3), 0 0 12px rgba(212, 175, 55, 0.4);
+}
+
+.battle-relic-slot.empty::before {
+    content: '∅';
+    font-size: clamp(24px, 7vw, 32px);
+    color: rgba(139, 115, 85, 0.3);
+}
+
 /* ========================================
    RELIC SELECTION SCREEN
    ======================================== */

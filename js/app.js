@@ -426,6 +426,9 @@ function startBattleScreen() {
     
     document.getElementById('btn-speed-toggle').textContent = `${game.battleSpeed}x`;
     
+    // Update relic display
+    updateBattleRelicDisplay();
+    
     // Start battle
     game.startBattle();
     updateBattleUI();
@@ -433,6 +436,30 @@ function startBattleScreen() {
     // Start animation loop
     if (animationFrame) cancelAnimationFrame(animationFrame);
     battleLoop();
+}
+
+function updateBattleRelicDisplay() {
+    const slots = document.querySelectorAll('.battle-relic-slot');
+    const relics = game.relicManager.activeRelics;
+    
+    console.log('=== UPDATE BATTLE RELIC DISPLAY ===');
+    console.log('Active relics:', relics.length, relics);
+    
+    slots.forEach((slot, index) => {
+        slot.classList.remove('active', 'empty');
+        
+        if (index < relics.length) {
+            const relic = relics[index];
+            slot.textContent = relic.icon;
+            slot.classList.add('active');
+            slot.title = relic.name;
+            console.log(`Slot ${index}: ${relic.name} (${relic.icon})`);
+        } else {
+            slot.textContent = '';
+            slot.classList.add('empty');
+            console.log(`Slot ${index}: empty`);
+        }
+    });
 }
 
 function battleLoop() {
