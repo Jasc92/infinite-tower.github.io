@@ -207,7 +207,22 @@
                 <div class="archetype-display">
                     <span id="archetype-name">Balanced</span>
                 </div>
-                <button id="btn-speed-toggle" class="btn btn-speed">1x</button>
+                <div class="battle-controls">
+                    <button id="btn-speed-toggle" class="btn btn-speed">1x</button>
+                    <button id="btn-abandon" class="btn btn-abandon">❌</button>
+                </div>
+            </div>
+            
+            <!-- Abandon Confirmation Modal -->
+            <div id="abandon-modal" class="modal hidden">
+                <div class="modal-content">
+                    <h3>⚠️ Abandon Run?</h3>
+                    <p>Your progress will be lost and the run will end.</p>
+                    <div class="modal-actions">
+                        <button id="btn-abandon-confirm" class="btn btn-primary">Yes, Abandon</button>
+                        <button id="btn-abandon-cancel" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </div>
             </div>
             
             <div class="battle-arena">

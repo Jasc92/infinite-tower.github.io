@@ -486,6 +486,27 @@ function setupEventListeners() {
         document.getElementById('btn-speed-toggle').textContent = `${speed}x`;
     });
     
+    document.getElementById('btn-abandon').addEventListener('click', () => {
+        // Pause battle and show confirmation
+        game.battleActive = false;
+        cancelAnimationFrame(animationFrame);
+        document.getElementById('abandon-modal').classList.remove('hidden');
+    });
+    
+    document.getElementById('btn-abandon-confirm').addEventListener('click', () => {
+        // Hide modal and end run
+        document.getElementById('abandon-modal').classList.add('hidden');
+        showScreen('result');
+    });
+    
+    document.getElementById('btn-abandon-cancel').addEventListener('click', () => {
+        // Hide modal and resume battle
+        document.getElementById('abandon-modal').classList.add('hidden');
+        game.battleActive = true;
+        game.lastFrameTime = performance.now();
+        battleLoop();
+    });
+    
     // Result screen
     document.getElementById('btn-restart').addEventListener('click', () => {
         game.resetRun();
