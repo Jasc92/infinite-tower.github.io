@@ -157,13 +157,6 @@ class CombatEngine {
 
         // Enemy attacks
         if (this.enemyAttackTimer <= 0) {
-            // Check Adrenaline: boost attack speed below 50% HP
-            let effectiveAttackSpeed = player.attackSpeed;
-            const adrenaline = this.relics.find(r => r.id === 'adrenaline');
-            if (adrenaline && (player.currentHp / player.maxHp) < adrenaline.threshold) {
-                effectiveAttackSpeed *= (1 + adrenaline.speedBoost);
-            }
-            
             let damageInfo = this.calculateDamage(
                 enemy.attack,
                 enemy.critChance,
@@ -287,8 +280,12 @@ class CombatEngine {
             // Momentum: +1% damage per second of combat (max 30%)
             const momentum = this.relics.find(r => r.id === 'momentum');
             if (momentum) {
-                const bonus = Math.min(momentum.maxStacks, Math.floor(this.combatTime)) * momentum.damagePerSecond;
+                const stacks = Math.min(momentum.maxStacks, Math.floor(this.combatTime));
+                const bonus = stacks * momentum.damagePerSecond;
                 modifiedAttack = Math.round(attack * (1 + bonus));
+                if (stacks > 0) {
+                    console.log(`📈 Momentum: +${Math.round(bonus * 100)}% (${stacks}s)`);
+                }
             }
             
             // Adrenaline: +25% attack speed below 50% HP (affects damage calc timing, not damage directly)
@@ -327,14 +324,16 @@ class CombatEngine {
             ? (modifiedAttack * critMultiplier) - effectiveDefense 
             : modifiedAttack - effectiveDefense;
 
-        // Execute: 3x damage to enemies below 20% HP
-        let finalDamage = Math.max(1, rawDamage);
-        if (isPlayerAttacking) {
-            const execute = this.relics.find(r => r.id === 'execute');
-            if (execute && (target.currentHp / target.maxHp) < execute.executeThreshold) {
-                finalDamage = Math.round(finalDamage * execute.executeDamage);
+            // Execute: 3x damage to enemies below 20% HP
+            let finalDamage = Math.max(1, rawDamage);
+            if (isPlayerAttacking) {
+                const execute = this.relics.find(r => r.id === 'execute');
+                if (execute && (target.currentHp / target.maxHp) < execute.executeThreshold) {
+                    const preExecute = finalDamage;
+                    finalDamage = Math.round(finalDamage * execute.executeDamage);
+                    console.log(`☠️ Execute: ${preExecute} → ${finalDamage} (3x)`);
+                }
             }
-        }
         
         return {
             damage: finalDamage,
