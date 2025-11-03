@@ -265,30 +265,37 @@ function startBattleScreen() {
 }
 
 function battleLoop() {
+    // If showing battle result overlay, just render and wait
+    if (game.battleResult) {
+        renderBattle();
+        animationFrame = requestAnimationFrame(battleLoop);
+        return;
+    }
+    
     const result = game.updateBattle(performance.now());
     
     updateBattleUI();
     renderBattle();
     
     if (result === 'win') {
-        // Set battle result and show overlay for 2 seconds
+        // Set battle result and show overlay, keep rendering for 2 seconds
         game.battleResult = 'win';
-        renderBattle(); // Render with overlay
         setTimeout(() => {
+            cancelAnimationFrame(animationFrame);
             game.battleResult = null;
             handleBattleWin();
         }, 2000);
     } else if (result === 'loss') {
-        // Set battle result and show overlay for 2 seconds
+        // Set battle result and show overlay, keep rendering for 2 seconds
         game.battleResult = 'lose';
-        renderBattle(); // Render with overlay
         setTimeout(() => {
+            cancelAnimationFrame(animationFrame);
             game.battleResult = null;
             handleBattleLoss();
         }, 2000);
-    } else {
-        animationFrame = requestAnimationFrame(battleLoop);
     }
+    
+    animationFrame = requestAnimationFrame(battleLoop);
 }
 
 function updateBattleUI() {
