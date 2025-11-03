@@ -475,7 +475,7 @@ body {
     padding: clamp(10px, 2.5vw, 12px);
     min-width: clamp(160px, 40vw, 220px);
     max-width: clamp(180px, 45vw, 280px);
-    font-size: clamp(10px, 2.8vw, 13px);
+    font-size: clamp(9px, 2.5vw, 12px);
     box-shadow: inset 0 1px 0 rgba(139, 115, 85, 0.25), 0 6px 16px rgba(0, 0, 0, 0.7);
 }
 
@@ -564,7 +564,8 @@ body {
 
 .result-header {
     text-align: center;
-    margin: clamp(15px, 3vh, 30px) 0;
+    margin: clamp(10px, 2vh, 15px) 0 clamp(8px, 1.5vh, 12px) 0;
+    flex-shrink: 0;
 }
 
 .result-header h2 {
@@ -576,23 +577,23 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: clamp(10px, 2vh, 15px);
+    gap: clamp(8px, 1.5vh, 12px);
     max-width: 500px;
     margin: 0 auto;
     width: 100%;
     overflow-y: auto;
     overflow-x: hidden;
-    padding-bottom: 5px;
-    margin-bottom: 0;
+    min-height: 0;
 }
 
 .result-card {
     background: linear-gradient(180deg, rgba(42, 31, 24, 0.95) 0%, rgba(26, 19, 14, 0.95) 100%);
-    padding: clamp(12px, 2.5vh, 20px);
+    padding: clamp(10px, 2vh, 15px);
     border-radius: 4px;
     border: 3px solid #8b7355;
     text-align: center;
     box-shadow: inset 0 1px 0 rgba(139, 115, 85, 0.2), 0 4px 12px rgba(0, 0, 0, 0.6);
+    flex-shrink: 0;
 }
 
 .result-label {
@@ -629,10 +630,11 @@ body {
 
 .final-build {
     background: linear-gradient(180deg, rgba(42, 31, 24, 0.95) 0%, rgba(26, 19, 14, 0.95) 100%);
-    padding: clamp(12px, 2.5vh, 20px);
+    padding: clamp(10px, 2vh, 15px);
     border-radius: 4px;
     border: 3px solid #8b7355;
     box-shadow: inset 0 1px 0 rgba(139, 115, 85, 0.2), 0 4px 12px rgba(0, 0, 0, 0.6);
+    flex-shrink: 0;
 }
 
 .final-build h3 {
