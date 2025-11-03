@@ -62,6 +62,11 @@ function loadSprites() {
     game.sprites.fastEnemyDead = new Image();
     game.sprites.fastEnemyDead.src = 'assets/fast-enemy-dead.png';
     
+    game.sprites.boss = new Image();
+    game.sprites.boss.src = 'assets/boss.png';
+    game.sprites.bossDead = new Image();
+    game.sprites.bossDead.src = 'assets/boss-dead.png';
+    
     // Background
     game.sprites.background = new Image();
     game.sprites.background.src = 'assets/background.png';
@@ -71,6 +76,11 @@ function loadSprites() {
 function getEnemySprite(isDead = false) {
     if (!game.enemy || !game.enemy.archetype) {
         return isDead ? game.sprites.enemyDead : game.sprites.enemy;
+    }
+    
+    // Boss takes priority over archetype
+    if (game.enemy.isBoss) {
+        return isDead ? game.sprites.bossDead : game.sprites.boss;
     }
     
     const archetype = game.enemy.archetype;
@@ -252,7 +262,16 @@ function startBattleScreen() {
     
     // Update UI
     document.getElementById('current-floor').textContent = game.currentFloor;
-    document.getElementById('archetype-name').textContent = game.enemyGen.getArchetypeName(game.currentArchetype);
+    
+    // Show boss indicator or archetype
+    if (game.isBossFloor()) {
+        document.getElementById('archetype-name').textContent = '⚔️ BOSS FLOOR ⚔️';
+        document.getElementById('archetype-name').style.color = '#ffd700'; // Gold
+    } else {
+        document.getElementById('archetype-name').textContent = game.enemyGen.getArchetypeName(game.currentArchetype);
+        document.getElementById('archetype-name').style.color = ''; // Reset
+    }
+    
     document.getElementById('btn-speed-toggle').textContent = `${game.battleSpeed}x`;
     
     // Start battle
@@ -394,8 +413,14 @@ function renderBattle() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         // Result text (más abajo)
-        const resultText = game.battleResult === 'win' ? 'VICTORY!' : 'DEFEAT!';
-        const resultColor = game.battleResult === 'win' ? '#4caf50' : '#f44336';
+        let resultText = game.battleResult === 'win' ? 'VICTORY!' : 'DEFEAT!';
+        let resultColor = game.battleResult === 'win' ? '#4caf50' : '#f44336';
+        
+        // Special text for boss wins
+        if (game.battleResult === 'win' && game.enemy && game.enemy.isBoss) {
+            resultText = 'BOSS DEFEATED!';
+            resultColor = '#ffd700'; // Gold
+        }
         
         ctx.font = `bold ${canvas.width * 0.1}px 'Press Start 2P', monospace`;
         ctx.textAlign = 'center';

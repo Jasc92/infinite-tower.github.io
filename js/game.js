@@ -191,11 +191,20 @@ class GameManager {
     }
 
     /**
+     * Check if current floor is a boss floor
+     */
+    isBossFloor() {
+        // Boss floors: 11, 21, 31, 41...
+        return (this.currentFloor - 1) % 10 === 0 && this.currentFloor > 1;
+    }
+
+    /**
      * Start battle for current floor
      */
     startBattle() {
         const diffMult = this.difficultyMultipliers[this.difficulty];
-        this.enemy = this.enemyGen.generateEnemy(this.currentFloor, diffMult, this.currentArchetype);
+        const isBoss = this.isBossFloor();
+        this.enemy = this.enemyGen.generateEnemy(this.currentFloor, diffMult, this.currentArchetype, isBoss);
         this.combat.reset();
         this.battleActive = true;
         this.battleResult = null; // Reset battle result
@@ -245,6 +254,12 @@ class GameManager {
             this.availablePoints = 5;
             this.baseStatsSnapshot = null; // Reset snapshot for new allocation
             return true; // Needs stat allocation
+        }
+        
+        // Boss floor bonus points (11, 21, 31, ...)
+        // Boss floors: every 10 floors + 1 (11, 21, 31...)
+        if ((this.currentFloor - 1) % 10 === 0 && this.currentFloor > 1) {
+            this.availablePoints += 3; // Bonus points from boss
         }
         
         return false; // Continue to next battle

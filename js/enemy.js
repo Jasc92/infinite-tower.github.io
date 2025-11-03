@@ -29,18 +29,22 @@ class EnemyGenerator {
      * @param {number} floor - Current floor number
      * @param {number} difficultyMult - Difficulty multiplier (0.90, 1.00, 1.12)
      * @param {string} archetype - 'BALANCED', 'TANK', or 'GLASS'
+     * @param {boolean} isBoss - Whether this is a boss enemy
      * @returns {Object} Enemy stats
      */
-    generateEnemy(floor, difficultyMult, archetype) {
+    generateEnemy(floor, difficultyMult, archetype, isBoss = false) {
         const base = { ...this.baseEnemy };
         
         if (floor === 1) {
             base.currentHp = base.maxHp;
             base.archetype = 'BALANCED';
+            base.isBoss = false;
             return base;
         }
 
-        const bias = this.archetypes[archetype];
+        // Bosses use BALANCED archetype (no counter)
+        const actualArchetype = isBoss ? 'BALANCED' : archetype;
+        const bias = this.archetypes[actualArchetype];
         
         let hp = base.maxHp;
         let def = base.defense;
@@ -74,15 +78,24 @@ class EnemyGenerator {
             }
         }
 
+        // Apply boss multipliers
+        if (isBoss) {
+            hp *= 1.4;
+            atk *= 1.25;
+            def *= 1.3;
+            atkSpd *= 1.2;
+        }
+
         return {
             attackSpeed: parseFloat(atkSpd.toFixed(2)),
             attack: Math.round(atk),
             critChance: parseFloat(crit.toFixed(4)),
-            evasion: 0.0,
+            lifesteal: 0.0,
             defense: Math.round(def),
             maxHp: Math.round(hp),
             currentHp: Math.round(hp),
-            archetype: archetype
+            archetype: actualArchetype,
+            isBoss: isBoss
         };
     }
 
