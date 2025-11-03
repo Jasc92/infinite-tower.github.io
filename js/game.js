@@ -37,6 +37,7 @@ class GameManager {
         // Battle state
         this.battleActive = false;
         this.lastFrameTime = 0;
+        this.battleResult = null; // 'win', 'lose', or null
         
         // Sprites and canvas
         this.canvas = null;
@@ -197,6 +198,7 @@ class GameManager {
         this.enemy = this.enemyGen.generateEnemy(this.currentFloor, diffMult, this.currentArchetype);
         this.combat.reset();
         this.battleActive = true;
+        this.battleResult = null; // Reset battle result
         this.lastFrameTime = performance.now();
     }
 

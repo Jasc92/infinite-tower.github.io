@@ -30,17 +30,57 @@ function initializeGame() {
 }
 
 function loadSprites() {
-    // Hero sprite
+    // Hero sprites
     game.sprites.hero = new Image();
     game.sprites.hero.src = 'assets/hero.png';
+    game.sprites.heroDead = new Image();
+    game.sprites.heroDead.src = 'assets/hero-dead.png';
     
-    // Enemy sprite
+    // Enemy sprites (all variations)
     game.sprites.enemy = new Image();
     game.sprites.enemy.src = 'assets/enemy.png';
+    game.sprites.enemyDead = new Image();
+    game.sprites.enemyDead.src = 'assets/enemy-dead.png';
+    
+    game.sprites.tankEnemy = new Image();
+    game.sprites.tankEnemy.src = 'assets/tank-enemy.png';
+    game.sprites.tankEnemyDead = new Image();
+    game.sprites.tankEnemyDead.src = 'assets/tank-enemy-dead.png';
+    
+    game.sprites.atackEnemy = new Image();
+    game.sprites.atackEnemy.src = 'assets/atack-enemy.png';
+    game.sprites.atackEnemyDead = new Image();
+    game.sprites.atackEnemyDead.src = 'assets/atack-enemy-dead.png';
+    
+    game.sprites.criticalEnemy = new Image();
+    game.sprites.criticalEnemy.src = 'assets/critical-enemy.png';
+    game.sprites.criticalEnemyDead = new Image();
+    game.sprites.criticalEnemyDead.src = 'assets/critical-enemy-dead.png';
+    
+    game.sprites.fastEnemy = new Image();
+    game.sprites.fastEnemy.src = 'assets/fast-enemy.png';
+    game.sprites.fastEnemyDead = new Image();
+    game.sprites.fastEnemyDead.src = 'assets/fast-enemy-dead.png';
     
     // Background
     game.sprites.background = new Image();
     game.sprites.background.src = 'assets/background.png';
+}
+
+// Helper to get correct enemy sprite
+function getEnemySprite(isDead = false) {
+    if (!game.enemy || !game.enemy.archetype) {
+        return isDead ? game.sprites.enemyDead : game.sprites.enemy;
+    }
+    
+    const archetype = game.enemy.archetype;
+    if (archetype === 'TANK') {
+        return isDead ? game.sprites.tankEnemyDead : game.sprites.tankEnemy;
+    } else if (archetype === 'GLASS') {
+        return isDead ? game.sprites.atackEnemyDead : game.sprites.atackEnemy;
+    } else {
+        return isDead ? game.sprites.enemyDead : game.sprites.enemy;
+    }
 }
 
 // ========================================
@@ -231,9 +271,21 @@ function battleLoop() {
     renderBattle();
     
     if (result === 'win') {
-        handleBattleWin();
+        // Set battle result and show overlay for 2 seconds
+        game.battleResult = 'win';
+        renderBattle(); // Render with overlay
+        setTimeout(() => {
+            game.battleResult = null;
+            handleBattleWin();
+        }, 2000);
     } else if (result === 'loss') {
-        handleBattleLoss();
+        // Set battle result and show overlay for 2 seconds
+        game.battleResult = 'lose';
+        renderBattle(); // Render with overlay
+        setTimeout(() => {
+            game.battleResult = null;
+            handleBattleLoss();
+        }, 2000);
     } else {
         animationFrame = requestAnimationFrame(battleLoop);
     }
@@ -304,22 +356,54 @@ function renderBattle() {
     const enemyXPos = canvas.width * 0.75; // 75% from left (más centrado)
     const verticalCenter = canvas.height * 0.55; // Un poco abajo del centro
     
+    // Determine which sprites to use (alive or dead)
+    const heroSprite = game.player.currentHp <= 0 ? game.sprites.heroDead : game.sprites.hero;
+    const enemySprite = game.enemy.currentHp <= 0 ? getEnemySprite(true) : getEnemySprite(false);
+    
     // Draw hero (centered, sin escalar - usa tamaño original)
-    if (game.sprites.hero.complete) {
-        const heroW = game.sprites.hero.width;
-        const heroH = game.sprites.hero.height;
+    if (heroSprite && heroSprite.complete) {
+        const heroW = heroSprite.width;
+        const heroH = heroSprite.height;
         const heroX = heroXPos - heroW / 2;
         const heroY = verticalCenter - heroH / 2;
-        ctx.drawImage(game.sprites.hero, heroX, heroY, heroW, heroH);
+        ctx.drawImage(heroSprite, heroX, heroY, heroW, heroH);
     }
     
     // Draw enemy (centered, sin escalar - usa tamaño original)
-    if (game.sprites.enemy.complete) {
-        const enemyW = game.sprites.enemy.width;
-        const enemyH = game.sprites.enemy.height;
+    if (enemySprite && enemySprite.complete) {
+        const enemyW = enemySprite.width;
+        const enemyH = enemySprite.height;
         const enemyX = enemyXPos - enemyW / 2;
         const enemyY = verticalCenter - enemyH / 2;
-        ctx.drawImage(game.sprites.enemy, enemyX, enemyY, enemyW, enemyH);
+        ctx.drawImage(enemySprite, enemyX, enemyY, enemyW, enemyH);
+    }
+    
+    // Draw WIN/LOSE overlay if battle ended
+    if (game.battleResult) {
+        ctx.save();
+        
+        // Semi-transparent background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Result text
+        const resultText = game.battleResult === 'win' ? 'VICTORY!' : 'DEFEAT!';
+        const resultColor = game.battleResult === 'win' ? '#4caf50' : '#f44336';
+        
+        ctx.font = `bold ${canvas.width * 0.1}px 'Press Start 2P', monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Text outline
+        ctx.lineWidth = 8;
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
+        ctx.strokeText(resultText, canvas.width / 2, canvas.height / 2);
+        
+        // Text fill
+        ctx.fillStyle = resultColor;
+        ctx.fillText(resultText, canvas.width / 2, canvas.height / 2);
+        
+        ctx.restore();
     }
     
     // Draw floating combat text (render last so it's on top)

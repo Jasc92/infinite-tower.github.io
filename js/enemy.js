@@ -36,6 +36,7 @@ class EnemyGenerator {
         
         if (floor === 1) {
             base.currentHp = base.maxHp;
+            base.archetype = 'BALANCED';
             return base;
         }
 
@@ -80,7 +81,8 @@ class EnemyGenerator {
             evasion: 0.0,
             defense: Math.round(def),
             maxHp: Math.round(hp),
-            currentHp: Math.round(hp)
+            currentHp: Math.round(hp),
+            archetype: archetype
         };
     }
 
@@ -117,6 +119,19 @@ class EnemyGenerator {
             GLASS: 'Glass Cannon'
         };
         return names[archetype] || 'Balanced';
+    }
+
+    /**
+     * Get enemy image based on archetype
+     */
+    getEnemyImage(archetype, isDead = false) {
+        const suffix = isDead ? '-dead' : '';
+        const images = {
+            BALANCED: `assets/enemy${suffix}.png`,
+            TANK: `assets/tank-enemy${suffix}.png`,
+            GLASS: `assets/atack-enemy${suffix}.png`
+        };
+        return images[archetype] || `assets/enemy${suffix}.png`;
     }
 }
 
