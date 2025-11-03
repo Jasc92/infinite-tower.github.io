@@ -8,6 +8,7 @@ class GameManager {
         // Game engines
         this.combat = new CombatEngine();
         this.enemyGen = new EnemyGenerator();
+        this.relicManager = new RelicManager();
         
         // Game state
         this.difficulty = 'normal';
@@ -77,6 +78,7 @@ class GameManager {
         this.floorsUntilArchetypeCheck = 3;
         this.battleSpeed = 1.0;
         this.battleActive = false;
+        this.relicManager.reset();
     }
 
     /**
@@ -205,7 +207,12 @@ class GameManager {
         const diffMult = this.difficultyMultipliers[this.difficulty];
         const isBoss = this.isBossFloor();
         this.enemy = this.enemyGen.generateEnemy(this.currentFloor, diffMult, this.currentArchetype, isBoss);
+        
+        // Apply relic stat effects (creates a combat snapshot with bonuses)
+        this.relicManager.applyStatEffects(this.player);
+        
         this.combat.reset();
+        this.combat.relics = this.relicManager.activeRelics; // Pass relics to combat engine
         this.battleActive = true;
         this.battleResult = null; // Reset battle result
         this.lastFrameTime = performance.now();
@@ -253,6 +260,15 @@ class GameManager {
         if (this.currentFloor % 5 === 0) {
             this.availablePoints = 5;
             this.baseStatsSnapshot = null; // Reset snapshot for new allocation
+            
+            // Grant random relic
+            if (this.relicManager.activeRelics.length < 3) {
+                const options = this.relicManager.getRandomRelics(1);
+                if (options.length > 0) {
+                    this.relicManager.addRelic(options[0]);
+                }
+            }
+            
             return true; // Needs stat allocation
         }
         

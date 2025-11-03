@@ -1,0 +1,260 @@
+// ========================================
+// RELIC SYSTEM
+// Implements relic collection and effects
+// ========================================
+
+class RelicManager {
+    constructor() {
+        // Relic pool - 20 unique relics
+        this.relicPool = [
+            // OFFENSIVE (7)
+            {
+                id: 'berserker_rage',
+                name: 'Berserker Rage',
+                description: '+15% Attack, -10% Max HP',
+                icon: '⚔️',
+                effect: (player) => {
+                    player.attack = Math.round(player.attack * 1.15);
+                    player.maxHp = Math.round(player.maxHp * 0.9);
+                    player.currentHp = Math.min(player.currentHp, player.maxHp);
+                }
+            },
+            {
+                id: 'critical_mass',
+                name: 'Critical Mass',
+                description: 'Crits deal 2.5x damage instead of 2x',
+                icon: '💥',
+                critMultiplier: 2.5
+            },
+            {
+                id: 'first_blood',
+                name: 'First Blood',
+                description: 'First hit always crits',
+                icon: '🎯',
+                firstHitCrit: true
+            },
+            {
+                id: 'armor_piercing',
+                name: 'Armor Piercing',
+                description: 'Ignore 30% of enemy defense',
+                icon: '🔪',
+                armorPierce: 0.3
+            },
+            {
+                id: 'double_strike',
+                name: 'Double Strike',
+                description: '15% chance to attack twice',
+                icon: '⚡',
+                doubleStrikeChance: 0.15
+            },
+            {
+                id: 'execute',
+                name: 'Execute',
+                description: 'Deal 3x damage to enemies below 20% HP',
+                icon: '☠️',
+                executeDamage: 3.0,
+                executeThreshold: 0.2
+            },
+            {
+                id: 'bleed',
+                name: 'Bleed',
+                description: 'Attacks apply 5% max HP bleed over 3s',
+                icon: '🩸',
+                bleedPercent: 0.05,
+                bleedDuration: 3
+            },
+            
+            // DEFENSIVE (7)
+            {
+                id: 'second_wind',
+                name: 'Second Wind',
+                description: 'Heal 25% HP when dropping below 30% (once per battle)',
+                icon: '🌬️',
+                healPercent: 0.25,
+                triggerThreshold: 0.3,
+                used: false
+            },
+            {
+                id: 'thorns',
+                name: 'Thorns',
+                description: 'Reflect 20% of damage taken',
+                icon: '🌵',
+                reflectPercent: 0.2
+            },
+            {
+                id: 'fortify',
+                name: 'Fortify',
+                description: '+50 flat HP',
+                icon: '🛡️',
+                effect: (player) => {
+                    player.maxHp += 50;
+                    player.currentHp += 50;
+                }
+            },
+            {
+                id: 'shield_wall',
+                name: 'Shield Wall',
+                description: '+15 Defense, -15% Attack Speed',
+                icon: '🏰',
+                effect: (player) => {
+                    player.defense += 15;
+                    player.attackSpeed = Math.max(0.5, player.attackSpeed * 0.85);
+                }
+            },
+            {
+                id: 'regeneration',
+                name: 'Regeneration',
+                description: 'Heal 2% max HP per second',
+                icon: '💚',
+                regenPercent: 0.02
+            },
+            {
+                id: 'last_stand',
+                name: 'Last Stand',
+                description: 'Survive lethal damage once at 1 HP, gain +50% damage for 5s',
+                icon: '⚔️',
+                survived: false,
+                buffDuration: 5,
+                buffDamage: 0.5
+            },
+            {
+                id: 'thick_skin',
+                name: 'Thick Skin',
+                description: 'Take 15% less damage from all sources',
+                icon: '🐘',
+                damageReduction: 0.15
+            },
+            
+            // UTILITY/HYBRID (6)
+            {
+                id: 'vampire',
+                name: 'Vampire',
+                description: '+15% Lifesteal',
+                icon: '🧛',
+                effect: (player) => {
+                    player.lifesteal = Math.min(0.40, player.lifesteal + 0.15);
+                }
+            },
+            {
+                id: 'haste',
+                name: 'Haste',
+                description: '+0.5 Attack Speed',
+                icon: '💨',
+                effect: (player) => {
+                    player.attackSpeed = Math.min(6.0, player.attackSpeed + 0.5);
+                }
+            },
+            {
+                id: 'momentum',
+                name: 'Momentum',
+                description: 'Deal 1% more damage per second of combat (max 30%)',
+                icon: '📈',
+                maxStacks: 30,
+                damagePerSecond: 0.01
+            },
+            {
+                id: 'blood_pact',
+                name: 'Blood Pact',
+                description: 'Lose 10% max HP, gain +20% damage and +10% lifesteal',
+                icon: '🩸',
+                effect: (player) => {
+                    player.maxHp = Math.round(player.maxHp * 0.9);
+                    player.currentHp = Math.min(player.currentHp, player.maxHp);
+                    player.attack = Math.round(player.attack * 1.2);
+                    player.lifesteal = Math.min(0.40, player.lifesteal + 0.10);
+                }
+            },
+            {
+                id: 'adrenaline',
+                name: 'Adrenaline',
+                description: 'Below 50% HP, gain +25% attack speed',
+                icon: '💪',
+                speedBoost: 0.25,
+                threshold: 0.5
+            },
+            {
+                id: 'balanced_stance',
+                name: 'Balanced Stance',
+                description: '+5% to all stats',
+                icon: '⚖️',
+                effect: (player) => {
+                    player.attack = Math.round(player.attack * 1.05);
+                    player.attackSpeed = Math.min(6.0, player.attackSpeed * 1.05);
+                    player.critChance = Math.min(0.75, player.critChance * 1.05);
+                    player.lifesteal = Math.min(0.40, player.lifesteal * 1.05);
+                    player.defense = Math.round(player.defense * 1.05);
+                    player.maxHp = Math.round(player.maxHp * 1.05);
+                    player.currentHp = Math.round(player.currentHp * 1.05);
+                }
+            }
+        ];
+        
+        this.activeRelics = []; // Max 3
+    }
+
+    /**
+     * Get 3 random relics (excluding already owned)
+     */
+    getRandomRelics(count = 3) {
+        const ownedIds = this.activeRelics.map(r => r.id);
+        const available = this.relicPool.filter(r => !ownedIds.includes(r.id));
+        
+        // Shuffle and take count
+        const shuffled = available.sort(() => Math.random() - 0.5);
+        return shuffled.slice(0, count);
+    }
+
+    /**
+     * Add relic to active relics
+     */
+    addRelic(relic) {
+        if (this.activeRelics.length >= 3) {
+            return false; // Full, need to replace
+        }
+        
+        // Clone relic to avoid shared state
+        this.activeRelics.push({ ...relic });
+        return true;
+    }
+
+    /**
+     * Replace relic at index
+     */
+    replaceRelic(index, newRelic) {
+        if (index < 0 || index >= this.activeRelics.length) return false;
+        
+        this.activeRelics[index] = { ...newRelic };
+        return true;
+    }
+
+    /**
+     * Apply all relic stat effects to player
+     */
+    applyStatEffects(player) {
+        this.activeRelics.forEach(relic => {
+            if (relic.effect) {
+                relic.effect(player);
+            }
+        });
+    }
+
+    /**
+     * Get relic by ID
+     */
+    getRelicById(id) {
+        return this.relicPool.find(r => r.id === id);
+    }
+
+    /**
+     * Reset relics for new run
+     */
+    reset() {
+        this.activeRelics = [];
+        // Reset any relic states
+        this.relicPool.forEach(relic => {
+            if (relic.used !== undefined) relic.used = false;
+            if (relic.survived !== undefined) relic.survived = false;
+        });
+    }
+}
+
