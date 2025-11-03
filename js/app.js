@@ -580,6 +580,10 @@ function setupEventListeners() {
         showScreen('battle');
     });
     
+    document.getElementById('btn-stats-back-menu').addEventListener('click', () => {
+        showScreen('menu');
+    });
+    
     // Battle screen
     document.getElementById('btn-speed-toggle').addEventListener('click', () => {
         const speed = game.toggleSpeed();
