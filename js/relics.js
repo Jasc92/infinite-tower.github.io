@@ -13,10 +13,9 @@ class RelicManager {
                 name: 'Berserker Rage',
                 description: '+15% Attack, -10% Max HP',
                 icon: '⚔️',
-                effect: (player) => {
-                    player.attack = Math.round(player.attack * 1.15);
-                    player.maxHp = Math.round(player.maxHp * 0.9);
-                    player.currentHp = Math.min(player.currentHp, player.maxHp);
+                percentageEffects: {
+                    attack: 1.15,
+                    maxHp: 0.9
                 }
             },
             {
@@ -86,9 +85,8 @@ class RelicManager {
                 name: 'Fortify',
                 description: '+50 flat HP',
                 icon: '🛡️',
-                effect: (player) => {
-                    player.maxHp += 50;
-                    player.currentHp += 50;
+                flatEffects: {
+                    maxHp: 50
                 }
             },
             {
@@ -96,9 +94,11 @@ class RelicManager {
                 name: 'Shield Wall',
                 description: '+15 Defense, -15% Attack Speed',
                 icon: '🏰',
-                effect: (player) => {
-                    player.defense += 15;
-                    player.attackSpeed = Math.max(0.5, player.attackSpeed * 0.85);
+                flatEffects: {
+                    defense: 15
+                },
+                percentageEffects: {
+                    attackSpeed: 0.85
                 }
             },
             {
@@ -129,10 +129,10 @@ class RelicManager {
             {
                 id: 'vampire',
                 name: 'Vampire',
-                description: '+15% Lifesteal',
+                description: '+15% Lifesteal (flat)',
                 icon: '🧛',
-                effect: (player) => {
-                    player.lifesteal = Math.min(0.40, player.lifesteal + 0.15);
+                flatEffects: {
+                    lifesteal: 0.15
                 }
             },
             {
@@ -140,8 +140,8 @@ class RelicManager {
                 name: 'Haste',
                 description: '+0.5 Attack Speed',
                 icon: '💨',
-                effect: (player) => {
-                    player.attackSpeed = Math.min(6.0, player.attackSpeed + 0.5);
+                flatEffects: {
+                    attackSpeed: 0.5
                 }
             },
             {
@@ -157,11 +157,12 @@ class RelicManager {
                 name: 'Blood Pact',
                 description: 'Lose 10% max HP, gain +20% damage and +10% lifesteal',
                 icon: '🩸',
-                effect: (player) => {
-                    player.maxHp = Math.round(player.maxHp * 0.9);
-                    player.currentHp = Math.min(player.currentHp, player.maxHp);
-                    player.attack = Math.round(player.attack * 1.2);
-                    player.lifesteal = Math.min(0.40, player.lifesteal + 0.10);
+                percentageEffects: {
+                    maxHp: 0.9,
+                    attack: 1.2
+                },
+                flatEffects: {
+                    lifesteal: 0.10
                 }
             },
             {
@@ -177,14 +178,13 @@ class RelicManager {
                 name: 'Balanced Stance',
                 description: '+5% to all stats',
                 icon: '⚖️',
-                effect: (player) => {
-                    player.attack = Math.round(player.attack * 1.05);
-                    player.attackSpeed = Math.min(6.0, player.attackSpeed * 1.05);
-                    player.critChance = Math.min(0.75, player.critChance * 1.05);
-                    player.lifesteal = Math.min(0.40, player.lifesteal * 1.05);
-                    player.defense = Math.round(player.defense * 1.05);
-                    player.maxHp = Math.round(player.maxHp * 1.05);
-                    player.currentHp = Math.round(player.currentHp * 1.05);
+                percentageEffects: {
+                    attack: 1.05,
+                    attackSpeed: 1.05,
+                    critChance: 1.05,
+                    lifesteal: 1.05,
+                    defense: 1.05,
+                    maxHp: 1.05
                 }
             }
         ];
@@ -228,14 +228,70 @@ class RelicManager {
     }
 
     /**
-     * Apply all relic stat effects to player
+     * Apply FLAT effects only (applied once, additive)
      */
-    applyStatEffects(player) {
+    applyFlatEffects(player) {
         this.activeRelics.forEach(relic => {
-            if (relic.effect) {
-                relic.effect(player);
+            if (relic.flatEffects) {
+                if (relic.flatEffects.attack) player.attack += relic.flatEffects.attack;
+                if (relic.flatEffects.defense) player.defense += relic.flatEffects.defense;
+                if (relic.flatEffects.maxHp) {
+                    player.maxHp += relic.flatEffects.maxHp;
+                    player.currentHp += relic.flatEffects.maxHp;
+                }
+                if (relic.flatEffects.attackSpeed) {
+                    player.attackSpeed = Math.min(6.0, player.attackSpeed + relic.flatEffects.attackSpeed);
+                }
+                if (relic.flatEffects.lifesteal) {
+                    player.lifesteal = Math.min(0.40, player.lifesteal + relic.flatEffects.lifesteal);
+                }
             }
         });
+    }
+
+    /**
+     * Apply PERCENTAGE effects (recalculated each time based on current value)
+     */
+    applyPercentageEffects(player) {
+        // Calculate multipliers from all percentage effects
+        let attackMult = 1.0;
+        let defenseMult = 1.0;
+        let maxHpMult = 1.0;
+        let attackSpeedMult = 1.0;
+        let critChanceMult = 1.0;
+        let lifestealMult = 1.0;
+
+        this.activeRelics.forEach(relic => {
+            if (relic.percentageEffects) {
+                if (relic.percentageEffects.attack) attackMult *= relic.percentageEffects.attack;
+                if (relic.percentageEffects.defense) defenseMult *= relic.percentageEffects.defense;
+                if (relic.percentageEffects.maxHp) maxHpMult *= relic.percentageEffects.maxHp;
+                if (relic.percentageEffects.attackSpeed) attackSpeedMult *= relic.percentageEffects.attackSpeed;
+                if (relic.percentageEffects.critChance) critChanceMult *= relic.percentageEffects.critChance;
+                if (relic.percentageEffects.lifesteal) lifestealMult *= relic.percentageEffects.lifesteal;
+            }
+        });
+
+        // Apply multipliers
+        player.attack = Math.round(player.attack * attackMult);
+        player.defense = Math.round(player.defense * defenseMult);
+        player.maxHp = Math.round(player.maxHp * maxHpMult);
+        player.currentHp = Math.min(player.currentHp, player.maxHp); // Ensure HP doesn't exceed max
+        
+        player.attackSpeed = Math.min(6.0, player.attackSpeed * attackSpeedMult);
+        player.critChance = Math.min(0.75, player.critChance * critChanceMult);
+        player.lifesteal = Math.min(0.40, player.lifesteal * lifestealMult);
+    }
+
+    /**
+     * Apply all relic stat effects to player
+     * First applies flat effects, then percentage effects
+     */
+    applyStatEffects(player) {
+        // Apply flat effects first (additive)
+        this.applyFlatEffects(player);
+        // Then apply percentage effects (multiplicative on updated values)
+        this.applyPercentageEffects(player);
     }
 
     /**

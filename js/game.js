@@ -89,6 +89,8 @@ class GameManager {
             defense: this.player.defense,
             maxHp: this.player.maxHp
         };
+        // Also track stats without relic effects (for percentage recalculation)
+        this.baseStatsWithoutRelics = { ...this.basePlayerStats };
     }
 
     /**
@@ -204,6 +206,62 @@ class GameManager {
     }
 
     /**
+     * Update basePlayerStats to current player stats
+     * This is called after stat allocation (before relic effects)
+     * Saves stats WITHOUT relic effects, then applies relics to get final stats
+     */
+    updateBasePlayerStats() {
+        // Save current stats WITHOUT relic effects (pure stats + allocated points)
+        this.baseStatsWithoutRelics = {
+            attack: this.player.attack,
+            attackSpeed: this.player.attackSpeed,
+            critChance: this.player.critChance,
+            lifesteal: this.player.lifesteal,
+            defense: this.player.defense,
+            maxHp: this.player.maxHp
+        };
+        
+        // Now apply relic effects to get final stats (with percentage effects recalculated)
+        this.applyRelicEffectsToBaseStats();
+        
+        console.log('=== UPDATED BASE PLAYER STATS ===');
+        console.log('Without relics:', this.baseStatsWithoutRelics);
+        console.log('With relics:', this.basePlayerStats);
+    }
+
+    /**
+     * Apply relic effects to base stats (recalculates percentage effects)
+     * This ensures percentage effects scale with current stat values
+     */
+    applyRelicEffectsToBaseStats() {
+        // Restore player stats from base (without relics)
+        if (!this.baseStatsWithoutRelics) {
+            this.baseStatsWithoutRelics = { ...this.basePlayerStats };
+        }
+        
+        // Copy base stats without relics to player
+        this.player.attack = this.baseStatsWithoutRelics.attack;
+        this.player.attackSpeed = this.baseStatsWithoutRelics.attackSpeed;
+        this.player.critChance = this.baseStatsWithoutRelics.critChance;
+        this.player.lifesteal = this.baseStatsWithoutRelics.lifesteal;
+        this.player.defense = this.baseStatsWithoutRelics.defense;
+        this.player.maxHp = this.baseStatsWithoutRelics.maxHp;
+        
+        // Apply relic effects (flat first, then percentage)
+        this.relicManager.applyStatEffects(this.player);
+        
+        // Save final stats with relic effects
+        this.basePlayerStats = {
+            attack: this.player.attack,
+            attackSpeed: this.player.attackSpeed,
+            critChance: this.player.critChance,
+            lifesteal: this.player.lifesteal,
+            defense: this.player.defense,
+            maxHp: this.player.maxHp
+        };
+    }
+
+    /**
      * Check if current floor is a boss floor
      */
     isBossFloor() {
@@ -219,7 +277,7 @@ class GameManager {
         const isBoss = this.isBossFloor();
         this.enemy = this.enemyGen.generateEnemy(this.currentFloor, diffMult, this.currentArchetype, isBoss);
         
-        // Restore base stats before applying relic effects to prevent compounding
+        // Restore base stats (which already include relic stat effects applied once)
         if (this.basePlayerStats) {
             this.player.attack = this.basePlayerStats.attack;
             this.player.attackSpeed = this.basePlayerStats.attackSpeed;
@@ -230,24 +288,9 @@ class GameManager {
             this.player.currentHp = this.player.maxHp; // Full HP for new battle
         }
         
-        // Apply relic stat effects (creates a combat snapshot with bonuses)
-        console.log('=== APPLYING RELIC EFFECTS ===');
-        console.log('Active relics:', this.relicManager.activeRelics.length);
-        console.log('Player stats BEFORE relics:', {
-            atk: this.player.attack,
-            hp: this.player.maxHp,
-            def: this.player.defense,
-            lifesteal: this.player.lifesteal
-        });
-        
-        this.relicManager.applyStatEffects(this.player);
-        
-        console.log('Player stats AFTER relics:', {
-            atk: this.player.attack,
-            hp: this.player.maxHp,
-            def: this.player.defense,
-            lifesteal: this.player.lifesteal
-        });
+        // NOTE: Relic stat effects (effect()) are NO LONGER applied here
+        // They are applied ONCE when relics are selected, and basePlayerStats is updated
+        // Only combat effects (critMultiplier, armorPierce, etc.) are checked in combat.js
         
         this.combat.reset();
         this.combat.relics = this.relicManager.activeRelics; // Pass relics to combat engine
@@ -305,18 +348,11 @@ class GameManager {
         // Check for relic selection FIRST (every 5 floors)
         if (this.currentFloor % 5 === 0) {
             // We'll return relic first, but prepare for stats after
-            this.availablePoints = 5;
+            this.availablePoints += 5; // ADD points instead of resetting
             this.baseStatsSnapshot = null; // Reset snapshot for new allocation
             
-            // Update base player stats after stat allocation
-            this.basePlayerStats = {
-                attack: this.player.attack,
-                attackSpeed: this.player.attackSpeed,
-                critChance: this.player.critChance,
-                lifesteal: this.player.lifesteal,
-                defense: this.player.defense,
-                maxHp: this.player.maxHp
-            };
+            // basePlayerStats will be updated after stat allocation (in btn-start-battle click handler)
+            // Don't update here because stats haven't been allocated yet
             
             return 'relic'; // Relic selection FIRST
         }

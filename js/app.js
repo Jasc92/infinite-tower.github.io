@@ -372,13 +372,42 @@ function updateRelicScreen() {
                 c.style.opacity = '0.5';
             });
             
+            // Add or replace relic
             if (isReplaceMode) {
-                // Show replace selection (for now, replace first)
                 game.relicManager.replaceRelic(0, relic);
             } else {
                 game.relicManager.addRelic(relic);
             }
             
+            // Ensure we have baseStatsWithoutRelics (stats without relic effects)
+            if (!game.baseStatsWithoutRelics) {
+                // If this is the first relic, use current player stats as base
+                game.baseStatsWithoutRelics = {
+                    attack: game.player.attack,
+                    attackSpeed: game.player.attackSpeed,
+                    critChance: game.player.critChance,
+                    lifesteal: game.player.lifesteal,
+                    defense: game.player.defense,
+                    maxHp: game.player.maxHp
+                };
+            }
+            
+            // Now apply ALL active relic effects (including the new/replaced one)
+            // This ensures effects are applied only once, in the correct order
+            console.log('=== APPLYING ALL RELIC EFFECTS ===');
+            console.log('Active relics:', game.relicManager.activeRelics.map(r => r.name));
+            console.log('Base stats WITHOUT relics:', game.baseStatsWithoutRelics);
+            
+            // Apply relic effects to base stats (recalculates percentage effects)
+            game.applyRelicEffectsToBaseStats();
+            
+            console.log('Player stats AFTER relic effect:', {
+                atk: game.player.attack,
+                hp: game.player.maxHp,
+                def: game.player.defense,
+                lifesteal: game.player.lifesteal,
+                atkSpd: game.player.attackSpeed
+            });
             console.log('Active relics after selection:', game.relicManager.activeRelics.length);
             console.log('Navigating to stats in 300ms...');
             
@@ -836,6 +865,8 @@ function setupEventListeners() {
     });
     
     document.getElementById('btn-start-battle').addEventListener('click', () => {
+        // Update basePlayerStats after stat allocation (before battle starts)
+        game.updateBasePlayerStats();
         showScreen('battle');
     });
     
