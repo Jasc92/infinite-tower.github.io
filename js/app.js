@@ -389,11 +389,11 @@ function renderBattle() {
     if (game.battleResult) {
         ctx.save();
         
-        // Semi-transparent background
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        // Semi-transparent background (más transparente)
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Result text
+        // Result text (más abajo)
         const resultText = game.battleResult === 'win' ? 'VICTORY!' : 'DEFEAT!';
         const resultColor = game.battleResult === 'win' ? '#4caf50' : '#f44336';
         
@@ -401,14 +401,17 @@ function renderBattle() {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Text outline
-        ctx.lineWidth = 8;
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
-        ctx.strokeText(resultText, canvas.width / 2, canvas.height / 2);
+        // Position text at 75% down (más abajo para no tapar personajes)
+        const textY = canvas.height * 0.75;
+        
+        // Text outline (más grueso para mejor visibilidad)
+        ctx.lineWidth = 10;
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.95)';
+        ctx.strokeText(resultText, canvas.width / 2, textY);
         
         // Text fill
         ctx.fillStyle = resultColor;
-        ctx.fillText(resultText, canvas.width / 2, canvas.height / 2);
+        ctx.fillText(resultText, canvas.width / 2, textY);
         
         ctx.restore();
     }
