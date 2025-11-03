@@ -57,7 +57,7 @@ class GameManager {
             attackSpeed: 1.0,
             attack: 10,
             critChance: 0.05,
-            evasion: 0.0,
+            lifesteal: 0.0,
             defense: 5,
             maxHp: 100,
             currentHp: 100
@@ -100,10 +100,10 @@ class GameManager {
     applyStatPoint(statType) {
         switch (statType) {
             case 'attackSpeed':
-                if (this.player.attackSpeed < 7.0) {
-                    // Improved: +0.15 per point, max 7.0
-                    this.player.attackSpeed += 0.15;
-                    if (this.player.attackSpeed > 7.0) this.player.attackSpeed = 7.0;
+                if (this.player.attackSpeed < 6.0) {
+                    // Balanced: +0.12 per point, max 6.0
+                    this.player.attackSpeed += 0.12;
+                    if (this.player.attackSpeed > 6.0) this.player.attackSpeed = 6.0;
                 }
                 break;
             case 'attack':
@@ -111,16 +111,16 @@ class GameManager {
                 break;
             case 'crit':
                 if (this.player.critChance < 0.75) {
-                    // Improved: +2% per point (was 1%)
+                    // Improved: +2% per point
                     this.player.critChance += 0.02;
                     if (this.player.critChance > 0.75) this.player.critChance = 0.75;
                 }
                 break;
-            case 'evasion':
-                if (this.player.evasion < 0.50) {
-                    // Improved: +1.5% per point, max 50%
-                    this.player.evasion += 0.015;
-                    if (this.player.evasion > 0.50) this.player.evasion = 0.50;
+            case 'lifesteal':
+                if (this.player.lifesteal < 0.40) {
+                    // New: +2% lifesteal per point, max 40%
+                    this.player.lifesteal += 0.02;
+                    if (this.player.lifesteal > 0.40) this.player.lifesteal = 0.40;
                 }
                 break;
             case 'defense':
@@ -142,7 +142,7 @@ class GameManager {
         switch (statType) {
             case 'attackSpeed':
                 if (this.player.attackSpeed > this.baseStatsSnapshot.attackSpeed) {
-                    this.player.attackSpeed -= 0.15;
+                    this.player.attackSpeed -= 0.12;
                     if (this.player.attackSpeed < this.baseStatsSnapshot.attackSpeed) {
                         this.player.attackSpeed = this.baseStatsSnapshot.attackSpeed;
                     }
@@ -164,11 +164,11 @@ class GameManager {
                     return true;
                 }
                 break;
-            case 'evasion':
-                if (this.player.evasion > this.baseStatsSnapshot.evasion) {
-                    this.player.evasion -= 0.015;
-                    if (this.player.evasion < this.baseStatsSnapshot.evasion) {
-                        this.player.evasion = this.baseStatsSnapshot.evasion;
+            case 'lifesteal':
+                if (this.player.lifesteal > this.baseStatsSnapshot.lifesteal) {
+                    this.player.lifesteal -= 0.02;
+                    if (this.player.lifesteal < this.baseStatsSnapshot.lifesteal) {
+                        this.player.lifesteal = this.baseStatsSnapshot.lifesteal;
                     }
                     return true;
                 }

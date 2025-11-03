@@ -33,10 +33,26 @@ class CombatEngine {
             const damageInfo = this.calculateDamage(
                 player.attack,
                 player.critChance,
-                enemy.defense,
-                enemy.evasion
+                enemy.defense
             );
             enemy.currentHp -= damageInfo.damage;
+
+            // Lifesteal healing
+            if (player.lifesteal > 0 && damageInfo.damage > 0) {
+                const healAmount = Math.round(damageInfo.damage * player.lifesteal);
+                player.currentHp = Math.min(player.maxHp, player.currentHp + healAmount);
+                
+                // Add heal floating text
+                if (healAmount > 0) {
+                    this.addFloatingText({
+                        damage: healAmount,
+                        isMiss: false,
+                        isCrit: false,
+                        isHeal: true,
+                        text: `+${healAmount}`
+                    }, 'player');
+                }
+            }
 
             // Add floating text for enemy
             this.addFloatingText(damageInfo, 'enemy');
@@ -54,8 +70,7 @@ class CombatEngine {
             const damageInfo = this.calculateDamage(
                 enemy.attack,
                 enemy.critChance,
-                player.defense,
-                player.evasion
+                player.defense
             );
             player.currentHp -= damageInfo.damage;
 
@@ -106,30 +121,21 @@ class CombatEngine {
      * 3. Subtract defense
      * 4. Minimum 1 damage
      */
-    calculateDamage(attack, critChance, targetDefense, targetEvasion) {
-        // 1. Evasion check
-        if (Math.random() < targetEvasion) {
-            return {
-                damage: 0,
-                isMiss: true,
-                isCrit: false,
-                text: 'MISS!'
-            };
-        }
-
-        // 2. Critical check
+    calculateDamage(attack, critChance, targetDefense) {
+        // 1. Critical check
         const isCrit = Math.random() < critChance;
         const rawDamage = isCrit 
             ? (attack * 2) - targetDefense 
             : attack - targetDefense;
 
-        // 3. Minimum damage is 1
+        // 2. Minimum damage is 1
         const finalDamage = Math.max(1, rawDamage);
         
         return {
             damage: finalDamage,
             isMiss: false,
             isCrit: isCrit,
+            isHeal: false,
             text: isCrit ? `${finalDamage} CRIT!` : `${finalDamage}`
         };
     }

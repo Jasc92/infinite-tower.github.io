@@ -153,10 +153,10 @@ function updateStatsScreen() {
     document.getElementById('points-available').textContent = game.availablePoints;
     
     // Update stat displays
-    updateStatDisplay('attackSpeed', game.player.attackSpeed.toFixed(1), game.player.attackSpeed >= 7.0);
+    updateStatDisplay('attackSpeed', game.player.attackSpeed.toFixed(1), game.player.attackSpeed >= 6.0);
     updateStatDisplay('attack', game.player.attack, false);
     updateStatDisplay('crit', Math.round(game.player.critChance * 100), game.player.critChance >= 0.75);
-    updateStatDisplay('evasion', Math.round(game.player.evasion * 100), game.player.evasion >= 0.50);
+    updateStatDisplay('lifesteal', Math.round(game.player.lifesteal * 100), game.player.lifesteal >= 0.40);
     updateStatDisplay('defense', game.player.defense, false);
     updateStatDisplay('hp', game.player.maxHp, false);
     
@@ -200,8 +200,8 @@ function updateStatDisplay(stat, value, isMax) {
             case 'crit':
                 canRemove = game.player.critChance > game.baseStatsSnapshot.critChance;
                 break;
-            case 'evasion':
-                canRemove = game.player.evasion > game.baseStatsSnapshot.evasion;
+            case 'lifesteal':
+                canRemove = game.player.lifesteal > game.baseStatsSnapshot.lifesteal;
                 break;
             case 'defense':
                 canRemove = game.player.defense > game.baseStatsSnapshot.defense;
@@ -235,9 +235,9 @@ function removeStatPoint(statType) {
 
 function checkStatCap(statType) {
     switch (statType) {
-        case 'attackSpeed': return game.player.attackSpeed < 7.0;
+        case 'attackSpeed': return game.player.attackSpeed < 6.0;
         case 'crit': return game.player.critChance < 0.75;
-        case 'evasion': return game.player.evasion < 0.50;
+        case 'lifesteal': return game.player.lifesteal < 0.40;
         default: return true;
     }
 }
@@ -307,7 +307,7 @@ function updateBattleUI() {
     document.getElementById('player-spd').textContent = game.player.attackSpeed.toFixed(1);
     document.getElementById('player-crt').textContent = Math.round(game.player.critChance * 100);
     document.getElementById('player-def').textContent = game.player.defense;
-    document.getElementById('player-eva').textContent = Math.round(game.player.evasion * 100);
+    document.getElementById('player-lifesteal').textContent = Math.round(game.player.lifesteal * 100);
     
     // Enemy stats
     if (game.enemy) {
@@ -318,7 +318,7 @@ function updateBattleUI() {
         document.getElementById('enemy-spd').textContent = game.enemy.attackSpeed.toFixed(1);
         document.getElementById('enemy-crt').textContent = Math.round(game.enemy.critChance * 100);
         document.getElementById('enemy-def').textContent = game.enemy.defense;
-        document.getElementById('enemy-eva').textContent = Math.round(game.enemy.evasion * 100);
+        document.getElementById('enemy-lifesteal').textContent = Math.round((game.enemy.lifesteal || 0) * 100);
     }
 }
 
@@ -442,7 +442,9 @@ function renderBattle() {
             ctx.globalAlpha = floatText.opacity;
             
             // Set color based on type
-            if (floatText.isMiss) {
+            if (floatText.isHeal) {
+                ctx.fillStyle = '#4caf50'; // Green for heals
+            } else if (floatText.isMiss) {
                 ctx.fillStyle = '#bdbdbd';
             } else if (floatText.isCrit) {
                 ctx.fillStyle = '#ffd700';

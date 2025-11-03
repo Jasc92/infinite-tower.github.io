@@ -32,7 +32,7 @@
             <div class="title-container">
                 <h1 class="game-title">INFINITE TOWER</h1>
                 <div class="subtitle">Roguelike Auto-Battler</div>
-                <div class="version">v1.3.3</div>
+                <div class="version">v1.4.0</div>
             </div>
             
             <div class="menu-content">
@@ -125,18 +125,18 @@
                     </div>
                 </div>
                 
-                <div class="stat-row" data-stat="evasion">
+                <div class="stat-row" data-stat="lifesteal">
                     <div class="stat-info">
-                        <div class="stat-name">🌪️ Evasion</div>
-                        <div class="stat-description">Chance to completely dodge enemy attacks. Max: 50%</div>
+                        <div class="stat-name">🩸 Lifesteal</div>
+                        <div class="stat-description">Heal for % of damage dealt. Synergizes with Attack Speed. Max: 40%</div>
                         <div class="stat-value">
-                            <span id="stat-evasion">0</span>%
+                            <span id="stat-lifesteal">0</span>%
                             <span class="stat-max"></span>
                         </div>
                     </div>
                     <div class="stat-buttons">
-                        <button class="btn btn-stat btn-stat-minus" data-stat="evasion">−</button>
-                        <button class="btn btn-stat btn-stat-plus" data-stat="evasion">+</button>
+                        <button class="btn btn-stat btn-stat-minus" data-stat="lifesteal">−</button>
+                        <button class="btn btn-stat btn-stat-plus" data-stat="lifesteal">+</button>
                     </div>
                 </div>
                 
@@ -189,9 +189,9 @@
                     
                     <h4>📊 Stats</h4>
                     <p><strong>Attack:</strong> Base damage per hit (+2 per point)<br>
-                    <strong>Attack Speed:</strong> Attacks per second (+0.15 per point, max 7.0)<br>
+                    <strong>Attack Speed:</strong> Attacks per second (+0.12 per point, max 6.0)<br>
                     <strong>Critical:</strong> Double damage chance (+2% per point, max 75%)<br>
-                    <strong>Evasion:</strong> Dodge attacks (+1.5% per point, max 50%)<br>
+                    <strong>Lifesteal:</strong> Heal for % of damage dealt (+2% per point, max 40%)<br>
                     <strong>Defense:</strong> Reduces incoming damage (+2 per point)<br>
                     <strong>HP:</strong> Health points (+10 per point)</p>
                     
@@ -253,7 +253,7 @@
                         <div>SPD: <span id="player-spd">1.0</span>/s</div>
                         <div>CRT: <span id="player-crt">5</span>%</div>
                         <div>DEF: <span id="player-def">5</span></div>
-                        <div>EVA: <span id="player-eva">0</span>%</div>
+                        <div>LS: <span id="player-lifesteal">0</span>%</div>
                     </div>
                 </div>
                 
@@ -273,7 +273,7 @@
                         <div>SPD: <span id="enemy-spd">0.9</span>/s</div>
                         <div>CRT: <span id="enemy-crt">2</span>%</div>
                         <div>DEF: <span id="enemy-def">4</span></div>
-                        <div>EVA: <span id="enemy-eva">0</span>%</div>
+                        <div>LS: <span id="enemy-lifesteal">0</span>%</div>
                     </div>
                 </div>
             </div>

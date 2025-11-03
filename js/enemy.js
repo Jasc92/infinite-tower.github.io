@@ -10,7 +10,7 @@ class EnemyGenerator {
             attackSpeed: 0.9,
             attack: 8,
             critChance: 0.02,
-            evasion: 0.0,
+            lifesteal: 0.0,
             defense: 4,
             maxHp: 85,
             currentHp: 85
@@ -93,13 +93,13 @@ class EnemyGenerator {
      * @returns {string} 'BALANCED', 'TANK', or 'GLASS'
      */
     determineArchetype(player) {
-        // Offense score: Attack + (AttackSpeed * 10) + (Crit% * 50)
-        const offenseScore = player.attack + (player.attackSpeed * 10) + (player.critChance * 50);
+        // Offense score: Attack + (AttackSpeed * 10) + (Crit% * 50) + (Lifesteal% * 25)
+        const offenseScore = player.attack + (player.attackSpeed * 10) + (player.critChance * 50) + (player.lifesteal * 25);
         
-        // Defense score: Defense + (HP / 10) + (Evasion% * 30)
-        const defenseScore = player.defense + (player.maxHp / 10) + (player.evasion * 30);
+        // Defense score: Defense + (HP / 10) + (Lifesteal% * 35 for sustain)
+        const defenseScore = player.defense + (player.maxHp / 10) + (player.lifesteal * 35);
 
-        // Decision logic (exact from spec)
+        // Decision logic
         if (offenseScore > defenseScore * 1.15) {
             return 'TANK'; // Counter offense with tank
         } else if (defenseScore > offenseScore * 1.15) {
