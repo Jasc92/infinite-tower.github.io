@@ -99,11 +99,12 @@ class GameManager {
             attackSpeed: this.player.attackSpeed,
             attack: this.player.attack,
             critChance: this.player.critChance,
-            evasion: this.player.evasion,
+            lifesteal: this.player.lifesteal,
             defense: this.player.defense,
             maxHp: this.player.maxHp,
             currentHp: this.player.currentHp
         };
+        console.log('=== SNAPSHOT BASE STATS ===', this.baseStatsSnapshot);
     }
 
     /**

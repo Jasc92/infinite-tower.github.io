@@ -228,21 +228,40 @@ function updateStatDisplay(stat, value, isMax) {
 }
 
 function allocateStatPoint(statType) {
+    console.log(`=== ALLOCATE STAT POINT: ${statType} ===`);
+    console.log('Available points:', game.availablePoints);
+    console.log('Current value:', game.player[statType] || game.player.attackSpeed);
+    
     if (game.availablePoints > 0) {
         const canAllocate = checkStatCap(statType);
         if (canAllocate) {
             game.applyStatPoint(statType);
             game.availablePoints--;
+            console.log('After allocation:', game.player[statType] || game.player.attackSpeed);
+            console.log('Remaining points:', game.availablePoints);
             updateStatsScreen();
+        } else {
+            console.log('Cannot allocate: stat at cap');
         }
+    } else {
+        console.log('Cannot allocate: no points available');
     }
 }
 
 function removeStatPoint(statType) {
+    console.log(`=== REMOVE STAT POINT: ${statType} ===`);
+    console.log('Available points:', game.availablePoints);
+    console.log('Current value:', game.player[statType] || game.player.attackSpeed);
+    console.log('Snapshot value:', game.baseStatsSnapshot ? (game.baseStatsSnapshot[statType] || game.baseStatsSnapshot.attackSpeed) : 'NO SNAPSHOT');
+    
     const removed = game.removeStatPoint(statType);
     if (removed) {
         game.availablePoints++;
+        console.log('After removal:', game.player[statType] || game.player.attackSpeed);
+        console.log('Remaining points:', game.availablePoints);
         updateStatsScreen();
+    } else {
+        console.log('Cannot remove: already at base value or no snapshot');
     }
 }
 
