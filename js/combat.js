@@ -73,8 +73,8 @@ class CombatEngine {
         // Update floating texts
         this.floatingTexts = this.floatingTexts.filter(text => {
             text.lifetime -= deltaTime;
-            text.y -= 50 * deltaTime; // Move up
-            text.opacity = Math.max(0, text.lifetime / 1.0); // Fade out
+            // Fade out in the last 0.5 seconds
+            text.opacity = text.lifetime < 0.5 ? text.lifetime / 0.5 : 1.0;
             return text.lifetime > 0;
         });
 
@@ -82,15 +82,19 @@ class CombatEngine {
     }
 
     addFloatingText(damageInfo, target) {
+        // Generate random offset immediately to avoid stacking
+        const randomOffsetX = (Math.random() - 0.5) * 80;
+        const randomOffsetY = Math.random() * 30;
+        
         this.floatingTexts.push({
             text: damageInfo.text,
             damage: damageInfo.damage,
             isCrit: damageInfo.isCrit,
             isMiss: damageInfo.isMiss,
             target: target, // 'player' or 'enemy'
-            x: 0, // Will be set by render function
-            y: 0, // Will be set by render function
-            lifetime: 1.0, // seconds
+            offsetX: randomOffsetX,
+            offsetY: randomOffsetY,
+            lifetime: 1.5, // seconds - increased for better visibility
             opacity: 1.0
         });
     }

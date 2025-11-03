@@ -323,30 +323,28 @@ function renderBattle() {
     }
     
     // Draw floating combat text (render last so it's on top)
-    if (game.combat && game.combat.floatingTexts) {
+    if (game.combat && game.combat.floatingTexts && game.combat.floatingTexts.length > 0) {
         // Save context state
         ctx.save();
         
         game.combat.floatingTexts.forEach(floatText => {
-            // Set position based on target - position relative to sprite
+            // Calculate position based on target with pre-generated offset
             const baseX = floatText.target === 'player' ? heroXPos : enemyXPos;
-            const baseY = verticalCenter - 60; // Position above sprite center
+            const baseY = verticalCenter - 80; // Position well above sprite
             
-            // Initialize position only once
-            if (floatText.x === 0 && floatText.y === 0) {
-                floatText.x = baseX + (Math.random() - 0.5) * 60;
-                floatText.y = baseY;
-            }
+            // Calculate current position with offset and movement
+            const currentY = baseY - floatText.offsetY - (1.5 - floatText.lifetime) * 60;
+            const currentX = baseX + floatText.offsetX;
             
             // Set font and style - reduced size for better visibility
-            const fontSize = floatText.isCrit ? 20 : 16;
-            ctx.font = `${fontSize}px 'Press Start 2P', monospace`;
+            const fontSize = floatText.isCrit ? 18 : 14;
+            ctx.font = `bold ${fontSize}px 'Press Start 2P', monospace`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             
             // Draw text with strong outline for visibility
             ctx.lineWidth = 4;
-            ctx.strokeStyle = 'rgba(0, 0, 0, ' + (floatText.opacity * 0.8) + ')';
+            ctx.strokeStyle = 'rgba(0, 0, 0, ' + (floatText.opacity * 0.9) + ')';
             ctx.globalAlpha = floatText.opacity;
             
             // Set color based on type
@@ -359,8 +357,8 @@ function renderBattle() {
             }
             
             // Draw outline then fill
-            ctx.strokeText(floatText.text, floatText.x, floatText.y);
-            ctx.fillText(floatText.text, floatText.x, floatText.y);
+            ctx.strokeText(floatText.text, currentX, currentY);
+            ctx.fillText(floatText.text, currentX, currentY);
         });
         
         // Restore context state
