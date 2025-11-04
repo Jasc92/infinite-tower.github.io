@@ -945,22 +945,48 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
     ctx.textBaseline = 'top';
     ctx.fillText(title, x + width / 2, y + 6);
     
+    // Calculate shake effect based on recent damage
+    let shakeX = 0;
+    let shakeY = 0;
+    const shakeDuration = 0.15; // 150ms shake duration
+    const currentTime = game.combat ? game.combat.combatTime : 0;
+    
+    if (fighter.lastDamageTime !== undefined && fighter.lastDamageAmount !== undefined) {
+        const timeSinceDamage = currentTime - fighter.lastDamageTime;
+        if (timeSinceDamage >= 0 && timeSinceDamage < shakeDuration) {
+            // Calculate shake intensity based on damage amount and decay over time
+            const shakeIntensity = Math.min(1.0, (fighter.lastDamageAmount / 50.0)) * 3; // Max 3px shake
+            const decayFactor = 1.0 - (timeSinceDamage / shakeDuration); // Linear decay
+            const finalShake = shakeIntensity * decayFactor;
+            
+            // Random shake direction (changes every frame for vibration effect)
+            shakeX = (Math.random() - 0.5) * 2 * finalShake;
+            shakeY = (Math.random() - 0.5) * 2 * finalShake;
+        }
+    }
+    
     // HP Bar (compact - moved up)
     const hpBarY = y + 20;
     const hpBarHeight = 10;
     const hpBarWidth = width - 12;
     const hpBarX = x + 6;
     
+    // Apply shake to HP bar position
+    const shakenHpBarX = hpBarX + shakeX;
+    const shakenHpBarY = hpBarY + shakeY;
+    
     // HP Bar background
     ctx.fillStyle = '#0a0a14';
-    ctx.fillRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+    ctx.fillRect(shakenHpBarX, shakenHpBarY, hpBarWidth, hpBarHeight);
     
     // HP Bar fill
     const hpPercent = Math.max(0, Math.min(1, fighter.currentHp / fighter.maxHp));
     const hpFillWidth = hpBarWidth * hpPercent;
     
+    const isDead = fighter.currentHp <= 0;
+    
     if (hpPercent > 0) {
-        const hpGradient = ctx.createLinearGradient(hpBarX, hpBarY, hpBarX, hpBarY + hpBarHeight);
+        const hpGradient = ctx.createLinearGradient(shakenHpBarX, shakenHpBarY, shakenHpBarX, shakenHpBarY + hpBarHeight);
         if (title === 'HERO') {
             hpGradient.addColorStop(0, '#4caf50');
             hpGradient.addColorStop(1, '#8bc34a');
@@ -969,13 +995,44 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
             hpGradient.addColorStop(1, '#ff5722');
         }
         ctx.fillStyle = hpGradient;
-        ctx.fillRect(hpBarX, hpBarY, hpFillWidth, hpBarHeight);
+        ctx.fillRect(shakenHpBarX, shakenHpBarY, hpFillWidth, hpBarHeight);
     }
     
     // HP Bar border
     ctx.strokeStyle = '#2a2a3e';
     ctx.lineWidth = 1;
-    ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+    ctx.strokeRect(shakenHpBarX, shakenHpBarY, hpBarWidth, hpBarHeight);
+    
+    // Draw cracks when HP is 0 (broken bar effect)
+    if (isDead) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.lineWidth = 1.5;
+        
+        // Draw multiple crack lines
+        const crackCount = 4 + Math.floor(Math.random() * 3); // 4-6 cracks
+        for (let i = 0; i < crackCount; i++) {
+            const startX = shakenHpBarX + Math.random() * hpBarWidth;
+            const startY = shakenHpBarY + Math.random() * hpBarHeight;
+            const endX = startX + (Math.random() - 0.5) * 8;
+            const endY = startY + (Math.random() - 0.5) * 8;
+            
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+            
+            // Sometimes add a branch crack
+            if (Math.random() > 0.5) {
+                ctx.beginPath();
+                ctx.moveTo(endX, endY);
+                ctx.lineTo(endX + (Math.random() - 0.5) * 4, endY + (Math.random() - 0.5) * 4);
+                ctx.stroke();
+            }
+        }
+        
+        ctx.restore();
+    }
     
     // HP Text (larger font)
     ctx.font = '10px "Press Start 2P", monospace'; // Increased from 7px to 10px

@@ -29,6 +29,20 @@ class CombatEngine {
             if (relic.id === 'last_stand') relic.survived = false;
         });
     }
+    
+    /**
+     * Reset damage tracking for fighters (for shake effect)
+     */
+    resetDamageTracking(player, enemy) {
+        if (player) {
+            player.lastDamageTime = undefined;
+            player.lastDamageAmount = undefined;
+        }
+        if (enemy) {
+            enemy.lastDamageTime = undefined;
+            enemy.lastDamageAmount = undefined;
+        }
+    }
 
     /**
      * Update combat state
@@ -82,6 +96,12 @@ class CombatEngine {
                 true // isPlayer attacking
             );
             enemy.currentHp -= damageInfo.damage;
+            
+            // Track damage for visual feedback (shake effect)
+            if (damageInfo.damage > 0 && !damageInfo.isMiss) {
+                enemy.lastDamageTime = this.combatTime;
+                enemy.lastDamageAmount = damageInfo.damage;
+            }
 
             // Lifesteal healing
             if (player.lifesteal > 0 && damageInfo.damage > 0 && !damageInfo.isMiss) {
@@ -123,6 +143,13 @@ class CombatEngine {
                     true
                 );
                 enemy.currentHp -= bonusDamageInfo.damage;
+                
+                // Track damage for visual feedback (shake effect)
+                if (bonusDamageInfo.damage > 0 && !bonusDamageInfo.isMiss) {
+                    enemy.lastDamageTime = this.combatTime;
+                    enemy.lastDamageAmount = bonusDamageInfo.damage;
+                }
+                
                 this.addFloatingText(bonusDamageInfo, 'enemy');
             }
             
@@ -131,7 +158,9 @@ class CombatEngine {
             // Reset timer: 1 / attackSpeed (with adrenaline bonus if applicable)
             this.playerAttackTimer = 1 / effectivePlayerSpeed;
 
+            // Check win condition AFTER damage application (accounting for speed multiplier)
             if (enemy.currentHp <= 0) {
+                enemy.currentHp = 0; // Clamp to 0
                 return 'player_win';
             }
         }
@@ -141,6 +170,13 @@ class CombatEngine {
             const tickDamage = Math.round(enemy.bleedDamage / 3); // 3 ticks over 3 seconds
             enemy.currentHp -= tickDamage;
             enemy.bleedDuration -= 1;
+            
+            // Track damage for visual feedback (shake effect)
+            if (tickDamage > 0) {
+                enemy.lastDamageTime = this.combatTime;
+                enemy.lastDamageAmount = tickDamage;
+            }
+            
             this.addFloatingText({
                 damage: tickDamage,
                 isMiss: false,
@@ -150,7 +186,9 @@ class CombatEngine {
             }, 'enemy');
             this.bleedDamageTimer = 1.0; // Tick every second
             
+            // Check win condition AFTER bleed damage (accounting for speed multiplier)
             if (enemy.currentHp <= 0) {
+                enemy.currentHp = 0; // Clamp to 0
                 return 'player_win';
             }
         }
@@ -209,12 +247,25 @@ class CombatEngine {
             } else {
                 player.currentHp -= damageInfo.damage;
             }
+            
+            // Track damage for visual feedback (shake effect)
+            if (damageInfo.damage > 0 && !damageInfo.isMiss) {
+                player.lastDamageTime = this.combatTime;
+                player.lastDamageAmount = damageInfo.damage;
+            }
 
             // Thorns (reflect damage)
             const thorns = this.relics.find(r => r.id === 'thorns');
             if (thorns && damageInfo.damage > 0 && !damageInfo.isMiss) {
                 const reflectDamage = Math.round(damageInfo.damage * thorns.reflectPercent);
                 enemy.currentHp -= reflectDamage;
+                
+                // Track damage for visual feedback (shake effect)
+                if (reflectDamage > 0) {
+                    enemy.lastDamageTime = this.combatTime;
+                    enemy.lastDamageAmount = reflectDamage;
+                }
+                
                 this.addFloatingText({
                     damage: reflectDamage,
                     isMiss: false,
@@ -223,7 +274,9 @@ class CombatEngine {
                     text: `🌵${reflectDamage}` // Compact spacing
                 }, 'enemy');
                 
+                // Check win condition AFTER thorns damage (accounting for speed multiplier)
                 if (enemy.currentHp <= 0) {
+                    enemy.currentHp = 0; // Clamp to 0
                     return 'player_win';
                 }
             }
@@ -234,7 +287,9 @@ class CombatEngine {
             // Reset timer: 1 / attackSpeed
             this.enemyAttackTimer = 1 / enemy.attackSpeed;
 
+            // Check loss condition AFTER damage application (accounting for speed multiplier)
             if (player.currentHp <= 0) {
+                player.currentHp = 0; // Clamp to 0
                 return 'player_loss';
             }
         }
