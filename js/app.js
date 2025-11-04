@@ -552,14 +552,21 @@ function updateRelicScreen() {
     const isReplaceMode = game.relicManager.activeRelics.length >= 3;
     
     if (game.relicManager.activeRelics.length > 0) {
-        // Create slots container
-        const slotsContainer = document.createElement('div');
-        slotsContainer.className = 'relic-selection-slots';
+        // Create title
+        const title = document.createElement('h4');
+        title.style.cssText = 'font-size: clamp(10px, 3vw, 14px); color: #d4af37; margin-bottom: 8px; text-align: center;';
+        title.textContent = '⚡ Current Relics';
+        currentRelicsContainer.appendChild(title);
         
-        // Create slots similar to battle screen
+        // Create slots container (horizontal layout like result screen)
+        const slotsContainer = document.createElement('div');
+        slotsContainer.className = 'final-relics-slots'; // Use same class as result screen
+        slotsContainer.style.cssText = 'display: flex; gap: clamp(8px, 2vw, 12px); justify-content: center; align-items: center;';
+        
+        // Create slots similar to result screen
         for (let i = 0; i < 3; i++) {
             const slotDiv = document.createElement('div');
-            slotDiv.className = 'relic-selection-slot';
+            slotDiv.className = 'final-relic-slot'; // Use same class as result screen
             
             if (i < game.relicManager.activeRelics.length) {
                 const relic = game.relicManager.activeRelics[i];
@@ -568,7 +575,7 @@ function updateRelicScreen() {
                 slotDiv.title = relic.name;
                 
                 // Show tooltip on tap/click (when not in replace mode or not selected)
-                slotDiv.addEventListener('click', (e) => {
+                slotDiv.onclick = (e) => {
                     e.stopPropagation();
                     if (isReplaceMode) {
                         // In replace mode, clicking current relic selects it for replacement
@@ -577,8 +584,9 @@ function updateRelicScreen() {
                         // Otherwise just show tooltip
                         showRelicTooltip(relic);
                     }
-                });
+                };
                 
+                // Touch support
                 slotDiv.addEventListener('touchstart', (e) => {
                     e.stopPropagation();
                     if (isReplaceMode) {
@@ -608,7 +616,8 @@ function updateRelicScreen() {
         if (isReplaceMode) {
             const instruction = document.createElement('div');
             instruction.className = 'relic-replace-instruction';
-            instruction.textContent = 'Tap a relic below to replace it, then select a new one above';
+            instruction.textContent = 'Tap a relic above to replace it, then select a new one below';
+            instruction.style.cssText = 'font-size: clamp(10px, 2.5vw, 12px); color: #ffcc00; text-align: center; margin-top: 8px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);';
             currentRelicsContainer.appendChild(instruction);
         }
     }
@@ -773,7 +782,8 @@ function selectRelicToReplace(index) {
     console.log('Selected relic to replace:', index, selectedRelic.name);
     
     // Update UI to show which relic is selected for replacement
-    const slots = document.querySelectorAll('.relic-selection-slot');
+    // Support both old class name and new class name
+    const slots = document.querySelectorAll('.relic-selection-slot, .final-relic-slot');
     slots.forEach((slot, i) => {
         if (i === index && i < game.relicManager.activeRelics.length) {
             slot.classList.add('selected-for-replace');

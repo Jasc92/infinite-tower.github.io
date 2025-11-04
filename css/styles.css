@@ -653,6 +653,57 @@ body {
     border: 2px solid #8b7355;
 }
 
+/* Final relics slots (used in result screen and relic selection screen) */
+.final-relics-slots {
+    display: flex;
+    gap: clamp(8px, 2vw, 12px);
+    justify-content: center;
+    align-items: center;
+}
+
+.final-relic-slot {
+    width: clamp(45px, 13vw, 60px);
+    height: clamp(45px, 13vw, 60px);
+    border: 2px solid #8b7355;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(24px, 7vw, 36px);
+    background: linear-gradient(180deg, rgba(26, 19, 14, 0.95) 0%, rgba(10, 10, 20, 0.95) 100%);
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.final-relic-slot.empty {
+    border-color: #4a4a4a;
+    background: rgba(26, 19, 14, 0.5);
+    cursor: default;
+}
+
+.final-relic-slot.active {
+    border-color: #8b7355;
+    background: linear-gradient(180deg, rgba(42, 31, 24, 0.95) 0%, rgba(26, 19, 14, 0.95) 100%);
+}
+
+.final-relic-slot.active:hover,
+.final-relic-slot.active.touching {
+    border-color: #d4af37;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+}
+
+.final-relic-slot.selected-for-replace {
+    border-color: #ff6b6b;
+    border-width: 3px;
+    box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.3), 0 4px 12px rgba(255, 107, 107, 0.5);
+    transform: scale(1.05);
+}
+
 .relic-selection-slots {
     display: flex;
     gap: clamp(8px, 2vw, 12px);
