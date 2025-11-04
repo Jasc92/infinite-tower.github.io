@@ -18,9 +18,13 @@ function initializeGame() {
     game = new GameManager();
     topRuns = new TopRunsManager();
     
-    // Setup canvas
+    // Setup battle canvas (combat rendering)
     game.canvas = document.getElementById('battle-canvas');
     game.ctx = game.canvas.getContext('2d');
+    
+    // Setup UI canvas (HP bars and stats)
+    game.uiCanvas = document.getElementById('battle-ui-canvas');
+    game.uiCtx = game.uiCanvas.getContext('2d');
     
     // Load sprites
     loadSprites();
@@ -460,6 +464,9 @@ function startBattleScreen() {
     // Setup canvas size
     resizeCanvas();
     
+    // Initial render of UI canvas
+    renderBattleUI();
+    
     // Update UI
     document.getElementById('current-floor').textContent = game.currentFloor;
     
@@ -514,6 +521,7 @@ function battleLoop() {
     // If showing battle result overlay, just render and wait
     if (game.battleResult) {
         renderBattle();
+        renderBattleUI();
         animationFrame = requestAnimationFrame(battleLoop);
         return;
     }
@@ -522,6 +530,7 @@ function battleLoop() {
     
     updateBattleUI();
     renderBattle();
+    renderBattleUI();
     
     if (result === 'win') {
         // Set battle result and show overlay, keep rendering for 2 seconds
@@ -545,27 +554,107 @@ function battleLoop() {
 }
 
 function updateBattleUI() {
-    // Player stats
-    document.getElementById('player-hp-current').textContent = Math.max(0, Math.round(game.player.currentHp));
-    document.getElementById('player-hp-max').textContent = game.player.maxHp;
-    document.getElementById('player-hp-fill').style.width = `${(game.player.currentHp / game.player.maxHp) * 100}%`;
-    document.getElementById('player-atk').textContent = game.player.attack;
-    document.getElementById('player-spd').textContent = game.player.attackSpeed.toFixed(1);
-    document.getElementById('player-crt').textContent = Math.round(game.player.critChance * 100);
-    document.getElementById('player-def').textContent = game.player.defense;
-    document.getElementById('player-lifesteal').textContent = Math.round(game.player.lifesteal * 100);
+    // This function is now just a placeholder - UI is rendered in canvas
+    // Data is already in game.player and game.enemy
+}
+
+function renderBattleUI() {
+    const ctx = game.uiCtx;
+    const canvas = game.uiCanvas;
     
-    // Enemy stats
-    if (game.enemy) {
-        document.getElementById('enemy-hp-current').textContent = Math.max(0, Math.round(game.enemy.currentHp));
-        document.getElementById('enemy-hp-max').textContent = game.enemy.maxHp;
-        document.getElementById('enemy-hp-fill').style.width = `${(game.enemy.currentHp / game.enemy.maxHp) * 100}%`;
-        document.getElementById('enemy-atk').textContent = game.enemy.attack;
-        document.getElementById('enemy-spd').textContent = game.enemy.attackSpeed.toFixed(1);
-        document.getElementById('enemy-crt').textContent = Math.round(game.enemy.critChance * 100);
-        document.getElementById('enemy-def').textContent = game.enemy.defense;
-        document.getElementById('enemy-lifesteal').textContent = Math.round((game.enemy.lifesteal || 0) * 100);
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    if (!game.player || !game.enemy) return;
+    
+    // Panel dimensions
+    const panelPadding = 8;
+    const panelWidth = (canvas.width - panelPadding * 3) / 2;
+    const panelHeight = canvas.height - panelPadding * 2;
+    const panelX1 = panelPadding;
+    const panelX2 = panelWidth + panelPadding * 2;
+    const panelY = panelPadding;
+    
+    // Draw both panels
+    drawFighterPanel(ctx, panelX1, panelY, panelWidth, panelHeight, game.player, 'HERO', '#4caf50');
+    drawFighterPanel(ctx, panelX2, panelY, panelWidth, panelHeight, game.enemy, 'ENEMY', '#f44336');
+}
+
+function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) {
+    // Panel background
+    const gradient = ctx.createLinearGradient(x, y, x, y + height);
+    gradient.addColorStop(0, 'rgba(42, 31, 24, 0.95)');
+    gradient.addColorStop(1, 'rgba(26, 19, 14, 0.98)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(x, y, width, height);
+    
+    // Border
+    ctx.strokeStyle = '#8b7355';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x, y, width, height);
+    
+    // Title
+    ctx.font = 'bold 10px "Press Start 2P", monospace';
+    ctx.fillStyle = titleColor;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(title, x + width / 2, y + 8);
+    
+    // HP Bar
+    const hpBarY = y + 28;
+    const hpBarHeight = 12;
+    const hpBarWidth = width - 16;
+    const hpBarX = x + 8;
+    
+    // HP Bar background
+    ctx.fillStyle = '#0a0a14';
+    ctx.fillRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+    
+    // HP Bar fill
+    const hpPercent = Math.max(0, Math.min(1, fighter.currentHp / fighter.maxHp));
+    const hpFillWidth = hpBarWidth * hpPercent;
+    
+    if (hpPercent > 0) {
+        const hpGradient = ctx.createLinearGradient(hpBarX, hpBarY, hpBarX, hpBarY + hpBarHeight);
+        if (title === 'HERO') {
+            hpGradient.addColorStop(0, '#4caf50');
+            hpGradient.addColorStop(1, '#8bc34a');
+        } else {
+            hpGradient.addColorStop(0, '#f44336');
+            hpGradient.addColorStop(1, '#ff5722');
+        }
+        ctx.fillStyle = hpGradient;
+        ctx.fillRect(hpBarX, hpBarY, hpFillWidth, hpBarHeight);
     }
+    
+    // HP Bar border
+    ctx.strokeStyle = '#2a2a3e';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+    
+    // HP Text
+    ctx.font = '8px "Press Start 2P", monospace';
+    ctx.fillStyle = '#a0a0a0';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${Math.max(0, Math.round(fighter.currentHp))} / ${fighter.maxHp}`, x + width / 2, hpBarY + hpBarHeight + 4);
+    
+    // Stats
+    const statsY = hpBarY + hpBarHeight + 20;
+    ctx.font = '7px "Press Start 2P", monospace';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#e0e0e0';
+    
+    const stats = [
+        `ATK: ${fighter.attack}`,
+        `SPD: ${fighter.attackSpeed.toFixed(1)}/s`,
+        `CRT: ${Math.round(fighter.critChance * 100)}%`,
+        `DEF: ${fighter.defense}`,
+        `LS: ${Math.round((fighter.lifesteal || 0) * 100)}%`
+    ];
+    
+    stats.forEach((stat, index) => {
+        ctx.fillText(stat, x + 10, statsY + index * 12);
+    });
 }
 
 function renderBattle() {
@@ -737,10 +826,20 @@ function handleBattleLoss() {
 }
 
 function resizeCanvas() {
+    // Resize battle canvas (combat rendering)
     const canvas = game.canvas;
-    const container = canvas.parentElement;
+    const container = canvas.parentElement; // .battle-arena
+    const uiCanvas = game.uiCanvas;
+    
+    // Resize UI canvas first (fixed height from CSS)
+    uiCanvas.width = container.clientWidth;
+    const uiCanvasComputedHeight = parseInt(getComputedStyle(uiCanvas).height);
+    uiCanvas.height = uiCanvasComputedHeight || 120;
+    
+    // Battle canvas takes remaining space (flex: 1)
+    // Calculate available height: container height minus UI canvas height
     canvas.width = container.clientWidth;
-    canvas.height = container.clientHeight;
+    canvas.height = container.clientHeight - uiCanvas.height;
 }
 
 // ========================================
@@ -938,6 +1037,7 @@ function setupEventListeners() {
         if (currentScreen === 'battle') {
             resizeCanvas();
             renderBattle();
+            renderBattleUI();
         }
     });
 }

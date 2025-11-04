@@ -472,6 +472,8 @@ body {
 
 .battle-arena {
     flex: 1;
+    display: flex;
+    flex-direction: column;
     position: relative;
     border: 2px solid var(--border);
     border-radius: 10px;
@@ -479,14 +481,23 @@ body {
     background: var(--bg-darker);
     margin-bottom: clamp(8px, 1.5vh, 15px);
     min-height: 0;
-    /* Removed max-height constraint - let flex handle it */
 }
 
-#battle-canvas {
+.battle-canvas-main {
+    flex: 1;
     width: 100%;
-    height: 100%;
+    min-height: 0;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
+}
+
+.battle-canvas-ui {
+    flex-shrink: 0;
+    width: 100%;
+    height: clamp(120px, 20vh, 180px);
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background: linear-gradient(180deg, rgba(42, 31, 24, 0.95) 0%, rgba(26, 19, 14, 0.98) 100%);
 }
 
 .fighter-panel {

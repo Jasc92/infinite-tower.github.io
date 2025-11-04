@@ -32,7 +32,7 @@
             <div class="title-container">
                 <h1 class="game-title">INFINITE TOWER</h1>
                 <div class="subtitle">Roguelike Auto-Battler</div>
-                <div class="version">v2.2.4</div>
+                <div class="version">v2.2.5</div>
             </div>
             
             <div class="menu-content">
@@ -269,48 +269,11 @@
             </div>
             
             <div class="battle-arena">
-                <!-- Canvas for battle rendering -->
-                <canvas id="battle-canvas"></canvas>
+                <!-- Canvas 1: Battle rendering (sprites, background, floating text) -->
+                <canvas id="battle-canvas" class="battle-canvas-main"></canvas>
                 
-                <!-- Player Stats -->
-                <div class="fighter-panel player-panel">
-                    <div class="fighter-title">HERO</div>
-                    <div class="hp-bar-container">
-                        <div class="hp-bar">
-                            <div id="player-hp-fill" class="hp-fill player-hp"></div>
-                        </div>
-                        <div class="hp-text">
-                            <span id="player-hp-current">100</span> / <span id="player-hp-max">100</span>
-                        </div>
-                    </div>
-                    <div class="fighter-stats">
-                        <div>ATK: <span id="player-atk">10</span></div>
-                        <div>SPD: <span id="player-spd">1.0</span>/s</div>
-                        <div>CRT: <span id="player-crt">5</span>%</div>
-                        <div>DEF: <span id="player-def">5</span></div>
-                        <div>LS: <span id="player-lifesteal">0</span>%</div>
-                    </div>
-                </div>
-                
-                <!-- Enemy Stats -->
-                <div class="fighter-panel enemy-panel">
-                    <div class="fighter-title">ENEMY</div>
-                    <div class="hp-bar-container">
-                        <div class="hp-bar">
-                            <div id="enemy-hp-fill" class="hp-fill enemy-hp"></div>
-                        </div>
-                        <div class="hp-text">
-                            <span id="enemy-hp-current">85</span> / <span id="enemy-hp-max">85</span>
-                        </div>
-                    </div>
-                    <div class="fighter-stats">
-                        <div>ATK: <span id="enemy-atk">8</span></div>
-                        <div>SPD: <span id="enemy-spd">0.9</span>/s</div>
-                        <div>CRT: <span id="enemy-crt">2</span>%</div>
-                        <div>DEF: <span id="enemy-def">4</span></div>
-                        <div>LS: <span id="enemy-lifesteal">0</span>%</div>
-                    </div>
-                </div>
+                <!-- Canvas 2: UI rendering (HP bars and stats) -->
+                <canvas id="battle-ui-canvas" class="battle-canvas-ui"></canvas>
             </div>
             
             <div class="battle-status">
