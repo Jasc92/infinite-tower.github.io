@@ -395,28 +395,33 @@ class GameManager {
             this.availablePoints += 3; // Bonus points from boss
         }
         
-        // NEW RELIC SYSTEM: 1 at start, then every 10 floors (10, 20, 30, ...) BEFORE boss floors
-        // Floor 1 (start): relic selection
-        // Floor 10 (before boss 11): relic selection
-        // Floor 20 (before boss 21): relic selection
-        // etc.
-        if (this.currentFloor === 1 || (this.currentFloor % 10 === 0 && this.currentFloor > 1)) {
-            // Add stat points (5 at start, 5 every floor)
+        // STAT ALLOCATION: Every 5 floors (5, 10, 15, 20, 25, 30...)
+        // RELIC SELECTION: Floor 1 (start), then every 10 floors (10, 20, 30...)
+        
+        // Check for relic selection first (Floor 1, or every 10 floors)
+        const isRelicFloor = this.currentFloor === 1 || (this.currentFloor % 10 === 0 && this.currentFloor > 1);
+        // Check for stat allocation (every 5 floors)
+        const isStatFloor = this.currentFloor % 5 === 0;
+        
+        if (isRelicFloor) {
+            // Relic floor: add stat points and show relic selection
             if (this.currentFloor === 1) {
                 this.availablePoints = 5; // Start with 5 points
             } else {
-                this.availablePoints += 5; // Add 5 points each floor
+                // Floor 10, 20, 30... also get stat points
+                this.availablePoints += 5;
             }
-            this.baseStatsSnapshot = null; // Reset snapshot for new allocation
-            
-            return 'relic'; // Relic selection
+            this.baseStatsSnapshot = null;
+            return 'relic'; // Relic selection (then stats after)
+        } else if (isStatFloor) {
+            // Stat floor only (5, 15, 25, 35...)
+            this.availablePoints += 5;
+            this.baseStatsSnapshot = null;
+            return 'stats'; // Stat allocation
         }
         
-        // Every other floor: stat allocation
-        this.availablePoints += 5; // ADD points instead of resetting
-        this.baseStatsSnapshot = null; // Reset snapshot for new allocation
-        
-        return 'stats'; // Stat allocation
+        // No stat allocation, no relic selection - continue to battle
+        return 'battle';
     }
 
     /**

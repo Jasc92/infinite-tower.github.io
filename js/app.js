@@ -1319,14 +1319,14 @@ function handleBattleWin() {
     
     const nextAction = game.nextFloor();
     
-    if (nextAction === 'stats') {
-        // Every 5 floors: stat allocation
-        setTimeout(() => showScreen('stats'), 500);
-    } else if (nextAction === 'relic') {
-        // Every 5 floors (after stats): relic selection
+    if (nextAction === 'relic') {
+        // Relic selection (Floor 1, or every 10 floors: 10, 20, 30...)
         setTimeout(() => showScreen('relic'), 500);
+    } else if (nextAction === 'stats') {
+        // Stat allocation (every 5 floors: 5, 10, 15, 20, 25, 30...)
+        setTimeout(() => showScreen('stats'), 500);
     } else {
-        // Continue to next floor
+        // Continue to next floor (no stat allocation, no relic selection)
         setTimeout(() => startBattleScreen(), 500);
     }
 }
