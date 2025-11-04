@@ -1035,24 +1035,53 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
         ctx.fillRect(shakenHpBarX, shakenHpBarY, hpBarWidth, hpBarHeight);
     }
     
-    // HP Bar fill
-    const hpPercent = Math.max(0, Math.min(1, fighter.currentHp / fighter.maxHp));
-    const hpFillWidth = hpBarWidth * hpPercent;
+    // SHIELD SYSTEM: Draw shield bar if active (only for player)
+    const hasShield = fighter.shield !== undefined && fighter.shield > 0 && fighter.maxShield !== undefined && fighter.maxShield > 0;
+    const totalPool = (fighter.maxHp || 0) + (fighter.maxShield || 0);
     
-    const isDead = fighter.currentHp <= 0;
-    
-    if (hpPercent > 0) {
-        const hpGradient = ctx.createLinearGradient(shakenHpBarX, shakenHpBarY, shakenHpBarX, shakenHpBarY + hpBarHeight);
-        if (title === 'HERO') {
+    if (hasShield && title === 'HERO') {
+        // Draw shield bar (blue) on top of HP bar
+        const shieldPercent = fighter.shield / totalPool;
+        const shieldFillWidth = hpBarWidth * shieldPercent;
+        
+        // Shield bar fill (blue gradient)
+        const shieldGradient = ctx.createLinearGradient(shakenHpBarX, shakenHpBarY, shakenHpBarX, shakenHpBarY + hpBarHeight);
+        shieldGradient.addColorStop(0, '#2196f3'); // Light blue
+        shieldGradient.addColorStop(1, '#1976d2'); // Dark blue
+        ctx.fillStyle = shieldGradient;
+        ctx.fillRect(shakenHpBarX, shakenHpBarY, shieldFillWidth, hpBarHeight);
+        
+        // Draw HP bar on top of shield (only the HP portion)
+        const hpPercent = Math.max(0, Math.min(1, fighter.currentHp / fighter.maxHp));
+        const hpFillWidth = hpBarWidth * hpPercent;
+        
+        if (hpPercent > 0) {
+            const hpGradient = ctx.createLinearGradient(shakenHpBarX, shakenHpBarY, shakenHpBarX, shakenHpBarY + hpBarHeight);
             hpGradient.addColorStop(0, '#4caf50');
             hpGradient.addColorStop(1, '#8bc34a');
-        } else {
-            hpGradient.addColorStop(0, '#f44336');
-            hpGradient.addColorStop(1, '#ff5722');
+            ctx.fillStyle = hpGradient;
+            ctx.fillRect(shakenHpBarX, shakenHpBarY, hpFillWidth, hpBarHeight);
         }
-        ctx.fillStyle = hpGradient;
-        ctx.fillRect(shakenHpBarX, shakenHpBarY, hpFillWidth, hpBarHeight);
+    } else {
+        // Normal HP bar (no shield)
+        const hpPercent = Math.max(0, Math.min(1, fighter.currentHp / fighter.maxHp));
+        const hpFillWidth = hpBarWidth * hpPercent;
+        
+        if (hpPercent > 0) {
+            const hpGradient = ctx.createLinearGradient(shakenHpBarX, shakenHpBarY, shakenHpBarX, shakenHpBarY + hpBarHeight);
+            if (title === 'HERO') {
+                hpGradient.addColorStop(0, '#4caf50');
+                hpGradient.addColorStop(1, '#8bc34a');
+            } else {
+                hpGradient.addColorStop(0, '#f44336');
+                hpGradient.addColorStop(1, '#ff5722');
+            }
+            ctx.fillStyle = hpGradient;
+            ctx.fillRect(shakenHpBarX, shakenHpBarY, hpFillWidth, hpBarHeight);
+        }
     }
+    
+    const isDead = fighter.currentHp <= 0;
     
     // HP Bar border
     ctx.strokeStyle = '#2a2a3e';
@@ -1101,11 +1130,17 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
         ctx.restore();
     }
     
-    // HP Text (much larger font)
+    // HP Text (much larger font) - Show shield if active
     ctx.font = '13px "Press Start 2P", monospace'; // Increased from 10px to 13px
     ctx.fillStyle = '#a0a0a0';
     ctx.textAlign = 'center';
-    ctx.fillText(`${Math.max(0, Math.round(fighter.currentHp))} / ${fighter.maxHp}`, x + width / 2, hpBarY + hpBarHeight + 5);
+    
+    // Show HP+Shield format if shield is active (only for player)
+    if (hasShield && title === 'HERO') {
+        ctx.fillText(`${Math.max(0, Math.round(fighter.currentHp))}+${Math.round(fighter.shield)} / ${fighter.maxHp}`, x + width / 2, hpBarY + hpBarHeight + 5);
+    } else {
+        ctx.fillText(`${Math.max(0, Math.round(fighter.currentHp))} / ${fighter.maxHp}`, x + width / 2, hpBarY + hpBarHeight + 5);
+    }
     
     // Stats (separated from HP bar, larger font)
     const statsY = hpBarY + hpBarHeight + 22; // Increased spacing from HP text (was 14, now 22)

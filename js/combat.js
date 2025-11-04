@@ -13,6 +13,17 @@ class CombatEngine {
         this.firstHit = true; // Track first hit for First Blood
         this.bleedDamageTimer = 0; // Timer for bleed ticks
         this.regenTimer = 0; // Timer for regen ticks
+        
+        // NEW RELIC MECHANICS - Modular counters and timers
+        this.rageComboHits = 0; // Rage Combo: consecutive hits
+        this.weakPointHits = 0; // Weak Point: defense ignore scaling
+        this.battleHardenedHits = 0; // Battle Hardened: defense stacking
+        this.retaliateCount = 0; // Retaliate: counter-attack count
+        this.shieldRegenTimer = 0; // Shield Battery: shield regeneration timer
+        this.energySurgeTimer = 0; // Energy Surge: cooldown timer
+        this.energySurgeReady = false; // Energy Surge: ready state
+        this.recycleBoostTimer = 0; // Recycle: speed boost timer
+        this.recycleBoostActive = false; // Recycle: boost active state
     }
 
     reset() {
@@ -23,6 +34,18 @@ class CombatEngine {
         this.firstHit = true;
         this.bleedDamageTimer = 0;
         this.regenTimer = 0;
+        
+        // Reset new relic mechanics
+        this.rageComboHits = 0;
+        this.weakPointHits = 0;
+        this.battleHardenedHits = 0;
+        this.retaliateCount = 0;
+        this.shieldRegenTimer = 0;
+        this.energySurgeTimer = 0;
+        this.energySurgeReady = false;
+        this.recycleBoostTimer = 0;
+        this.recycleBoostActive = false;
+        
         // Reset relic states
         this.relics.forEach(relic => {
             if (relic.id === 'second_wind') relic.used = false;
@@ -64,6 +87,9 @@ class CombatEngine {
         // Update relic timers
         this.bleedDamageTimer -= deltaTime;
         this.regenTimer -= deltaTime;
+        this.shieldRegenTimer -= deltaTime;
+        this.energySurgeTimer -= deltaTime;
+        this.recycleBoostTimer -= deltaTime;
         
         // Regeneration relic (heal 2% max HP per second)
         const regenRelic = this.relics.find(r => r.id === 'regeneration');
@@ -79,6 +105,53 @@ class CombatEngine {
             }, 'player');
             this.regenTimer = 1.0; // Tick every second
         }
+        
+        // Potion Master: heal 3% max HP every 3 seconds (separate timer)
+        const potionMaster = this.relics.find(r => r.id === 'potion_master');
+        if (potionMaster) {
+            // Use regenTimer for Potion Master if no Regeneration relic
+            if (!regenRelic && this.regenTimer <= 0) {
+                const healAmount = Math.round(player.maxHp * potionMaster.healPercent);
+                player.currentHp = Math.min(player.maxHp, player.currentHp + healAmount);
+                this.addFloatingText({
+                    damage: healAmount,
+                    isMiss: false,
+                    isCrit: false,
+                    isHeal: true,
+                    text: `⚗️+${healAmount}`
+                }, 'player');
+                this.regenTimer = potionMaster.healInterval;
+            }
+        }
+        
+        // Shield Battery: regenerate shield every 5 seconds (if shield is broken)
+        const shieldBattery = this.relics.find(r => r.id === 'shield_battery');
+        if (shieldBattery && player.shield <= 0 && this.shieldRegenTimer <= 0) {
+            const regenAmount = Math.round(player.maxHp * shieldBattery.shieldRegenPercent);
+            player.shield = Math.min(player.maxShield || regenAmount, regenAmount);
+            player.maxShield = Math.max(player.maxShield || 0, player.shield);
+            if (player.shield > 0) {
+                console.log(`🔄 Shield Battery: Regenerated ${player.shield} shield`);
+            }
+            this.shieldRegenTimer = shieldBattery.shieldRegenInterval;
+        }
+        
+        // Energy Surge: cooldown timer (every 4 seconds)
+        const energySurge = this.relics.find(r => r.id === 'energy_surge');
+        if (energySurge && this.energySurgeTimer <= 0) {
+            this.energySurgeReady = true;
+            this.energySurgeTimer = energySurge.surgeInterval;
+        }
+        
+        // Recycle: speed boost timer (3 seconds)
+        if (this.recycleBoostActive && this.recycleBoostTimer <= 0) {
+            this.recycleBoostActive = false;
+        }
+        
+        // Recycle: update timer
+        if (this.recycleBoostActive) {
+            this.recycleBoostTimer -= deltaTime;
+        }
 
         // Player attacks
         if (this.playerAttackTimer <= 0) {
@@ -87,6 +160,14 @@ class CombatEngine {
             const adrenaline = this.relics.find(r => r.id === 'adrenaline');
             if (adrenaline && (player.currentHp / player.maxHp) < adrenaline.threshold) {
                 effectivePlayerSpeed *= (1 + adrenaline.speedBoost);
+            }
+            
+            // Recycle: speed boost if active
+            if (this.recycleBoostActive) {
+                const recycle = this.relics.find(r => r.id === 'recycle');
+                if (recycle) {
+                    effectivePlayerSpeed *= (1 + recycle.speedBoost);
+                }
             }
             
             const damageInfo = this.calculateDamage(
@@ -104,6 +185,24 @@ class CombatEngine {
                 enemy.lastDamageTime = this.combatTime;
                 enemy.lastDamageAmount = damageInfo.damage;
                 enemy.lastDamageIsCrit = damageInfo.isCrit; // Track if it was a crit
+                
+                // Rage Combo: increment hits on successful hit
+                const rageCombo = this.relics.find(r => r.id === 'rage_combo');
+                if (rageCombo) {
+                    this.rageComboHits++;
+                }
+                
+                // Weak Point: increment hits on successful hit
+                const weakPoint = this.relics.find(r => r.id === 'weak_point');
+                if (weakPoint) {
+                    this.weakPointHits++;
+                }
+            } else if (damageInfo.isMiss) {
+                // Rage Combo: reset on miss
+                const rageCombo = this.relics.find(r => r.id === 'rage_combo');
+                if (rageCombo) {
+                    this.rageComboHits = 0;
+                }
             }
 
             // Lifesteal healing
@@ -209,12 +308,57 @@ class CombatEngine {
                 false // enemy attacking
             );
             
+            // SHIELD SYSTEM: If player has shield, prevent critical hits
+            // While shield is active, critical hits are treated as normal damage
+            if (player.shield > 0 && damageInfo.isCrit) {
+                // Convert crit to normal damage (shield prevents crits)
+                damageInfo.isCrit = false;
+                // Recalculate damage as normal hit (2x becomes 1x)
+                const baseDamage = enemy.attack - player.defense;
+                damageInfo.damage = Math.max(1, baseDamage);
+                damageInfo.text = `${damageInfo.damage}`;
+            }
+            
+            // Blink: 20% chance to dodge completely
+            const blink = this.relics.find(r => r.id === 'blink');
+            if (blink && Math.random() < blink.dodgeChance) {
+                damageInfo.damage = 0;
+                damageInfo.isMiss = true;
+                damageInfo.text = 'DODGE!';
+                
+                // Recycle: trigger on dodge
+                const recycle = this.relics.find(r => r.id === 'recycle');
+                if (recycle) {
+                    this.recycleBoostActive = true;
+                    this.recycleBoostTimer = recycle.boostDuration;
+                }
+            }
+            
             // Thick Skin (damage reduction) - check if player has this relic
             const thickSkin = this.relics.find(r => r.id === 'thick_skin');
             if (thickSkin && damageInfo.damage > 0 && !damageInfo.isMiss) {
                 const originalDamage = damageInfo.damage;
                 damageInfo.damage = Math.round(damageInfo.damage * (1 - thickSkin.damageReduction));
                 console.log(`🐘 Thick Skin: ${originalDamage} → ${damageInfo.damage} (-${Math.round((1 - (damageInfo.damage / originalDamage)) * 100)}%)`);
+            }
+            
+            // Iron Will: -10% damage from critical hits, +20 Defense (already applied via flatEffects)
+            const ironWill = this.relics.find(r => r.id === 'iron_will');
+            if (ironWill && damageInfo.isCrit && damageInfo.damage > 0 && !damageInfo.isMiss) {
+                const originalDamage = damageInfo.damage;
+                damageInfo.damage = Math.round(damageInfo.damage * (1 - ironWill.critDamageReduction));
+            }
+            
+            // Battle Hardened: +1 defense per hit taken (max +20, resets on heal above 80% HP)
+            const battleHardened = this.relics.find(r => r.id === 'battle_hardened');
+            if (battleHardened && damageInfo.damage > 0 && !damageInfo.isMiss) {
+                // Check if we should reset (healed above 80% HP)
+                if ((player.currentHp / player.maxHp) > battleHardened.resetThreshold) {
+                    this.battleHardenedHits = 0;
+                } else {
+                    this.battleHardenedHits = Math.min(battleHardened.defenseMax, this.battleHardenedHits + battleHardened.defensePerHit);
+                    player.defense += battleHardened.defensePerHit; // Temporary bonus
+                }
             }
             
             // Second Wind check
@@ -250,14 +394,67 @@ class CombatEngine {
                     text: `⚔️SURVIVED` // Compact spacing, removed exclamation
                 }, 'player');
             } else {
-                player.currentHp -= damageInfo.damage;
+                // SHIELD SYSTEM: Absorb damage with shield first
+                if (player.shield > 0 && damageInfo.damage > 0 && !damageInfo.isMiss) {
+                    const shieldAbsorbed = Math.min(player.shield, damageInfo.damage);
+                    player.shield -= shieldAbsorbed;
+                    const remainingDamage = damageInfo.damage - shieldAbsorbed;
+                    
+                    if (remainingDamage > 0) {
+                        player.currentHp -= remainingDamage;
+                    }
+                    
+                    // Track damage for visual feedback (shake effect)
+                    player.lastDamageTime = this.combatTime;
+                    player.lastDamageAmount = damageInfo.damage;
+                    player.lastDamageIsCrit = false; // Shield absorbs as normal damage
+                } else {
+                    player.currentHp -= damageInfo.damage;
+                    
+                    // Track damage for visual feedback (shake effect)
+                    if (damageInfo.damage > 0 && !damageInfo.isMiss) {
+                        player.lastDamageTime = this.combatTime;
+                        player.lastDamageAmount = damageInfo.damage;
+                        player.lastDamageIsCrit = damageInfo.isCrit; // Track if it was a crit
+                    }
+                }
             }
             
-            // Track damage for visual feedback (shake effect)
-            if (damageInfo.damage > 0 && !damageInfo.isMiss) {
-                player.lastDamageTime = this.combatTime;
-                player.lastDamageAmount = damageInfo.damage;
-                player.lastDamageIsCrit = damageInfo.isCrit; // Track if it was a crit
+            // Retaliate: counter-attack first 5 hits received
+            const retaliate = this.relics.find(r => r.id === 'retaliate');
+            if (retaliate && this.retaliateCount < retaliate.maxCounters && damageInfo.damage > 0 && !damageInfo.isMiss) {
+                this.retaliateCount++;
+                const counterDamage = Math.round(player.attack * retaliate.counterDamage);
+                const counterDamageInfo = this.calculateDamage(
+                    counterDamage,
+                    player.critChance,
+                    enemy.defense,
+                    player,
+                    enemy,
+                    true
+                );
+                enemy.currentHp -= counterDamageInfo.damage;
+                
+                // Track damage for visual feedback
+                if (counterDamageInfo.damage > 0) {
+                    enemy.lastDamageTime = this.combatTime;
+                    enemy.lastDamageAmount = counterDamageInfo.damage;
+                    enemy.lastDamageIsCrit = counterDamageInfo.isCrit;
+                }
+                
+                this.addFloatingText({
+                    damage: counterDamageInfo.damage,
+                    isMiss: false,
+                    isCrit: counterDamageInfo.isCrit,
+                    isHeal: false,
+                    text: `⚔️${counterDamageInfo.damage}`
+                }, 'enemy');
+                
+                // Check win condition after retaliate
+                if (enemy.currentHp <= 0) {
+                    enemy.currentHp = 0;
+                    return 'player_win';
+                }
             }
 
             // Thorns (reflect damage)
@@ -383,6 +580,49 @@ class CombatEngine {
             }
         }
         
+        // NEW RELIC MECHANICS - Apply before calculating damage
+        
+        // Rage Combo: +5% damage per consecutive hit (max 50%, resets on miss)
+        if (isPlayerAttacking) {
+            const rageCombo = this.relics.find(r => r.id === 'rage_combo');
+            if (rageCombo) {
+                const comboBonus = Math.min(this.rageComboHits * rageCombo.comboDamagePerHit, rageCombo.comboMaxDamage);
+                modifiedAttack = Math.round(modifiedAttack * (1 + comboBonus));
+            }
+            
+            // Spite: +60% damage below 30% HP
+            const spite = this.relics.find(r => r.id === 'spite');
+            if (spite && (attacker.currentHp / attacker.maxHp) < spite.lowHpThreshold) {
+                modifiedAttack = Math.round(modifiedAttack * (1 + spite.lowHpDamageBoost));
+            }
+            
+            // Weak Point: ignore more defense per hit (max 60%)
+            const weakPoint = this.relics.find(r => r.id === 'weak_point');
+            if (weakPoint) {
+                const ignoreBonus = Math.min(this.weakPointHits * weakPoint.defenseIgnorePerHit, weakPoint.defenseIgnoreMax);
+                effectiveDefense = Math.round(effectiveDefense * (1 - ignoreBonus));
+            }
+            
+            // Executioner: +50% damage to enemies below 40% HP (stacks with Execute)
+            const executioner = this.relics.find(r => r.id === 'executioner');
+            if (executioner && (target.currentHp / target.maxHp) < executioner.executeThreshold) {
+                modifiedAttack = Math.round(modifiedAttack * executioner.executeDamage);
+            }
+            
+            // Precision Strike: cannot miss but -10% damage
+            const precisionStrike = this.relics.find(r => r.id === 'precision_strike');
+            if (precisionStrike) {
+                modifiedAttack = Math.round(modifiedAttack * (1 - precisionStrike.damageReduction));
+            }
+            
+            // Energy Surge: 2.5x damage if ready
+            const energySurge = this.relics.find(r => r.id === 'energy_surge');
+            if (energySurge && this.energySurgeReady) {
+                modifiedAttack = Math.round(modifiedAttack * energySurge.surgeMultiplier);
+                this.energySurgeReady = false; // Consume the surge
+            }
+        }
+        
         const rawDamage = isCrit 
             ? (modifiedAttack * critMultiplier) - effectiveDefense 
             : modifiedAttack - effectiveDefense;
@@ -398,9 +638,26 @@ class CombatEngine {
                 }
             }
         
+        // Precision Strike: cannot miss
+        let isMiss = false;
+        if (isPlayerAttacking) {
+            const precisionStrike = this.relics.find(r => r.id === 'precision_strike');
+            if (precisionStrike) {
+                isMiss = false; // Cannot miss
+            }
+        }
+        
+        // Energy Surge: cannot miss when ready
+        if (isPlayerAttacking) {
+            const energySurge = this.relics.find(r => r.id === 'energy_surge');
+            if (energySurge && this.energySurgeReady) {
+                isMiss = false; // Cannot miss
+            }
+        }
+        
         return {
             damage: finalDamage,
-            isMiss: false,
+            isMiss: isMiss,
             isCrit: isCrit,
             isHeal: false,
             text: isCrit ? `${finalDamage} CRIT!` : `${finalDamage}`

@@ -186,6 +186,140 @@ class RelicManager {
                     defense: 1.05,
                     maxHp: 1.05
                 }
+            },
+            
+            // NEW RELICS (15)
+            // SHIELD SYSTEM (2)
+            {
+                id: 'diamond_shield',
+                name: 'Diamond Shield',
+                description: 'Gain a shield equal to 25% max HP at battle start. Shield prevents critical hits and absorbs damage first',
+                icon: '💎',
+                shieldPercent: 0.25
+            },
+            {
+                id: 'shield_battery',
+                name: 'Shield Battery',
+                description: 'Shield regenerates 10% of max HP every 5 seconds (if shield is broken)',
+                icon: '🔄',
+                shieldRegenPercent: 0.10,
+                shieldRegenInterval: 5.0
+            },
+            
+            // OFFENSIVE (5)
+            {
+                id: 'rage_combo',
+                name: 'Rage Combo',
+                description: 'Each consecutive hit increases damage by 5% (max 50%, resets on miss)',
+                icon: '⚔️',
+                comboDamagePerHit: 0.05,
+                comboMaxDamage: 0.50
+            },
+            {
+                id: 'weak_point',
+                name: 'Weak Point',
+                description: 'Each attack ignores 2% more of enemy defense (max 60%)',
+                icon: '🎯',
+                defenseIgnorePerHit: 0.02,
+                defenseIgnoreMax: 0.60
+            },
+            {
+                id: 'spite',
+                name: 'Spite',
+                description: 'Below 30% HP, deal +60% damage',
+                icon: '🔥',
+                lowHpDamageBoost: 0.60,
+                lowHpThreshold: 0.30
+            },
+            {
+                id: 'executioner',
+                name: 'Executioner',
+                description: 'Deal +50% damage to enemies below 40% HP',
+                icon: '⚔️',
+                executeDamage: 1.50,
+                executeThreshold: 0.40
+            },
+            {
+                id: 'precision_strike',
+                name: 'Precision Strike',
+                description: 'Attacks cannot miss, but deal -10% damage',
+                icon: '🎯',
+                cannotMiss: true,
+                damageReduction: 0.10
+            },
+            
+            // DEFENSIVE (4)
+            {
+                id: 'battle_hardened',
+                name: 'Battle Hardened',
+                description: 'Each hit taken increases defense by 1 (max +20, resets on heal above 80% HP)',
+                icon: '🛡️',
+                defensePerHit: 1,
+                defenseMax: 20,
+                resetThreshold: 0.80
+            },
+            {
+                id: 'blink',
+                name: 'Blink',
+                description: '20% chance to dodge any attack completely',
+                icon: '💫',
+                dodgeChance: 0.20
+            },
+            {
+                id: 'iron_will',
+                name: 'Iron Will',
+                description: 'Take 10% less damage from critical hits, +20 Defense',
+                icon: '🛡️',
+                critDamageReduction: 0.10,
+                flatEffects: {
+                    defense: 20
+                }
+            },
+            {
+                id: 'retaliate',
+                name: 'Retaliate',
+                description: 'First 5 hits received, counter-attack immediately for 40% of normal damage',
+                icon: '⚔️',
+                counterDamage: 0.40,
+                maxCounters: 5
+            },
+            
+            // UTILITY/HYBRID (4)
+            {
+                id: 'power_spike',
+                name: 'Power Spike',
+                description: 'Every 5 floors, gain +10% to all stats (permanent)',
+                icon: '⚡',
+                floorInterval: 5,
+                statBoost: 0.10
+            },
+            {
+                id: 'potion_master',
+                name: 'Potion Master',
+                description: 'Heal 3% max HP every 3 seconds, but lose 1% max HP permanently each floor',
+                icon: '⚗️',
+                healPercent: 0.03,
+                healInterval: 3.0,
+                hpLossPerFloor: 0.01
+            },
+            {
+                id: 'recycle',
+                name: 'Recycle',
+                description: 'When you dodge or miss, gain +15% attack speed for 3 seconds',
+                icon: '🔄',
+                speedBoost: 0.15,
+                boostDuration: 3.0
+            },
+            {
+                id: 'energy_surge',
+                name: 'Energy Surge',
+                description: 'Every 4 seconds, next attack deals 2.5x damage and cannot miss. -15% attack speed',
+                icon: '⚡',
+                surgeInterval: 4.0,
+                surgeMultiplier: 2.5,
+                percentageEffects: {
+                    attackSpeed: 0.85
+                }
             }
         ];
         

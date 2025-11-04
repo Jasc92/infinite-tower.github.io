@@ -61,7 +61,9 @@ class GameManager {
             lifesteal: 0.0,
             defense: 5,
             maxHp: 100,
-            currentHp: 100
+            currentHp: 100,
+            shield: 0, // Shield system (absorbs damage, prevents crits while active)
+            maxShield: 0 // Maximum shield for this battle
         };
     }
 
@@ -301,6 +303,41 @@ class GameManager {
             this.player.currentHp = this.player.maxHp; // Full HP for new battle
         }
         
+        // Reset shield for new battle
+        this.player.shield = 0;
+        this.player.maxShield = 0;
+        
+        // Apply Diamond Shield relic (if active)
+        const diamondShield = this.relicManager.activeRelics.find(r => r.id === 'diamond_shield');
+        if (diamondShield) {
+            this.player.maxShield = Math.round(this.player.maxHp * diamondShield.shieldPercent);
+            this.player.shield = this.player.maxShield;
+            console.log(`💎 Diamond Shield: ${this.player.shield}/${this.player.maxShield} shield`);
+        }
+        
+        // Apply Potion Master HP loss per floor (if active)
+        const potionMaster = this.relicManager.activeRelics.find(r => r.id === 'potion_master');
+        if (potionMaster && this.currentFloor > 1) {
+            const hpLoss = Math.round(this.player.maxHp * potionMaster.hpLossPerFloor);
+            this.player.maxHp = Math.max(10, this.player.maxHp - hpLoss); // Minimum 10 HP
+            this.player.currentHp = Math.min(this.player.currentHp, this.player.maxHp);
+            console.log(`⚗️ Potion Master: Lost ${hpLoss} max HP (now ${this.player.maxHp})`);
+        }
+        
+        // Apply Power Spike (if active) - permanent stat boost every 5 floors
+        const powerSpike = this.relicManager.activeRelics.find(r => r.id === 'power_spike');
+        if (powerSpike && this.currentFloor % powerSpike.floorInterval === 0) {
+            const boost = 1 + powerSpike.statBoost;
+            this.player.attack = Math.round(this.player.attack * boost);
+            this.player.attackSpeed = Math.min(6.0, this.player.attackSpeed * boost);
+            this.player.critChance = Math.min(0.75, this.player.critChance * boost);
+            this.player.lifesteal = Math.min(0.40, this.player.lifesteal * boost);
+            this.player.defense = Math.round(this.player.defense * boost);
+            this.player.maxHp = Math.round(this.player.maxHp * boost);
+            this.player.currentHp = Math.min(this.player.currentHp, this.player.maxHp);
+            console.log(`⚡ Power Spike: +${powerSpike.statBoost * 100}% to all stats`);
+        }
+        
         // NOTE: Relic stat effects (effect()) are NO LONGER applied here
         // They are applied ONCE when relics are selected, and basePlayerStats is updated
         // Only combat effects (critMultiplier, armorPierce, etc.) are checked in combat.js
@@ -358,19 +395,28 @@ class GameManager {
             this.availablePoints += 3; // Bonus points from boss
         }
         
-        // Check for relic selection FIRST (every 5 floors)
-        if (this.currentFloor % 5 === 0) {
-            // We'll return relic first, but prepare for stats after
-            this.availablePoints += 5; // ADD points instead of resetting
+        // NEW RELIC SYSTEM: 1 at start, then every 10 floors (10, 20, 30, ...) BEFORE boss floors
+        // Floor 1 (start): relic selection
+        // Floor 10 (before boss 11): relic selection
+        // Floor 20 (before boss 21): relic selection
+        // etc.
+        if (this.currentFloor === 1 || (this.currentFloor % 10 === 0 && this.currentFloor > 1)) {
+            // Add stat points (5 at start, 5 every floor)
+            if (this.currentFloor === 1) {
+                this.availablePoints = 5; // Start with 5 points
+            } else {
+                this.availablePoints += 5; // Add 5 points each floor
+            }
             this.baseStatsSnapshot = null; // Reset snapshot for new allocation
             
-            // basePlayerStats will be updated after stat allocation (in btn-start-battle click handler)
-            // Don't update here because stats haven't been allocated yet
-            
-            return 'relic'; // Relic selection FIRST
+            return 'relic'; // Relic selection
         }
         
-        return 'battle'; // Continue to next battle
+        // Every other floor: stat allocation
+        this.availablePoints += 5; // ADD points instead of resetting
+        this.baseStatsSnapshot = null; // Reset snapshot for new allocation
+        
+        return 'stats'; // Stat allocation
     }
 
     /**
