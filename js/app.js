@@ -234,20 +234,77 @@ function updateStatDisplay(stat, value, isMax) {
 function allocateStatPoint(statType) {
     console.log(`=== ALLOCATE STAT POINT: ${statType} ===`);
     console.log('Available points:', game.availablePoints);
-    console.log('Current value:', game.player[statType] || game.player.attackSpeed);
+    
+    // CRITICAL: Must work on base stats without relics
+    // First, restore player to base stats (without relic effects)
+    if (!game.baseStatsWithoutRelics) {
+        // Initialize base stats from current player stats
+        // But we need to remove relic effects first
+        game.baseStatsWithoutRelics = {
+            attack: game.player.attack,
+            attackSpeed: game.player.attackSpeed,
+            critChance: game.player.critChance,
+            lifesteal: game.player.lifesteal,
+            defense: game.player.defense,
+            maxHp: game.player.maxHp
+        };
+        // Remove relic effects to get true base
+        if (game.relicManager.activeRelics.length > 0) {
+            // Temporarily remove all relics, get base stats, then reapply
+            const tempRelics = [...game.relicManager.activeRelics];
+            game.relicManager.activeRelics = [];
+            game.baseStatsWithoutRelics = {
+                attack: game.player.attack,
+                attackSpeed: game.player.attackSpeed,
+                critChance: game.player.critChance,
+                lifesteal: game.player.lifesteal,
+                defense: game.player.defense,
+                maxHp: game.player.maxHp
+            };
+            game.relicManager.activeRelics = tempRelics;
+        }
+    }
+    
+    // Restore player to base stats (without relics) before applying point
+    game.player.attack = game.baseStatsWithoutRelics.attack;
+    game.player.attackSpeed = game.baseStatsWithoutRelics.attackSpeed;
+    game.player.critChance = game.baseStatsWithoutRelics.critChance;
+    game.player.lifesteal = game.baseStatsWithoutRelics.lifesteal;
+    game.player.defense = game.baseStatsWithoutRelics.defense;
+    game.player.maxHp = game.baseStatsWithoutRelics.maxHp;
+    
+    // Get current base value (without relics)
+    const currentBaseValue = game.baseStatsWithoutRelics[statType] !== undefined 
+        ? game.baseStatsWithoutRelics[statType] 
+        : game.baseStatsWithoutRelics.attackSpeed;
+    console.log('Current base value (without relics):', currentBaseValue);
     
     if (game.availablePoints > 0) {
         const canAllocate = checkStatCap(statType);
         if (canAllocate) {
+            // Apply to player stats (which are now base stats without relics)
             game.applyStatPoint(statType);
             game.availablePoints--;
-            console.log('After allocation:', game.player[statType] || game.player.attackSpeed);
+            
+            // Update baseStatsWithoutRelics with new value
+            game.baseStatsWithoutRelics[statType] = game.player[statType] !== undefined 
+                ? game.player[statType] 
+                : game.player.attackSpeed;
+            
+            // Reapply relic effects to get final stats
+            game.applyRelicEffectsToBaseStats();
+            
+            console.log('After allocation:', game.player[statType] !== undefined ? game.player[statType] : game.player.attackSpeed);
             console.log('Remaining points:', game.availablePoints);
             updateStatsScreen();
         } else {
+            // Still reapply relics even if can't allocate
+            game.applyRelicEffectsToBaseStats();
             console.log('Cannot allocate: stat at cap');
         }
     } else {
+        // Still reapply relics even if no points
+        game.applyRelicEffectsToBaseStats();
         console.log('Cannot allocate: no points available');
     }
 }
@@ -255,17 +312,47 @@ function allocateStatPoint(statType) {
 function removeStatPoint(statType) {
     console.log(`=== REMOVE STAT POINT: ${statType} ===`);
     console.log('Available points:', game.availablePoints);
-    console.log('Current value:', game.player[statType] || game.player.attackSpeed);
-    console.log('Snapshot value:', game.baseStatsSnapshot ? (game.baseStatsSnapshot[statType] || game.baseStatsSnapshot.attackSpeed) : 'NO SNAPSHOT');
+    
+    // Work on base stats without relics
+    if (!game.baseStatsWithoutRelics) {
+        // If no base stats yet, can't remove
+        console.log('Cannot remove: no base stats');
+        return;
+    }
+    
+    // Get current base value (without relics)
+    const currentBaseValue = game.baseStatsWithoutRelics[statType] || game.baseStatsWithoutRelics.attackSpeed;
+    const snapshotValue = game.baseStatsSnapshot ? (game.baseStatsSnapshot[statType] || game.baseStatsSnapshot.attackSpeed) : null;
+    
+    console.log('Current base value (without relics):', currentBaseValue);
+    console.log('Snapshot value:', snapshotValue || 'NO SNAPSHOT');
+    
+    // Restore player to base stats first
+    game.player.attack = game.baseStatsWithoutRelics.attack;
+    game.player.attackSpeed = game.baseStatsWithoutRelics.attackSpeed;
+    game.player.critChance = game.baseStatsWithoutRelics.critChance;
+    game.player.lifesteal = game.baseStatsWithoutRelics.lifesteal;
+    game.player.defense = game.baseStatsWithoutRelics.defense;
+    game.player.maxHp = game.baseStatsWithoutRelics.maxHp;
     
     const removed = game.removeStatPoint(statType);
     if (removed) {
         game.availablePoints++;
+        
+        // Update baseStatsWithoutRelics with new value
+        game.baseStatsWithoutRelics[statType] = game.player[statType] || game.player.attackSpeed;
+        
+        // Reapply relic effects to get final stats
+        game.applyRelicEffectsToBaseStats();
+        
         console.log('After removal:', game.player[statType] || game.player.attackSpeed);
         console.log('Remaining points:', game.availablePoints);
         updateStatsScreen();
     } else {
         console.log('Cannot remove: already at base value or no snapshot');
+        // Still reapply relics even if removal failed
+        game.applyRelicEffectsToBaseStats();
+        updateStatsScreen();
     }
 }
 
@@ -306,32 +393,77 @@ function updateRelicScreen() {
     // Update relic counter
     document.getElementById('relic-count').textContent = game.relicManager.activeRelics.length;
     
-    // Show current relics
+    // Show current relics at bottom (like in battle)
     const currentRelicsContainer = document.getElementById('current-relics');
     currentRelicsContainer.innerHTML = '';
+    currentRelicsContainer.className = 'current-relics';
+    
+    const isReplaceMode = game.relicManager.activeRelics.length >= 3;
     
     if (game.relicManager.activeRelics.length > 0) {
-        game.relicManager.activeRelics.forEach((relic) => {
-            const iconDiv = document.createElement('div');
-            iconDiv.className = 'current-relic-icon';
-            iconDiv.textContent = relic.icon;
-            iconDiv.title = relic.name;
+        // Create slots similar to battle screen
+        for (let i = 0; i < 3; i++) {
+            const slotDiv = document.createElement('div');
+            slotDiv.className = 'relic-selection-slot';
             
-            // Show tooltip on tap/click
-            iconDiv.addEventListener('click', (e) => {
-                e.stopPropagation();
-                showRelicTooltip(relic);
-            });
+            if (i < game.relicManager.activeRelics.length) {
+                const relic = game.relicManager.activeRelics[i];
+                slotDiv.textContent = relic.icon;
+                slotDiv.classList.add('active');
+                slotDiv.title = relic.name;
+                
+                // Show tooltip on tap/click
+                slotDiv.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (isReplaceMode) {
+                        // In replace mode, clicking current relic selects it for replacement
+                        selectRelicToReplace(i);
+                    } else {
+                        // Otherwise just show tooltip
+                        showRelicTooltip(relic);
+                    }
+                });
+                
+                slotDiv.addEventListener('touchstart', (e) => {
+                    e.stopPropagation();
+                    if (isReplaceMode) {
+                        slotDiv.classList.add('touching');
+                    }
+                });
+                
+                slotDiv.addEventListener('touchend', (e) => {
+                    e.stopPropagation();
+                    slotDiv.classList.remove('touching');
+                    if (isReplaceMode) {
+                        selectRelicToReplace(i);
+                    } else {
+                        showRelicTooltip(game.relicManager.activeRelics[i]);
+                    }
+                });
+            } else {
+                slotDiv.classList.add('empty');
+            }
             
-            currentRelicsContainer.appendChild(iconDiv);
-        });
+            currentRelicsContainer.appendChild(slotDiv);
+        }
+        
+        // Add instruction text in replace mode
+        if (isReplaceMode) {
+            const instruction = document.createElement('div');
+            instruction.className = 'relic-replace-instruction';
+            instruction.textContent = 'Tap a relic below to replace it, then select a new one above';
+            currentRelicsContainer.appendChild(instruction);
+        }
     }
     
     const container = document.getElementById('relic-options');
     container.innerHTML = '';
     
-    const isReplaceMode = game.relicManager.activeRelics.length >= 3;
-    console.log('Replace mode:', isReplaceMode);
+    // Reset selectedReplaceIndex when screen updates
+    selectedReplaceIndex = null;
+    
+    const isReplaceModeForCards = game.relicManager.activeRelics.length >= 3;
+    console.log('Replace mode:', isReplaceModeForCards);
     
     // Get 3 random relics
     const relicOptions = game.relicManager.getRandomRelics(3);
@@ -349,7 +481,7 @@ function updateRelicScreen() {
         console.log(`Creating card ${index} for relic:`, relic.name);
         
         const card = document.createElement('div');
-        card.className = 'relic-card' + (isReplaceMode ? ' replace-mode' : '');
+        card.className = 'relic-card' + (isReplaceModeForCards && selectedReplaceIndex === null ? ' replace-mode-waiting' : '');
         card.innerHTML = `
             <div class="relic-card-header">
                 <div class="relic-icon">${relic.icon}</div>
@@ -365,6 +497,12 @@ function updateRelicScreen() {
                 return;
             }
             
+            // In replace mode, must select a current relic first
+            if (isReplaceModeForCards && selectedReplaceIndex === null) {
+                console.log('Must select a current relic to replace first');
+                return;
+            }
+            
             isSelecting = true;
             e.preventDefault();
             e.stopPropagation();
@@ -376,9 +514,25 @@ function updateRelicScreen() {
                 c.style.opacity = '0.5';
             });
             
-            // Add or replace relic
+            // Apply relic (add or replace)
+            if (isReplaceModeForCards) {
+            
+            // Disable all cards
+            document.querySelectorAll('.relic-card').forEach(c => {
+                c.style.pointerEvents = 'none';
+                c.style.opacity = '0.5';
+            });
+            
+            // Apply relic (add or replace)
             if (isReplaceMode) {
-                game.relicManager.replaceRelic(0, relic);
+                // Remove effects of old relic first
+                const oldRelic = game.relicManager.activeRelics[selectedReplaceIndex];
+                removeRelicEffects(oldRelic);
+                
+                // Replace the relic
+                game.relicManager.replaceRelic(selectedReplaceIndex, relic);
+                
+                console.log(`Replaced relic at index ${selectedReplaceIndex}: ${oldRelic.name} -> ${relic.name}`);
             } else {
                 game.relicManager.addRelic(relic);
             }
@@ -422,6 +576,9 @@ function updateRelicScreen() {
             }, 300);
         };
         
+        // Store reference to selectRelic function for later use
+        card._selectRelic = selectRelic;
+        
         // Add both touch and click events for mobile compatibility
         card.addEventListener('touchstart', (e) => {
             if (!isSelecting) {
@@ -441,6 +598,9 @@ function updateRelicScreen() {
         console.log(`Card ${index} appended to container`);
     });
     
+    // Reset selectedReplaceIndex when screen updates
+    selectedReplaceIndex = null;
+    
     console.log('Total cards in container:', container.children.length);
     
     // Always show skip button with appropriate text
@@ -454,6 +614,64 @@ function updateRelicScreen() {
     }
     
     console.log('=== RELIC SCREEN READY ===');
+}
+
+// Global variable to track which current relic is selected for replacement
+let selectedReplaceIndex = null;
+
+function selectRelicToReplace(index) {
+    selectedReplaceIndex = index;
+    console.log('Selected relic to replace:', index, game.relicManager.activeRelics[index].name);
+    
+    // Update UI to show which relic is selected for replacement
+    const slots = document.querySelectorAll('.relic-selection-slot');
+    slots.forEach((slot, i) => {
+        if (i === index && i < game.relicManager.activeRelics.length) {
+            slot.classList.add('selected-for-replace');
+        } else {
+            slot.classList.remove('selected-for-replace');
+        }
+    });
+    
+    // Update new relic cards to show they're ready to be selected
+    const cards = document.querySelectorAll('.relic-card');
+    cards.forEach(card => {
+        card.classList.remove('replace-mode-waiting');
+        if (card._selectRelic) {
+            // Enable selection
+            card.style.pointerEvents = 'auto';
+            card.style.opacity = '1';
+        }
+    });
+}
+
+// Function to remove relic effects (inverse of applying them)
+function removeRelicEffects(relic) {
+    console.log('=== REMOVING RELIC EFFECTS ===', relic.name);
+    
+    // Restore player to base stats without relics
+    if (game.baseStatsWithoutRelics) {
+        game.player.attack = game.baseStatsWithoutRelics.attack;
+        game.player.attackSpeed = game.baseStatsWithoutRelics.attackSpeed;
+        game.player.critChance = game.baseStatsWithoutRelics.critChance;
+        game.player.lifesteal = game.baseStatsWithoutRelics.lifesteal;
+        game.player.defense = game.baseStatsWithoutRelics.defense;
+        game.player.maxHp = game.baseStatsWithoutRelics.maxHp;
+    }
+    
+    // Remove this specific relic from active list temporarily
+    const relicIndex = game.relicManager.activeRelics.indexOf(relic);
+    if (relicIndex >= 0) {
+        game.relicManager.activeRelics.splice(relicIndex, 1);
+        
+        // Reapply all remaining relics
+        game.relicManager.applyStatEffects(game.player);
+        
+        // Put relic back (will be replaced shortly)
+        game.relicManager.activeRelics.splice(relicIndex, 0, relic);
+    }
+    
+    console.log('Relic effects removed, stats reset to base');
 }
 
 // ========================================

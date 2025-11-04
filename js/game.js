@@ -208,10 +208,23 @@ class GameManager {
     /**
      * Update basePlayerStats to current player stats
      * This is called after stat allocation (before relic effects)
+     * IMPORTANT: Must be called AFTER removing relic effects from player stats
      * Saves stats WITHOUT relic effects, then applies relics to get final stats
      */
     updateBasePlayerStats() {
-        // Save current stats WITHOUT relic effects (pure stats + allocated points)
+        // CRITICAL: Player stats should already be without relic effects at this point
+        // If they're not, we need to restore them first
+        if (this.baseStatsWithoutRelics) {
+            // Restore player stats to base (without relics) before saving
+            this.player.attack = this.baseStatsWithoutRelics.attack;
+            this.player.attackSpeed = this.baseStatsWithoutRelics.attackSpeed;
+            this.player.critChance = this.baseStatsWithoutRelics.critChance;
+            this.player.lifesteal = this.baseStatsWithoutRelics.lifesteal;
+            this.player.defense = this.baseStatsWithoutRelics.defense;
+            this.player.maxHp = this.baseStatsWithoutRelics.maxHp;
+        }
+        
+        // Now save current stats (which should be without relic effects)
         this.baseStatsWithoutRelics = {
             attack: this.player.attack,
             attackSpeed: this.player.attackSpeed,
