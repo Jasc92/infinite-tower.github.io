@@ -32,7 +32,7 @@
             <div class="title-container">
                 <h1 class="game-title">INFINITE TOWER</h1>
                 <div class="subtitle">Roguelike Auto-Battler</div>
-                <div class="version">v2.6.0</div>
+                <div class="version">v2.7.0</div>
             </div>
             
             <div class="menu-content">
@@ -192,8 +192,11 @@
                 </div>
                 
                 <div class="relic-selection-actions">
+                    <button id="btn-select-relic" class="btn btn-primary btn-large hidden">
+                        Select <span id="selected-relic-name"></span>
+                    </button>
                     <button id="btn-skip-relic" class="btn btn-secondary">
-                        Skip
+                        Skip (Continue without relic)
                     </button>
                     <button id="btn-relic-home" class="btn btn-abandon">
                         🏠 Home

@@ -680,8 +680,97 @@ function updateRelicScreen() {
         return;
     }
     
-    // Flag to prevent multiple selections
+    // Track selected relic
+    let selectedRelic = null;
     let isSelecting = false;
+    
+    // Update select button visibility
+    function updateSelectButton() {
+        const selectBtn = document.getElementById('btn-select-relic');
+        const selectedNameSpan = document.getElementById('selected-relic-name');
+        
+        if (selectedRelic) {
+            selectBtn.classList.remove('hidden');
+            selectedNameSpan.textContent = selectedRelic.name;
+        } else {
+            selectBtn.classList.add('hidden');
+        }
+    }
+    
+    // Function to actually apply the selected relic
+    function applySelectedRelic() {
+        if (!selectedRelic || isSelecting) return;
+        
+        isSelecting = true;
+        console.log('Applying relic:', selectedRelic.name);
+        
+        // Disable all cards
+        document.querySelectorAll('.relic-card').forEach(c => {
+            c.style.pointerEvents = 'none';
+            c.style.opacity = '0.5';
+        });
+        
+        // Apply relic (add or replace)
+        if (isReplaceModeForCards) {
+            // Remove effects of old relic first
+            const oldRelic = game.relicManager.activeRelics[selectedReplaceIndex];
+            removeRelicEffects(oldRelic);
+            
+            // Replace the relic
+            game.relicManager.replaceRelic(selectedReplaceIndex, selectedRelic);
+            
+            console.log(`Replaced relic at index ${selectedReplaceIndex}: ${oldRelic.name} -> ${selectedRelic.name}`);
+        } else {
+            game.relicManager.addRelic(selectedRelic);
+        }
+        
+        // Ensure we have baseStatsWithoutRelics (stats without relic effects)
+        if (!game.baseStatsWithoutRelics) {
+            // If this is the first relic, use current player stats as base
+            game.baseStatsWithoutRelics = {
+                attack: game.player.attack,
+                attackSpeed: game.player.attackSpeed,
+                critChance: game.player.critChance,
+                lifesteal: game.player.lifesteal,
+                defense: game.player.defense,
+                maxHp: game.player.maxHp
+            };
+        }
+        
+        // Now apply ALL active relic effects (including the new/replaced one)
+        // This ensures effects are applied only once, in the correct order
+        console.log('=== APPLYING ALL RELIC EFFECTS ===');
+        console.log('Active relics:', game.relicManager.activeRelics.map(r => r.name));
+        console.log('Base stats WITHOUT relics:', game.baseStatsWithoutRelics);
+        
+        // Apply relic effects to base stats (recalculates percentage effects)
+        game.applyRelicEffectsToBaseStats();
+        
+        console.log('Player stats AFTER relic effect:', {
+            atk: game.player.attack,
+            hp: game.player.maxHp,
+            def: game.player.defense,
+            lifesteal: game.player.lifesteal,
+            atkSpd: game.player.attackSpeed
+        });
+        console.log('Active relics after selection:', game.relicManager.activeRelics.length);
+        console.log('Navigating to stats in 300ms...');
+        
+        // Continue to stats allocation
+        setTimeout(() => {
+            console.log('Calling showScreen(stats)...');
+            showScreen('stats');
+        }, 300);
+    }
+    
+    // Set up select button listener (only once per screen update)
+    const selectBtn = document.getElementById('btn-select-relic');
+    // Remove old listeners by cloning
+    const newSelectBtn = selectBtn.cloneNode(true);
+    selectBtn.parentNode.replaceChild(newSelectBtn, selectBtn);
+    newSelectBtn.addEventListener('click', () => {
+        applySelectedRelic();
+    });
     
     relicOptions.forEach((relic, index) => {
         console.log(`Creating card ${index} for relic:`, relic.name);
@@ -696,10 +785,10 @@ function updateRelicScreen() {
             <div class="relic-description">${relic.description}</div>
         `;
         
-        // Handler function
-        const selectRelic = (e) => {
+        // Handler to select relic (visual selection only)
+        const selectRelicVisual = (e) => {
             if (isSelecting) {
-                console.log('Already selecting, ignoring');
+                console.log('Already applying, ignoring');
                 return;
             }
             
@@ -712,93 +801,32 @@ function updateRelicScreen() {
             e.preventDefault();
             e.stopPropagation();
             
-            // Show confirmation modal
-            showRelicConfirmation(relic, isReplaceModeForCards, selectedReplaceIndex, () => {
-                // User confirmed - proceed with selection
-                isSelecting = true;
-                console.log('Relic selected:', relic.name);
-                
-                // Disable all cards
+            // Toggle selection
+            if (selectedRelic === relic) {
+                // Deselect
+                selectedRelic = null;
+                card.classList.remove('selected');
+            } else {
+                // Deselect previous
                 document.querySelectorAll('.relic-card').forEach(c => {
-                    c.style.pointerEvents = 'none';
-                    c.style.opacity = '0.5';
+                    c.classList.remove('selected');
                 });
-                
-                // Apply relic (add or replace)
-                if (isReplaceModeForCards) {
-                    // Remove effects of old relic first
-                    const oldRelic = game.relicManager.activeRelics[selectedReplaceIndex];
-                    removeRelicEffects(oldRelic);
-                    
-                    // Replace the relic
-                    game.relicManager.replaceRelic(selectedReplaceIndex, relic);
-                    
-                    console.log(`Replaced relic at index ${selectedReplaceIndex}: ${oldRelic.name} -> ${relic.name}`);
-                } else {
-                    game.relicManager.addRelic(relic);
-                }
-                
-                // Ensure we have baseStatsWithoutRelics (stats without relic effects)
-                if (!game.baseStatsWithoutRelics) {
-                    // If this is the first relic, use current player stats as base
-                    game.baseStatsWithoutRelics = {
-                        attack: game.player.attack,
-                        attackSpeed: game.player.attackSpeed,
-                        critChance: game.player.critChance,
-                        lifesteal: game.player.lifesteal,
-                        defense: game.player.defense,
-                        maxHp: game.player.maxHp
-                    };
-                }
-                
-                // Now apply ALL active relic effects (including the new/replaced one)
-                // This ensures effects are applied only once, in the correct order
-                console.log('=== APPLYING ALL RELIC EFFECTS ===');
-                console.log('Active relics:', game.relicManager.activeRelics.map(r => r.name));
-                console.log('Base stats WITHOUT relics:', game.baseStatsWithoutRelics);
-                
-                // Apply relic effects to base stats (recalculates percentage effects)
-                game.applyRelicEffectsToBaseStats();
-                
-                console.log('Player stats AFTER relic effect:', {
-                    atk: game.player.attack,
-                    hp: game.player.maxHp,
-                    def: game.player.defense,
-                    lifesteal: game.player.lifesteal,
-                    atkSpd: game.player.attackSpeed
-                });
-                console.log('Active relics after selection:', game.relicManager.activeRelics.length);
-                console.log('Navigating to stats in 300ms...');
-                
-                // Continue to stats allocation
-                setTimeout(() => {
-                    console.log('Calling showScreen(stats)...');
-                    showScreen('stats');
-                }, 300);
-            });
+                // Select this one
+                selectedRelic = relic;
+                card.classList.add('selected');
+            }
+            
+            updateSelectButton();
         };
         
-        // Store reference to selectRelic function for later use
-        card._selectRelic = selectRelic;
+        // Store relic reference
+        card._relic = relic;
         
-        // Add hover to show tooltip (desktop)
-        card.addEventListener('mouseenter', () => {
-            if (!isSelecting) {
-                showRelicTooltip(relic);
-            }
-        });
-        
-        card.addEventListener('mouseleave', () => {
-            // Don't auto-hide on mouse leave, let user close manually or wait for timeout
-        });
-        
-        // Add both touch and click events for mobile compatibility
+        // Add click/touch to select relic visually
         card.addEventListener('touchstart', (e) => {
             if (!isSelecting) {
-                console.log('Touch detected on:', relic.name);
+                e.stopPropagation();
                 card.classList.add('touching');
-                // Show tooltip on touch
-                showRelicTooltip(relic);
             }
         });
         
@@ -807,23 +835,22 @@ function updateRelicScreen() {
                 e.preventDefault();
                 e.stopPropagation();
                 card.classList.remove('touching');
-                // Hide tooltip before selecting
-                hideRelicTooltip();
-                selectRelic(e);
+                selectRelicVisual(e);
             }
         });
         
         card.addEventListener('click', (e) => {
             if (!isSelecting) {
-                // Hide tooltip before selecting
-                hideRelicTooltip();
-                selectRelic(e);
+                selectRelicVisual(e);
             }
         });
         
         container.appendChild(card);
         console.log(`Card ${index} appended to container`);
     });
+    
+    // Initialize select button as hidden
+    updateSelectButton();
     
     // Reset selectedReplaceIndex when screen updates
     selectedReplaceIndex = null;
