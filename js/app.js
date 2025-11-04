@@ -162,7 +162,39 @@ function updateStatsScreen() {
     const title = document.getElementById('stats-title');
     title.textContent = game.currentFloor === 1 ? 'Initial Build' : `Floor ${game.currentFloor} - Level Up!`;
     
-    // Take snapshot if we haven't yet
+    // Ensure baseStatsWithoutRelics exists before taking snapshot
+    if (!game.baseStatsWithoutRelics) {
+        // Initialize from player stats (should already be without relics if coming from battle)
+        if (game.relicManager.activeRelics.length > 0) {
+            // Temporarily remove relics to get true base
+            const tempRelics = [...game.relicManager.activeRelics];
+            game.relicManager.activeRelics = [];
+            
+            game.baseStatsWithoutRelics = {
+                attack: game.player.attack,
+                attackSpeed: game.player.attackSpeed,
+                critChance: game.player.critChance,
+                lifesteal: game.player.lifesteal,
+                defense: game.player.defense,
+                maxHp: game.player.maxHp
+            };
+            
+            game.relicManager.activeRelics = tempRelics;
+            // Reapply relics to player
+            game.applyRelicEffectsToBaseStats();
+        } else {
+            game.baseStatsWithoutRelics = {
+                attack: game.player.attack,
+                attackSpeed: game.player.attackSpeed,
+                critChance: game.player.critChance,
+                lifesteal: game.player.lifesteal,
+                defense: game.player.defense,
+                maxHp: game.player.maxHp
+            };
+        }
+    }
+    
+    // Take snapshot if we haven't yet (for comparison when removing points)
     if (!game.baseStatsSnapshot) {
         game.snapshotBaseStats();
     }
@@ -240,19 +272,12 @@ function allocateStatPoint(statType) {
     if (!game.baseStatsWithoutRelics) {
         // Initialize base stats from current player stats
         // But we need to remove relic effects first
-        game.baseStatsWithoutRelics = {
-            attack: game.player.attack,
-            attackSpeed: game.player.attackSpeed,
-            critChance: game.player.critChance,
-            lifesteal: game.player.lifesteal,
-            defense: game.player.defense,
-            maxHp: game.player.maxHp
-        };
-        // Remove relic effects to get true base
         if (game.relicManager.activeRelics.length > 0) {
             // Temporarily remove all relics, get base stats, then reapply
             const tempRelics = [...game.relicManager.activeRelics];
             game.relicManager.activeRelics = [];
+            
+            // Save current stats (now without relic effects)
             game.baseStatsWithoutRelics = {
                 attack: game.player.attack,
                 attackSpeed: game.player.attackSpeed,
@@ -261,7 +286,19 @@ function allocateStatPoint(statType) {
                 defense: game.player.defense,
                 maxHp: game.player.maxHp
             };
+            
+            // Restore relics
             game.relicManager.activeRelics = tempRelics;
+        } else {
+            // No relics, current stats are base stats
+            game.baseStatsWithoutRelics = {
+                attack: game.player.attack,
+                attackSpeed: game.player.attackSpeed,
+                critChance: game.player.critChance,
+                lifesteal: game.player.lifesteal,
+                defense: game.player.defense,
+                maxHp: game.player.maxHp
+            };
         }
     }
     
@@ -940,14 +977,14 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
     ctx.lineWidth = 1;
     ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
     
-    // HP Text (compact)
-    ctx.font = '7px "Press Start 2P", monospace';
+    // HP Text (larger font)
+    ctx.font = '10px "Press Start 2P", monospace'; // Increased from 7px to 10px
     ctx.fillStyle = '#a0a0a0';
     ctx.textAlign = 'center';
-    ctx.fillText(`${Math.max(0, Math.round(fighter.currentHp))} / ${fighter.maxHp}`, x + width / 2, hpBarY + hpBarHeight + 2);
+    ctx.fillText(`${Math.max(0, Math.round(fighter.currentHp))} / ${fighter.maxHp}`, x + width / 2, hpBarY + hpBarHeight + 3);
     
-    // Stats (compact - reduced spacing)
-    const statsY = hpBarY + hpBarHeight + 12;
+    // Stats (compact - reduced spacing, no extra space at bottom)
+    const statsY = hpBarY + hpBarHeight + 10; // Reduced from 12 to 10
     ctx.font = '9px "Press Start 2P", monospace';
     ctx.textAlign = 'left';
     ctx.fillStyle = '#e0e0e0';
@@ -960,8 +997,13 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
         `LS: ${Math.round((fighter.lifesteal || 0) * 100)}%`
     ];
     
+    // Calculate spacing to fit exactly without extra space
+    const statsHeight = stats.length * 10; // 9px font + 1px spacing
+    const availableHeight = height - (statsY - y);
+    const spacing = Math.min(10, Math.floor(availableHeight / stats.length)); // Max 10px spacing
+    
     stats.forEach((stat, index) => {
-        ctx.fillText(stat, x + 6, statsY + index * 11); // Reduced spacing from 14 to 11
+        ctx.fillText(stat, x + 6, statsY + index * spacing);
     });
 }
 
