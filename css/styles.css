@@ -572,7 +572,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    font-size: clamp(8px, 1.8vw, 10px); /* Increased by 1 point */
+    font-size: clamp(10px, 2vw, 12px); /* Increased by 2 points */
     line-height: 1.4;
 }
 
@@ -1218,7 +1218,7 @@ body {
     }
     
     .fighter-stats {
-        font-size: clamp(11px, 2.5vw, 14px); /* Increased by 1 point */
+        font-size: clamp(13px, 2.8vw, 16px); /* Increased by 2 points */
         gap: 5px;
     }
     

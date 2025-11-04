@@ -902,7 +902,7 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
     ctx.strokeRect(x, y, width, height);
     
     // Title
-    ctx.font = 'bold 10px "Press Start 2P", monospace';
+    ctx.font = 'bold 11px "Press Start 2P", monospace'; // Slightly larger
     ctx.fillStyle = titleColor;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
@@ -946,9 +946,9 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
     ctx.textAlign = 'center';
     ctx.fillText(`${Math.max(0, Math.round(fighter.currentHp))} / ${fighter.maxHp}`, x + width / 2, hpBarY + hpBarHeight + 4);
     
-    // Stats
+    // Stats (larger font)
     const statsY = hpBarY + hpBarHeight + 20;
-    ctx.font = '7px "Press Start 2P", monospace';
+    ctx.font = '9px "Press Start 2P", monospace'; // Increased from 7px to 9px
     ctx.textAlign = 'left';
     ctx.fillStyle = '#e0e0e0';
     
@@ -961,7 +961,7 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
     ];
     
     stats.forEach((stat, index) => {
-        ctx.fillText(stat, x + 10, statsY + index * 12);
+        ctx.fillText(stat, x + 10, statsY + index * 14); // Slightly more spacing
     });
 }
 
@@ -1036,22 +1036,22 @@ function renderBattle() {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Result text (más abajo)
-        let resultText = game.battleResult === 'win' ? 'VICTORY!' : 'DEFEAT!';
+        // Result text (más abajo, sin signos de exclamación)
+        let resultText = game.battleResult === 'win' ? 'VICTORY' : 'DEFEAT';
         let resultColor = game.battleResult === 'win' ? '#4caf50' : '#f44336';
         
         // Special text for boss wins
         if (game.battleResult === 'win' && game.enemy && game.enemy.isBoss) {
-            resultText = 'BOSS DEFEATED!';
+            resultText = 'BOSS DEFEATED';
             resultColor = '#ffd700'; // Gold
         }
         
-        ctx.font = `bold ${canvas.width * 0.08}px 'Press Start 2P', monospace`; // Smaller font
+        ctx.font = `bold ${canvas.width * 0.06}px 'Press Start 2P', monospace`; // Smaller font
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Position text at 80% down (más abajo para no tapar personajes)
-        const textY = canvas.height * 0.80;
+        // Position text at 85% down (más abajo para no tapar personajes)
+        const textY = canvas.height * 0.85;
         
         // Text outline (más grueso para mejor visibilidad)
         ctx.lineWidth = 10;
