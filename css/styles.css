@@ -1218,7 +1218,7 @@ body {
     }
     
     .fighter-stats {
-        font-size: clamp(10px, 2.5vw, 13px);
+        font-size: clamp(11px, 2.5vw, 14px); /* Increased by 1 point */
         gap: 5px;
     }
     
