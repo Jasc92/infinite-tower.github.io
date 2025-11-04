@@ -260,6 +260,7 @@ class CombatEngine {
             damage: damageInfo.damage,
             isCrit: damageInfo.isCrit,
             isMiss: damageInfo.isMiss,
+            isHeal: damageInfo.isHeal || false, // Include isHeal property
             target: target, // 'player' or 'enemy'
             offsetX: randomOffsetX,
             offsetY: randomOffsetY,
