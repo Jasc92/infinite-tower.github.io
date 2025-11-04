@@ -401,6 +401,10 @@ function updateRelicScreen() {
     const isReplaceMode = game.relicManager.activeRelics.length >= 3;
     
     if (game.relicManager.activeRelics.length > 0) {
+        // Create slots container
+        const slotsContainer = document.createElement('div');
+        slotsContainer.className = 'relic-selection-slots';
+        
         // Create slots similar to battle screen
         for (let i = 0; i < 3; i++) {
             const slotDiv = document.createElement('div');
@@ -412,7 +416,7 @@ function updateRelicScreen() {
                 slotDiv.classList.add('active');
                 slotDiv.title = relic.name;
                 
-                // Show tooltip on tap/click
+                // Show tooltip on tap/click (when not in replace mode or not selected)
                 slotDiv.addEventListener('click', (e) => {
                     e.stopPropagation();
                     if (isReplaceMode) {
@@ -444,8 +448,10 @@ function updateRelicScreen() {
                 slotDiv.classList.add('empty');
             }
             
-            currentRelicsContainer.appendChild(slotDiv);
+            slotsContainer.appendChild(slotDiv);
         }
+        
+        currentRelicsContainer.appendChild(slotsContainer);
         
         // Add instruction text in replace mode
         if (isReplaceMode) {
@@ -516,15 +522,6 @@ function updateRelicScreen() {
             
             // Apply relic (add or replace)
             if (isReplaceModeForCards) {
-            
-            // Disable all cards
-            document.querySelectorAll('.relic-card').forEach(c => {
-                c.style.pointerEvents = 'none';
-                c.style.opacity = '0.5';
-            });
-            
-            // Apply relic (add or replace)
-            if (isReplaceMode) {
                 // Remove effects of old relic first
                 const oldRelic = game.relicManager.activeRelics[selectedReplaceIndex];
                 removeRelicEffects(oldRelic);
