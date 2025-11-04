@@ -1063,9 +1063,9 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
     ctx.textAlign = 'center';
     ctx.fillText(`${Math.max(0, Math.round(fighter.currentHp))} / ${fighter.maxHp}`, x + width / 2, hpBarY + hpBarHeight + 5);
     
-    // Stats (compact - minimal spacing, no extra space at bottom)
-    const statsY = hpBarY + hpBarHeight + 14; // Reduced spacing
-    ctx.font = '9px "Press Start 2P", monospace';
+    // Stats (separated from HP bar, larger font)
+    const statsY = hpBarY + hpBarHeight + 22; // Increased spacing from HP text (was 14, now 22)
+    ctx.font = '11px "Press Start 2P", monospace'; // Increased from 9px to 11px
     ctx.textAlign = 'left';
     ctx.fillStyle = '#e0e0e0';
     
@@ -1078,8 +1078,8 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
     ];
     
     // Calculate spacing to minimize empty space - tighter spacing
-    const lineHeight = 9; // Font size
-    const lineSpacing = 2; // Minimal spacing between lines
+    const lineHeight = 11; // Font size (updated to match)
+    const lineSpacing = 3; // Small spacing between lines
     const totalStatsHeight = (stats.length - 1) * (lineHeight + lineSpacing) + lineHeight;
     const availableHeight = height - (statsY - y);
     const spacing = availableHeight > totalStatsHeight ? lineHeight + lineSpacing : Math.floor(availableHeight / stats.length);
