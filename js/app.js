@@ -901,18 +901,18 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
     ctx.lineWidth = 3;
     ctx.strokeRect(x, y, width, height);
     
-    // Title
-    ctx.font = 'bold 11px "Press Start 2P", monospace'; // Slightly larger
+    // Title (compact)
+    ctx.font = 'bold 10px "Press Start 2P", monospace';
     ctx.fillStyle = titleColor;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(title, x + width / 2, y + 8);
+    ctx.fillText(title, x + width / 2, y + 6);
     
-    // HP Bar
-    const hpBarY = y + 28;
-    const hpBarHeight = 12;
-    const hpBarWidth = width - 16;
-    const hpBarX = x + 8;
+    // HP Bar (compact - moved up)
+    const hpBarY = y + 20;
+    const hpBarHeight = 10;
+    const hpBarWidth = width - 12;
+    const hpBarX = x + 6;
     
     // HP Bar background
     ctx.fillStyle = '#0a0a14';
@@ -940,15 +940,15 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
     ctx.lineWidth = 1;
     ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
     
-    // HP Text
-    ctx.font = '8px "Press Start 2P", monospace';
+    // HP Text (compact)
+    ctx.font = '7px "Press Start 2P", monospace';
     ctx.fillStyle = '#a0a0a0';
     ctx.textAlign = 'center';
-    ctx.fillText(`${Math.max(0, Math.round(fighter.currentHp))} / ${fighter.maxHp}`, x + width / 2, hpBarY + hpBarHeight + 4);
+    ctx.fillText(`${Math.max(0, Math.round(fighter.currentHp))} / ${fighter.maxHp}`, x + width / 2, hpBarY + hpBarHeight + 2);
     
-    // Stats (larger font)
-    const statsY = hpBarY + hpBarHeight + 20;
-    ctx.font = '9px "Press Start 2P", monospace'; // Increased from 7px to 9px
+    // Stats (compact - reduced spacing)
+    const statsY = hpBarY + hpBarHeight + 12;
+    ctx.font = '9px "Press Start 2P", monospace';
     ctx.textAlign = 'left';
     ctx.fillStyle = '#e0e0e0';
     
@@ -961,7 +961,7 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
     ];
     
     stats.forEach((stat, index) => {
-        ctx.fillText(stat, x + 10, statsY + index * 14); // Slightly more spacing
+        ctx.fillText(stat, x + 6, statsY + index * 11); // Reduced spacing from 14 to 11
     });
 }
 
