@@ -274,9 +274,22 @@ function allocateStatPoint(statType) {
     game.player.maxHp = game.baseStatsWithoutRelics.maxHp;
     
     // Get current base value (without relics)
-    const currentBaseValue = game.baseStatsWithoutRelics[statType] !== undefined 
-        ? game.baseStatsWithoutRelics[statType] 
-        : game.baseStatsWithoutRelics.attackSpeed;
+    let currentBaseValue;
+    if (statType === 'attackSpeed') {
+        currentBaseValue = game.baseStatsWithoutRelics.attackSpeed;
+    } else if (statType === 'attack') {
+        currentBaseValue = game.baseStatsWithoutRelics.attack;
+    } else if (statType === 'crit') {
+        currentBaseValue = game.baseStatsWithoutRelics.critChance;
+    } else if (statType === 'lifesteal') {
+        currentBaseValue = game.baseStatsWithoutRelics.lifesteal;
+    } else if (statType === 'defense') {
+        currentBaseValue = game.baseStatsWithoutRelics.defense;
+    } else if (statType === 'hp') {
+        currentBaseValue = game.baseStatsWithoutRelics.maxHp;
+    } else {
+        currentBaseValue = game.baseStatsWithoutRelics.attackSpeed;
+    }
     console.log('Current base value (without relics):', currentBaseValue);
     
     if (game.availablePoints > 0) {
@@ -287,9 +300,20 @@ function allocateStatPoint(statType) {
             game.availablePoints--;
             
             // Update baseStatsWithoutRelics with new value
-            game.baseStatsWithoutRelics[statType] = game.player[statType] !== undefined 
-                ? game.player[statType] 
-                : game.player.attackSpeed;
+            // Handle special cases for stat types
+            if (statType === 'attackSpeed') {
+                game.baseStatsWithoutRelics.attackSpeed = game.player.attackSpeed;
+            } else if (statType === 'attack') {
+                game.baseStatsWithoutRelics.attack = game.player.attack;
+            } else if (statType === 'crit') {
+                game.baseStatsWithoutRelics.critChance = game.player.critChance;
+            } else if (statType === 'lifesteal') {
+                game.baseStatsWithoutRelics.lifesteal = game.player.lifesteal;
+            } else if (statType === 'defense') {
+                game.baseStatsWithoutRelics.defense = game.player.defense;
+            } else if (statType === 'hp') {
+                game.baseStatsWithoutRelics.maxHp = game.player.maxHp;
+            }
             
             // Reapply relic effects to get final stats
             game.applyRelicEffectsToBaseStats();
@@ -340,12 +364,42 @@ function removeStatPoint(statType) {
         game.availablePoints++;
         
         // Update baseStatsWithoutRelics with new value
-        game.baseStatsWithoutRelics[statType] = game.player[statType] || game.player.attackSpeed;
+        // Handle special cases for stat types
+        if (statType === 'attackSpeed') {
+            game.baseStatsWithoutRelics.attackSpeed = game.player.attackSpeed;
+        } else if (statType === 'attack') {
+            game.baseStatsWithoutRelics.attack = game.player.attack;
+        } else if (statType === 'crit') {
+            game.baseStatsWithoutRelics.critChance = game.player.critChance;
+        } else if (statType === 'lifesteal') {
+            game.baseStatsWithoutRelics.lifesteal = game.player.lifesteal;
+        } else if (statType === 'defense') {
+            game.baseStatsWithoutRelics.defense = game.player.defense;
+        } else if (statType === 'hp') {
+            game.baseStatsWithoutRelics.maxHp = game.player.maxHp;
+        }
         
         // Reapply relic effects to get final stats
         game.applyRelicEffectsToBaseStats();
         
-        console.log('After removal:', game.player[statType] || game.player.attackSpeed);
+        // Get the actual value for logging
+        let actualValue;
+        if (statType === 'attackSpeed') {
+            actualValue = game.player.attackSpeed;
+        } else if (statType === 'attack') {
+            actualValue = game.player.attack;
+        } else if (statType === 'crit') {
+            actualValue = game.player.critChance;
+        } else if (statType === 'lifesteal') {
+            actualValue = game.player.lifesteal;
+        } else if (statType === 'defense') {
+            actualValue = game.player.defense;
+        } else if (statType === 'hp') {
+            actualValue = game.player.maxHp;
+        } else {
+            actualValue = game.player.attackSpeed;
+        }
+        console.log('After removal:', actualValue);
         console.log('Remaining points:', game.availablePoints);
         updateStatsScreen();
     } else {
@@ -953,12 +1007,12 @@ function renderBattle() {
             resultColor = '#ffd700'; // Gold
         }
         
-        ctx.font = `bold ${canvas.width * 0.1}px 'Press Start 2P', monospace`;
+        ctx.font = `bold ${canvas.width * 0.08}px 'Press Start 2P', monospace`; // Smaller font
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Position text at 75% down (más abajo para no tapar personajes)
-        const textY = canvas.height * 0.75;
+        // Position text at 80% down (más abajo para no tapar personajes)
+        const textY = canvas.height * 0.80;
         
         // Text outline (más grueso para mejor visibilidad)
         ctx.lineWidth = 10;

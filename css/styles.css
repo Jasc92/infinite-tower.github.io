@@ -572,7 +572,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    font-size: clamp(7px, 1.8vw, 9px); /* Reduced by 1 point */
+    font-size: clamp(8px, 1.8vw, 10px); /* Increased by 1 point */
     line-height: 1.4;
 }
 
