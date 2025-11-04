@@ -1397,32 +1397,56 @@ function updateResultScreen() {
     `;
     
     // Show final relics
-    const slots = document.querySelectorAll('.final-relic-slot');
+    const slotsContainer = document.getElementById('final-relics-slots');
     const relics = game.relicManager.activeRelics;
     
     console.log('=== UPDATING RESULT RELICS ===');
     console.log('Active relics:', relics.length, relics.map(r => ({ name: r.name, icon: r.icon })));
-    console.log('Slots found:', slots.length);
+    console.log('Slots container found:', slotsContainer ? 'YES' : 'NO');
     
-    slots.forEach((slot, index) => {
-        slot.classList.remove('active', 'empty');
-        slot.onclick = null;
+    if (!slotsContainer) {
+        console.error('final-relics-slots container not found!');
+        return;
+    }
+    
+    // Clear existing slots
+    slotsContainer.innerHTML = '';
+    
+    // Create 3 slots
+    for (let i = 0; i < 3; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'final-relic-slot';
         
-        if (index < relics.length) {
-            const relic = relics[index];
-            console.log(`Slot ${index}: Setting relic ${relic.name} with icon: ${relic.icon}`);
+        if (i < relics.length) {
+            const relic = relics[i];
+            console.log(`Slot ${i}: Setting relic ${relic.name} with icon: ${relic.icon}`);
             
-            // Ensure icon is set correctly
-            slot.textContent = '';
-            slot.innerHTML = relic.icon; // Use innerHTML instead of textContent for emoji support
+            // Set icon using innerHTML for emoji support
+            slot.innerHTML = relic.icon;
             slot.classList.add('active');
             slot.title = relic.name;
-            slot.onclick = () => showRelicTooltip(relic);
+            
+            // Add click/touch handlers for tooltip
+            slot.onclick = (e) => {
+                e.stopPropagation();
+                showRelicTooltip(relic);
+            };
+            
+            // Touch support for mobile
+            slot.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+            });
+            
+            slot.addEventListener('touchend', (e) => {
+                e.stopPropagation();
+                showRelicTooltip(relic);
+            });
         } else {
-            slot.textContent = '';
             slot.classList.add('empty');
         }
-    });
+        
+        slotsContainer.appendChild(slot);
+    }
     
     console.log('Result screen updated');
 }
