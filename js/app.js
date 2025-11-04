@@ -1035,50 +1035,49 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
         ctx.fillRect(shakenHpBarX, shakenHpBarY, hpBarWidth, hpBarHeight);
     }
     
-    // SHIELD SYSTEM: Draw shield bar if active (only for player)
+    // SHIELD SYSTEM: Draw HP bar with shield color when shield is active
     const hasShield = fighter.shield !== undefined && fighter.shield > 0 && fighter.maxShield !== undefined && fighter.maxShield > 0;
-    const totalPool = (fighter.maxHp || 0) + (fighter.maxShield || 0);
     
+    const hpPercent = Math.max(0, Math.min(1, fighter.currentHp / fighter.maxHp));
+    const hpFillWidth = hpBarWidth * hpPercent;
+    
+    if (hpPercent > 0) {
+        const hpGradient = ctx.createLinearGradient(shakenHpBarX, shakenHpBarY, shakenHpBarX, shakenHpBarY + hpBarHeight);
+        
+        if (title === 'HERO') {
+            // HERO: Change color when shield is active
+            if (hasShield) {
+                // Shield active: Blue/cyan gradient (brighter, more vibrant)
+                hpGradient.addColorStop(0, '#03a9f4'); // Bright cyan-blue
+                hpGradient.addColorStop(1, '#0288d1'); // Darker cyan-blue
+            } else {
+                // No shield: Normal green gradient
+                hpGradient.addColorStop(0, '#4caf50'); // Green
+                hpGradient.addColorStop(1, '#8bc34a'); // Light green
+            }
+        } else {
+            // ENEMY: Always red gradient
+            hpGradient.addColorStop(0, '#f44336');
+            hpGradient.addColorStop(1, '#ff5722');
+        }
+        
+        ctx.fillStyle = hpGradient;
+        ctx.fillRect(shakenHpBarX, shakenHpBarY, hpFillWidth, hpBarHeight);
+    }
+    
+    // Draw shield bar on top of HP bar (if shield is active and broken)
+    // The shield bar shows the remaining shield as a separate blue layer
     if (hasShield && title === 'HERO') {
-        // Draw shield bar (blue) on top of HP bar
+        const totalPool = (fighter.maxHp || 0) + (fighter.maxShield || 0);
         const shieldPercent = fighter.shield / totalPool;
         const shieldFillWidth = hpBarWidth * shieldPercent;
         
-        // Shield bar fill (blue gradient)
+        // Draw shield bar on top (blue gradient, slightly transparent)
         const shieldGradient = ctx.createLinearGradient(shakenHpBarX, shakenHpBarY, shakenHpBarX, shakenHpBarY + hpBarHeight);
-        shieldGradient.addColorStop(0, '#2196f3'); // Light blue
-        shieldGradient.addColorStop(1, '#1976d2'); // Dark blue
+        shieldGradient.addColorStop(0, 'rgba(33, 150, 243, 0.6)'); // Light blue, semi-transparent
+        shieldGradient.addColorStop(1, 'rgba(25, 118, 210, 0.6)'); // Dark blue, semi-transparent
         ctx.fillStyle = shieldGradient;
         ctx.fillRect(shakenHpBarX, shakenHpBarY, shieldFillWidth, hpBarHeight);
-        
-        // Draw HP bar on top of shield (only the HP portion)
-        const hpPercent = Math.max(0, Math.min(1, fighter.currentHp / fighter.maxHp));
-        const hpFillWidth = hpBarWidth * hpPercent;
-        
-        if (hpPercent > 0) {
-            const hpGradient = ctx.createLinearGradient(shakenHpBarX, shakenHpBarY, shakenHpBarX, shakenHpBarY + hpBarHeight);
-            hpGradient.addColorStop(0, '#4caf50');
-            hpGradient.addColorStop(1, '#8bc34a');
-            ctx.fillStyle = hpGradient;
-            ctx.fillRect(shakenHpBarX, shakenHpBarY, hpFillWidth, hpBarHeight);
-        }
-    } else {
-        // Normal HP bar (no shield)
-        const hpPercent = Math.max(0, Math.min(1, fighter.currentHp / fighter.maxHp));
-        const hpFillWidth = hpBarWidth * hpPercent;
-        
-        if (hpPercent > 0) {
-            const hpGradient = ctx.createLinearGradient(shakenHpBarX, shakenHpBarY, shakenHpBarX, shakenHpBarY + hpBarHeight);
-            if (title === 'HERO') {
-                hpGradient.addColorStop(0, '#4caf50');
-                hpGradient.addColorStop(1, '#8bc34a');
-            } else {
-                hpGradient.addColorStop(0, '#f44336');
-                hpGradient.addColorStop(1, '#ff5722');
-            }
-            ctx.fillStyle = hpGradient;
-            ctx.fillRect(shakenHpBarX, shakenHpBarY, hpFillWidth, hpBarHeight);
-        }
     }
     
     const isDead = fighter.currentHp <= 0;

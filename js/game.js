@@ -395,13 +395,15 @@ class GameManager {
             this.availablePoints += 3; // Bonus points from boss
         }
         
-        // STAT ALLOCATION: Every 5 floors (5, 10, 15, 20, 25, 30...)
-        // RELIC SELECTION: Floor 1 (start), then every 10 floors (10, 20, 30...)
+        // STAT ALLOCATION: Every 5 floors (after completing floor 5, 10, 15, 20, 25, 30...)
+        // RELIC SELECTION: Floor 1 (start), then after completing floors 10, 20, 30...
         
-        // Check for relic selection first (Floor 1, or every 10 floors)
-        const isRelicFloor = this.currentFloor === 1 || (this.currentFloor % 10 === 0 && this.currentFloor > 1);
-        // Check for stat allocation (every 5 floors)
-        const isStatFloor = this.currentFloor % 5 === 0;
+        // Check if we just completed a floor that was a multiple of 10 (10, 20, 30...)
+        // After completing floor 10, currentFloor is now 11, so check if (11-1) % 10 === 0
+        const isRelicFloor = this.currentFloor === 1 || ((this.currentFloor - 1) % 10 === 0 && this.currentFloor > 1);
+        // Check if we just completed a floor that was a multiple of 5 (5, 10, 15, 20, 25, 30...)
+        // After completing floor 5, currentFloor is now 6, so check if (6-1) % 5 === 0
+        const isStatFloor = (this.currentFloor - 1) % 5 === 0 && this.currentFloor > 1;
         
         if (isRelicFloor) {
             // Relic floor: add stat points and show relic selection
