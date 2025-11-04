@@ -948,20 +948,26 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
     // Calculate shake effect based on recent damage
     let shakeX = 0;
     let shakeY = 0;
-    const shakeDuration = 0.15; // 150ms shake duration
+    let damageFlash = false;
+    const shakeDuration = 0.3; // 300ms shake duration (increased for visibility)
     const currentTime = game.combat ? game.combat.combatTime : 0;
     
     if (fighter.lastDamageTime !== undefined && fighter.lastDamageAmount !== undefined) {
         const timeSinceDamage = currentTime - fighter.lastDamageTime;
         if (timeSinceDamage >= 0 && timeSinceDamage < shakeDuration) {
             // Calculate shake intensity based on damage amount and decay over time
-            const shakeIntensity = Math.min(1.0, (fighter.lastDamageAmount / 50.0)) * 3; // Max 3px shake
+            const shakeIntensity = Math.min(1.0, (fighter.lastDamageAmount / 30.0)) * 8; // Max 8px shake (increased)
             const decayFactor = 1.0 - (timeSinceDamage / shakeDuration); // Linear decay
             const finalShake = shakeIntensity * decayFactor;
             
             // Random shake direction (changes every frame for vibration effect)
             shakeX = (Math.random() - 0.5) * 2 * finalShake;
             shakeY = (Math.random() - 0.5) * 2 * finalShake;
+            
+            // Flash effect for first 0.1 seconds
+            if (timeSinceDamage < 0.1) {
+                damageFlash = true;
+            }
         }
     }
     
@@ -978,6 +984,12 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
     // HP Bar background
     ctx.fillStyle = '#0a0a14';
     ctx.fillRect(shakenHpBarX, shakenHpBarY, hpBarWidth, hpBarHeight);
+    
+    // Damage flash effect (red overlay)
+    if (damageFlash) {
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.3)'; // Red flash overlay
+        ctx.fillRect(shakenHpBarX, shakenHpBarY, hpBarWidth, hpBarHeight);
+    }
     
     // HP Bar fill
     const hpPercent = Math.max(0, Math.min(1, fighter.currentHp / fighter.maxHp));
@@ -1003,30 +1015,41 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
     ctx.lineWidth = 1;
     ctx.strokeRect(shakenHpBarX, shakenHpBarY, hpBarWidth, hpBarHeight);
     
-    // Draw cracks when HP is 0 (broken bar effect)
+    // Draw cracks when HP is 0 (broken bar effect) - more visible
     if (isDead) {
         ctx.save();
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
-        ctx.lineWidth = 1.5;
+        // Use a seed for consistent crack pattern (based on fighter maxHp for uniqueness)
+        const seed = fighter.maxHp * 1000;
         
-        // Draw multiple crack lines
-        const crackCount = 4 + Math.floor(Math.random() * 3); // 4-6 cracks
+        // Draw multiple crack lines - more visible
+        const crackCount = 6 + Math.floor((seed % 3)); // 6-8 cracks
+        ctx.strokeStyle = '#000000'; // Pure black for maximum visibility
+        ctx.lineWidth = 2.5; // Thicker lines
+        
         for (let i = 0; i < crackCount; i++) {
-            const startX = shakenHpBarX + Math.random() * hpBarWidth;
-            const startY = shakenHpBarY + Math.random() * hpBarHeight;
-            const endX = startX + (Math.random() - 0.5) * 8;
-            const endY = startY + (Math.random() - 0.5) * 8;
+            // Use seed to make cracks consistent (not random every frame)
+            const pseudoRandom1 = ((seed + i * 73) % 1000) / 1000;
+            const pseudoRandom2 = ((seed + i * 137) % 1000) / 1000;
+            const pseudoRandom3 = ((seed + i * 211) % 1000) / 1000;
+            const pseudoRandom4 = ((seed + i * 317) % 1000) / 1000;
+            
+            const startX = shakenHpBarX + pseudoRandom1 * hpBarWidth;
+            const startY = shakenHpBarY + pseudoRandom2 * hpBarHeight;
+            const endX = startX + (pseudoRandom3 - 0.5) * 15; // Longer cracks
+            const endY = startY + (pseudoRandom4 - 0.5) * 15;
             
             ctx.beginPath();
             ctx.moveTo(startX, startY);
             ctx.lineTo(endX, endY);
             ctx.stroke();
             
-            // Sometimes add a branch crack
-            if (Math.random() > 0.5) {
+            // Add branch crack (more likely)
+            if (pseudoRandom1 > 0.3) {
+                const branchX = ((seed + i * 419) % 1000) / 1000;
+                const branchY = ((seed + i * 521) % 1000) / 1000;
                 ctx.beginPath();
                 ctx.moveTo(endX, endY);
-                ctx.lineTo(endX + (Math.random() - 0.5) * 4, endY + (Math.random() - 0.5) * 4);
+                ctx.lineTo(endX + (branchX - 0.5) * 8, endY + (branchY - 0.5) * 8);
                 ctx.stroke();
             }
         }
@@ -1034,14 +1057,14 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
         ctx.restore();
     }
     
-    // HP Text (larger font)
-    ctx.font = '10px "Press Start 2P", monospace'; // Increased from 7px to 10px
+    // HP Text (much larger font)
+    ctx.font = '13px "Press Start 2P", monospace'; // Increased from 10px to 13px
     ctx.fillStyle = '#a0a0a0';
     ctx.textAlign = 'center';
-    ctx.fillText(`${Math.max(0, Math.round(fighter.currentHp))} / ${fighter.maxHp}`, x + width / 2, hpBarY + hpBarHeight + 3);
+    ctx.fillText(`${Math.max(0, Math.round(fighter.currentHp))} / ${fighter.maxHp}`, x + width / 2, hpBarY + hpBarHeight + 5);
     
-    // Stats (compact - reduced spacing, no extra space at bottom)
-    const statsY = hpBarY + hpBarHeight + 10; // Reduced from 12 to 10
+    // Stats (compact - minimal spacing, no extra space at bottom)
+    const statsY = hpBarY + hpBarHeight + 14; // Reduced spacing
     ctx.font = '9px "Press Start 2P", monospace';
     ctx.textAlign = 'left';
     ctx.fillStyle = '#e0e0e0';
@@ -1054,10 +1077,12 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
         `LS: ${Math.round((fighter.lifesteal || 0) * 100)}%`
     ];
     
-    // Calculate spacing to fit exactly without extra space
-    const statsHeight = stats.length * 10; // 9px font + 1px spacing
+    // Calculate spacing to minimize empty space - tighter spacing
+    const lineHeight = 9; // Font size
+    const lineSpacing = 2; // Minimal spacing between lines
+    const totalStatsHeight = (stats.length - 1) * (lineHeight + lineSpacing) + lineHeight;
     const availableHeight = height - (statsY - y);
-    const spacing = Math.min(10, Math.floor(availableHeight / stats.length)); // Max 10px spacing
+    const spacing = availableHeight > totalStatsHeight ? lineHeight + lineSpacing : Math.floor(availableHeight / stats.length);
     
     stats.forEach((stat, index) => {
         ctx.fillText(stat, x + 6, statsY + index * spacing);
