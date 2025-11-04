@@ -544,9 +544,6 @@ function updateRelicScreen() {
     console.log('=== UPDATE RELIC SCREEN ===');
     console.log('Active relics:', game.relicManager.activeRelics.length);
     
-    // Update relic counter
-    document.getElementById('relic-count').textContent = game.relicManager.activeRelics.length;
-    
     // Show current relics at bottom (like in battle)
     const currentRelicsContainer = document.getElementById('current-relics');
     currentRelicsContainer.innerHTML = '';
@@ -772,7 +769,8 @@ let selectedReplaceIndex = null;
 
 function selectRelicToReplace(index) {
     selectedReplaceIndex = index;
-    console.log('Selected relic to replace:', index, game.relicManager.activeRelics[index].name);
+    const selectedRelic = game.relicManager.activeRelics[index];
+    console.log('Selected relic to replace:', index, selectedRelic.name);
     
     // Update UI to show which relic is selected for replacement
     const slots = document.querySelectorAll('.relic-selection-slot');
@@ -782,6 +780,14 @@ function selectRelicToReplace(index) {
         } else {
             slot.classList.remove('selected-for-replace');
         }
+    });
+    
+    // Show tooltip with the selected relic's description
+    showRelicTooltip(selectedRelic);
+    
+    // Enable new relic cards
+    document.querySelectorAll('.relic-card').forEach(card => {
+        card.classList.remove('replace-mode-waiting');
     });
     
     // Update new relic cards to show they're ready to be selected
