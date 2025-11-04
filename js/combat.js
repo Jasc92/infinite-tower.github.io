@@ -41,8 +41,16 @@ class CombatEngine {
         this.battleHardenedHits = 0;
         this.retaliateCount = 0;
         this.shieldRegenTimer = 0;
-        this.energySurgeTimer = 0;
+        
+        // Energy Surge: Initialize timer to interval so it waits 4 seconds before first surge
+        const energySurge = this.relics.find(r => r.id === 'energy_surge');
+        if (energySurge) {
+            this.energySurgeTimer = energySurge.surgeInterval; // Start with full interval (4.0)
+        } else {
+            this.energySurgeTimer = 0;
+        }
         this.energySurgeReady = false;
+        
         this.recycleBoostTimer = 0;
         this.recycleBoostActive = false;
         
