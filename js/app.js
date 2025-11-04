@@ -195,8 +195,19 @@ function updateStatsScreen() {
     }
     
     // Take snapshot if we haven't yet (for comparison when removing points)
+    // CRITICAL: Snapshot should capture base stats WITHOUT relics, not stats with relics
     if (!game.baseStatsSnapshot) {
-        game.snapshotBaseStats();
+        // Save base stats WITHOUT relics to snapshot
+        game.baseStatsSnapshot = {
+            attackSpeed: game.baseStatsWithoutRelics.attackSpeed,
+            attack: game.baseStatsWithoutRelics.attack,
+            critChance: game.baseStatsWithoutRelics.critChance,
+            lifesteal: game.baseStatsWithoutRelics.lifesteal,
+            defense: game.baseStatsWithoutRelics.defense,
+            maxHp: game.baseStatsWithoutRelics.maxHp,
+            currentHp: game.player.currentHp
+        };
+        console.log('=== SNAPSHOT BASE STATS (without relics) ===', game.baseStatsSnapshot);
     }
     
     document.getElementById('points-available').textContent = game.availablePoints;
@@ -236,29 +247,42 @@ function updateStatDisplay(stat, value, isMax) {
     }
     
     // Update minus button state - only enable if we have points to remove
+    // CRITICAL: Compare base stats (without relics) to snapshot base stats
     const minusBtn = document.querySelector(`.btn-stat-minus[data-stat="${stat}"]`);
-    if (minusBtn && game.baseStatsSnapshot) {
+    if (minusBtn && game.baseStatsSnapshot && game.baseStatsWithoutRelics) {
         let canRemove = false;
+        let currentBaseValue;
+        let snapshotValue;
+        
         switch (stat) {
             case 'attackSpeed':
-                canRemove = game.player.attackSpeed > game.baseStatsSnapshot.attackSpeed;
+                currentBaseValue = game.baseStatsWithoutRelics.attackSpeed;
+                snapshotValue = game.baseStatsSnapshot.attackSpeed;
                 break;
             case 'attack':
-                canRemove = game.player.attack > game.baseStatsSnapshot.attack;
+                currentBaseValue = game.baseStatsWithoutRelics.attack;
+                snapshotValue = game.baseStatsSnapshot.attack;
                 break;
             case 'crit':
-                canRemove = game.player.critChance > game.baseStatsSnapshot.critChance;
+                currentBaseValue = game.baseStatsWithoutRelics.critChance;
+                snapshotValue = game.baseStatsSnapshot.critChance;
                 break;
             case 'lifesteal':
-                canRemove = game.player.lifesteal > game.baseStatsSnapshot.lifesteal;
+                currentBaseValue = game.baseStatsWithoutRelics.lifesteal;
+                snapshotValue = game.baseStatsSnapshot.lifesteal;
                 break;
             case 'defense':
-                canRemove = game.player.defense > game.baseStatsSnapshot.defense;
+                currentBaseValue = game.baseStatsWithoutRelics.defense;
+                snapshotValue = game.baseStatsSnapshot.defense;
                 break;
             case 'hp':
-                canRemove = game.player.maxHp > game.baseStatsSnapshot.maxHp;
+                currentBaseValue = game.baseStatsWithoutRelics.maxHp;
+                snapshotValue = game.baseStatsSnapshot.maxHp;
                 break;
         }
+        
+        // Compare base stats (without relics) to snapshot
+        canRemove = currentBaseValue > snapshotValue;
         minusBtn.disabled = !canRemove;
     }
 }
