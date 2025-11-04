@@ -345,8 +345,30 @@ function removeStatPoint(statType) {
     }
     
     // Get current base value (without relics)
-    const currentBaseValue = game.baseStatsWithoutRelics[statType] || game.baseStatsWithoutRelics.attackSpeed;
-    const snapshotValue = game.baseStatsSnapshot ? (game.baseStatsSnapshot[statType] || game.baseStatsSnapshot.attackSpeed) : null;
+    let currentBaseValue;
+    let snapshotValue = null;
+    if (statType === 'attackSpeed') {
+        currentBaseValue = game.baseStatsWithoutRelics.attackSpeed;
+        snapshotValue = game.baseStatsSnapshot ? game.baseStatsSnapshot.attackSpeed : null;
+    } else if (statType === 'attack') {
+        currentBaseValue = game.baseStatsWithoutRelics.attack;
+        snapshotValue = game.baseStatsSnapshot ? game.baseStatsSnapshot.attack : null;
+    } else if (statType === 'crit') {
+        currentBaseValue = game.baseStatsWithoutRelics.critChance;
+        snapshotValue = game.baseStatsSnapshot ? game.baseStatsSnapshot.critChance : null;
+    } else if (statType === 'lifesteal') {
+        currentBaseValue = game.baseStatsWithoutRelics.lifesteal;
+        snapshotValue = game.baseStatsSnapshot ? game.baseStatsSnapshot.lifesteal : null;
+    } else if (statType === 'defense') {
+        currentBaseValue = game.baseStatsWithoutRelics.defense;
+        snapshotValue = game.baseStatsSnapshot ? game.baseStatsSnapshot.defense : null;
+    } else if (statType === 'hp') {
+        currentBaseValue = game.baseStatsWithoutRelics.maxHp;
+        snapshotValue = game.baseStatsSnapshot ? game.baseStatsSnapshot.maxHp : null;
+    } else {
+        currentBaseValue = game.baseStatsWithoutRelics.attackSpeed;
+        snapshotValue = game.baseStatsSnapshot ? game.baseStatsSnapshot.attackSpeed : null;
+    }
     
     console.log('Current base value (without relics):', currentBaseValue);
     console.log('Snapshot value:', snapshotValue || 'NO SNAPSHOT');
