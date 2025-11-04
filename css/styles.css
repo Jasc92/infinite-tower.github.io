@@ -309,6 +309,22 @@ body {
     color: var(--primary-light);
 }
 
+.guide-content h5 {
+    margin-top: 15px;
+    margin-bottom: 8px;
+    color: var(--accent);
+    font-size: clamp(10px, 2vw, 12px);
+}
+
+.relics-guide {
+    margin-top: 15px;
+}
+
+.relics-guide p {
+    margin-bottom: 6px;
+    font-size: clamp(8px, 1.6vw, 10px);
+}
+
 /* ========================================
    STAT ALLOCATION SCREEN
    ======================================== */
