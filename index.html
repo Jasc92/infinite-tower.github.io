@@ -32,7 +32,7 @@
             <div class="title-container">
                 <h1 class="game-title">INFINITE TOWER</h1>
                 <div class="subtitle">Roguelike Auto-Battler</div>
-                <div class="version">v2.7.2</div>
+                <div class="version">v2.8.0</div>
             </div>
             
             <div class="menu-content">
@@ -80,11 +80,15 @@
                 </div>
             </div>
             
+            <!-- Active Relics Display -->
+            <div id="stats-relics" class="stats-relics">
+                <!-- Relic slots will be populated here -->
+            </div>
+            
             <div class="stats-content">
                 <div class="stat-row" data-stat="attackSpeed">
                     <div class="stat-info">
                         <div class="stat-name">⚡ Attack Speed</div>
-                        <div class="stat-description">Attacks per second. More attacks = more damage over time. Max: 7.0</div>
                         <div class="stat-value">
                             <span id="stat-attackSpeed">1.0</span>/s
                             <span class="stat-max"></span>
@@ -99,7 +103,6 @@
                 <div class="stat-row" data-stat="attack">
                     <div class="stat-info">
                         <div class="stat-name">⚔️ Attack</div>
-                        <div class="stat-description">Base damage per hit. Higher attack means stronger hits.</div>
                         <div class="stat-value">
                             <span id="stat-attack">10</span>
                         </div>
@@ -113,7 +116,6 @@
                 <div class="stat-row" data-stat="crit">
                     <div class="stat-info">
                         <div class="stat-name">💥 Critical</div>
-                        <div class="stat-description">Chance to deal double damage (+2% per point). Max: 75%</div>
                         <div class="stat-value">
                             <span id="stat-crit">5</span>%
                             <span class="stat-max"></span>
@@ -128,7 +130,6 @@
                 <div class="stat-row" data-stat="lifesteal">
                     <div class="stat-info">
                         <div class="stat-name">🩸 Lifesteal</div>
-                        <div class="stat-description">Heal for % of damage dealt. Synergizes with Attack Speed. Max: 40%</div>
                         <div class="stat-value">
                             <span id="stat-lifesteal">0</span>%
                             <span class="stat-max"></span>
@@ -143,7 +144,6 @@
                 <div class="stat-row" data-stat="defense">
                     <div class="stat-info">
                         <div class="stat-name">🛡️ Defense</div>
-                        <div class="stat-description">Reduces damage from each hit. Essential for survival.</div>
                         <div class="stat-value">
                             <span id="stat-defense">5</span>
                         </div>
@@ -157,7 +157,6 @@
                 <div class="stat-row" data-stat="hp">
                     <div class="stat-info">
                         <div class="stat-name">❤️ Max HP</div>
-                        <div class="stat-description">Health points. When it reaches 0, you lose. Stay alive!</div>
                         <div class="stat-value">
                             <span id="stat-hp">100</span>
                         </div>

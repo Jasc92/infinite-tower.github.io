@@ -162,6 +162,9 @@ function updateStatsScreen() {
     const title = document.getElementById('stats-title');
     title.textContent = game.currentFloor === 1 ? 'Initial Build' : `Floor ${game.currentFloor} - Level Up!`;
     
+    // Update active relics display
+    updateStatsRelicsDisplay();
+    
     // Ensure baseStatsWithoutRelics exists before taking snapshot
     if (!game.baseStatsWithoutRelics) {
         // Initialize from player stats (should already be without relics if coming from battle)
@@ -285,6 +288,70 @@ function updateStatDisplay(stat, value, isMax) {
         canRemove = currentBaseValue > snapshotValue;
         minusBtn.disabled = !canRemove;
     }
+}
+
+function updateStatsRelicsDisplay() {
+    const relicsContainer = document.getElementById('stats-relics');
+    if (!relicsContainer) return;
+    
+    relicsContainer.innerHTML = '';
+    
+    const relics = game.relicManager.activeRelics;
+    
+    if (relics.length === 0) {
+        // Show empty state
+        const emptyMsg = document.createElement('div');
+        emptyMsg.style.cssText = 'font-size: clamp(9px, 2.2vw, 11px); color: var(--text-dim); text-align: center; padding: 8px;';
+        emptyMsg.textContent = 'No relics equipped';
+        relicsContainer.appendChild(emptyMsg);
+        return;
+    }
+    
+    // Create title
+    const title = document.createElement('h4');
+    title.textContent = '⚡ Active Relics';
+    relicsContainer.appendChild(title);
+    
+    // Create slots container
+    const slotsContainer = document.createElement('div');
+    slotsContainer.className = 'stats-relics-slots';
+    
+    // Create 3 slots
+    for (let i = 0; i < 3; i++) {
+        const slotDiv = document.createElement('div');
+        slotDiv.className = 'stats-relic-slot';
+        
+        if (i < relics.length) {
+            const relic = relics[i];
+            slotDiv.textContent = relic.icon;
+            slotDiv.classList.add('active');
+            slotDiv.title = `${relic.name}: ${relic.description}`;
+            
+            // Show tooltip on tap/click
+            slotDiv.onclick = (e) => {
+                e.stopPropagation();
+                showRelicTooltip(relic);
+            };
+            
+            // Touch support
+            slotDiv.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+                slotDiv.classList.add('touching');
+            });
+            
+            slotDiv.addEventListener('touchend', (e) => {
+                e.stopPropagation();
+                slotDiv.classList.remove('touching');
+                showRelicTooltip(relic);
+            });
+        } else {
+            slotDiv.classList.add('empty');
+        }
+        
+        slotsContainer.appendChild(slotDiv);
+    }
+    
+    relicsContainer.appendChild(slotsContainer);
 }
 
 function allocateStatPoint(statType) {
