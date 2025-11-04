@@ -59,7 +59,7 @@ class CombatEngine {
                 isMiss: false,
                 isCrit: false,
                 isHeal: true,
-                text: `💚 +${healAmount}`
+                text: `💚+${healAmount}` // Compact spacing
             }, 'player');
             this.regenTimer = 1.0; // Tick every second
         }
