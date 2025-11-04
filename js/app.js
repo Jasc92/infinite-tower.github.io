@@ -955,8 +955,12 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
     if (fighter.lastDamageTime !== undefined && fighter.lastDamageAmount !== undefined) {
         const timeSinceDamage = currentTime - fighter.lastDamageTime;
         if (timeSinceDamage >= 0 && timeSinceDamage < shakeDuration) {
-            // Calculate shake intensity based on damage amount and decay over time
-            const shakeIntensity = Math.min(1.0, (fighter.lastDamageAmount / 30.0)) * 8; // Max 8px shake (increased)
+            const isCrit = fighter.lastDamageIsCrit === true;
+            
+            // Different shake intensity for crits vs normal hits
+            // Crits: full shake (8px max), normal: reduced shake (3px max)
+            const maxShake = isCrit ? 8 : 3;
+            const shakeIntensity = Math.min(1.0, (fighter.lastDamageAmount / 30.0)) * maxShake;
             const decayFactor = 1.0 - (timeSinceDamage / shakeDuration); // Linear decay
             const finalShake = shakeIntensity * decayFactor;
             
@@ -964,8 +968,8 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
             shakeX = (Math.random() - 0.5) * 2 * finalShake;
             shakeY = (Math.random() - 0.5) * 2 * finalShake;
             
-            // Flash effect for first 0.1 seconds
-            if (timeSinceDamage < 0.1) {
+            // Flash effect for first 0.1 seconds (only for crits)
+            if (timeSinceDamage < 0.1 && isCrit) {
                 damageFlash = true;
             }
         }

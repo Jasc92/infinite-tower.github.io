@@ -37,10 +37,12 @@ class CombatEngine {
         if (player) {
             player.lastDamageTime = undefined;
             player.lastDamageAmount = undefined;
+            player.lastDamageIsCrit = undefined;
         }
         if (enemy) {
             enemy.lastDamageTime = undefined;
             enemy.lastDamageAmount = undefined;
+            enemy.lastDamageIsCrit = undefined;
         }
     }
 
@@ -101,6 +103,7 @@ class CombatEngine {
             if (damageInfo.damage > 0 && !damageInfo.isMiss) {
                 enemy.lastDamageTime = this.combatTime;
                 enemy.lastDamageAmount = damageInfo.damage;
+                enemy.lastDamageIsCrit = damageInfo.isCrit; // Track if it was a crit
             }
 
             // Lifesteal healing
@@ -148,6 +151,7 @@ class CombatEngine {
                 if (bonusDamageInfo.damage > 0 && !bonusDamageInfo.isMiss) {
                     enemy.lastDamageTime = this.combatTime;
                     enemy.lastDamageAmount = bonusDamageInfo.damage;
+                    enemy.lastDamageIsCrit = bonusDamageInfo.isCrit; // Track if it was a crit
                 }
                 
                 this.addFloatingText(bonusDamageInfo, 'enemy');
@@ -175,6 +179,7 @@ class CombatEngine {
             if (tickDamage > 0) {
                 enemy.lastDamageTime = this.combatTime;
                 enemy.lastDamageAmount = tickDamage;
+                enemy.lastDamageIsCrit = false; // Bleed ticks are never crits
             }
             
             this.addFloatingText({
@@ -252,6 +257,7 @@ class CombatEngine {
             if (damageInfo.damage > 0 && !damageInfo.isMiss) {
                 player.lastDamageTime = this.combatTime;
                 player.lastDamageAmount = damageInfo.damage;
+                player.lastDamageIsCrit = damageInfo.isCrit; // Track if it was a crit
             }
 
             // Thorns (reflect damage)
@@ -264,6 +270,7 @@ class CombatEngine {
                 if (reflectDamage > 0) {
                     enemy.lastDamageTime = this.combatTime;
                     enemy.lastDamageAmount = reflectDamage;
+                    enemy.lastDamageIsCrit = false; // Thorns damage is never crits
                 }
                 
                 this.addFloatingText({
