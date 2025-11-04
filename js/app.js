@@ -318,7 +318,24 @@ function allocateStatPoint(statType) {
             // Reapply relic effects to get final stats
             game.applyRelicEffectsToBaseStats();
             
-            console.log('After allocation:', game.player[statType] !== undefined ? game.player[statType] : game.player.attackSpeed);
+            // Get the actual value for logging
+            let actualValue;
+            if (statType === 'attackSpeed') {
+                actualValue = game.player.attackSpeed;
+            } else if (statType === 'attack') {
+                actualValue = game.player.attack;
+            } else if (statType === 'crit') {
+                actualValue = game.player.critChance;
+            } else if (statType === 'lifesteal') {
+                actualValue = game.player.lifesteal;
+            } else if (statType === 'defense') {
+                actualValue = game.player.defense;
+            } else if (statType === 'hp') {
+                actualValue = game.player.maxHp;
+            } else {
+                actualValue = game.player.attackSpeed;
+            }
+            console.log('After allocation:', actualValue);
             console.log('Remaining points:', game.availablePoints);
             updateStatsScreen();
         } else {
