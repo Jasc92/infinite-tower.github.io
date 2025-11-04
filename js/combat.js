@@ -146,7 +146,7 @@ class CombatEngine {
                 isMiss: false,
                 isCrit: false,
                 isHeal: false,
-                text: `🩸 ${tickDamage}`
+                text: `🩸${tickDamage}` // Compact spacing
             }, 'enemy');
             this.bleedDamageTimer = 1.0; // Tick every second
             
@@ -166,9 +166,9 @@ class CombatEngine {
                 false // enemy attacking
             );
             
-            // Thick Skin (damage reduction)
+            // Thick Skin (damage reduction) - check if player has this relic
             const thickSkin = this.relics.find(r => r.id === 'thick_skin');
-            if (thickSkin) {
+            if (thickSkin && damageInfo.damage > 0 && !damageInfo.isMiss) {
                 const originalDamage = damageInfo.damage;
                 damageInfo.damage = Math.round(damageInfo.damage * (1 - thickSkin.damageReduction));
                 console.log(`🐘 Thick Skin: ${originalDamage} → ${damageInfo.damage} (-${Math.round((1 - (damageInfo.damage / originalDamage)) * 100)}%)`);
@@ -187,7 +187,7 @@ class CombatEngine {
                     isMiss: false,
                     isCrit: false,
                     isHeal: true,
-                    text: `🌬️ +${healAmount}`
+                    text: `🌬️+${healAmount}` // Compact spacing
                 }, 'player');
             }
             
@@ -204,7 +204,7 @@ class CombatEngine {
                     isMiss: false,
                     isCrit: false,
                     isHeal: false,
-                    text: `⚔️ SURVIVED!`
+                    text: `⚔️SURVIVED` // Compact spacing, removed exclamation
                 }, 'player');
             } else {
                 player.currentHp -= damageInfo.damage;
@@ -220,7 +220,7 @@ class CombatEngine {
                     isMiss: false,
                     isCrit: false,
                     isHeal: false,
-                    text: `🌵 ${reflectDamage}`
+                    text: `🌵${reflectDamage}` // Compact spacing
                 }, 'enemy');
                 
                 if (enemy.currentHp <= 0) {
