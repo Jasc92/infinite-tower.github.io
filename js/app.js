@@ -691,9 +691,13 @@ function updateRelicScreen() {
         
         if (selectedRelic) {
             selectBtn.classList.remove('hidden');
+            selectBtn.style.display = 'block';
             selectedNameSpan.textContent = selectedRelic.name;
+            console.log('Select button shown for:', selectedRelic.name);
         } else {
             selectBtn.classList.add('hidden');
+            selectBtn.style.display = 'none';
+            console.log('Select button hidden');
         }
     }
     
@@ -822,7 +826,16 @@ function updateRelicScreen() {
         // Store relic reference
         card._relic = relic;
         
-        // Add click/touch to select relic visually
+        // Add click/touch to select relic visually - SIMPLE, NO TOOLTIPS
+        card.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!isSelecting) {
+                selectRelicVisual(e);
+            }
+        });
+        
+        // Touch support for mobile
         card.addEventListener('touchstart', (e) => {
             if (!isSelecting) {
                 e.stopPropagation();
@@ -839,17 +852,14 @@ function updateRelicScreen() {
             }
         });
         
-        card.addEventListener('click', (e) => {
-            if (!isSelecting) {
-                selectRelicVisual(e);
-            }
-        });
-        
         container.appendChild(card);
         console.log(`Card ${index} appended to container`);
     });
     
-    // Initialize select button as hidden
+    // Initialize select button as hidden and ensure it starts hidden
+    const selectBtn = document.getElementById('btn-select-relic');
+    selectBtn.classList.add('hidden');
+    selectBtn.style.display = 'none';
     updateSelectButton();
     
     // Reset selectedReplaceIndex when screen updates

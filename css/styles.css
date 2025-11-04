@@ -906,7 +906,7 @@ body {
 }
 
 .btn.hidden {
-    display: none;
+    display: none !important;
 }
 
 .stats-actions {
