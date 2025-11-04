@@ -39,6 +39,7 @@ body {
     padding: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh; /* Use dynamic viewport height for mobile */
     position: fixed;
 }
 
@@ -49,6 +50,7 @@ body {
 #game-container {
     width: 100vw;
     height: 100vh;
+    height: 100dvh; /* Use dynamic viewport height for mobile */
     position: relative;
     overflow: hidden;
     background: rgba(10, 10, 20, 0.85);
@@ -64,7 +66,7 @@ body {
     display: none;
     flex-direction: column;
     padding: 10px;
-    padding-bottom: 20px;
+    padding-bottom: clamp(30px, 8vh, 40px); /* More padding at bottom for mobile */
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
@@ -475,9 +477,9 @@ body {
     border-radius: 10px;
     overflow: hidden;
     background: var(--bg-darker);
-    margin-bottom: 0;
+    margin-bottom: clamp(8px, 1.5vh, 15px);
     min-height: 0;
-    max-height: calc(100% - 280px);
+    /* Removed max-height constraint - let flex handle it */
 }
 
 #battle-canvas {
@@ -492,26 +494,25 @@ body {
     background: linear-gradient(180deg, rgba(42, 31, 24, 0.95) 0%, rgba(26, 19, 14, 0.98) 100%);
     border: 3px solid #8b7355;
     border-radius: 4px;
-    padding: clamp(8px, 2vw, 10px);
-    width: clamp(140px, 38vw, 200px);
-    font-size: clamp(8px, 2.3vw, 10px);
+    padding: clamp(6px, 1.5vw, 8px);
+    width: calc(50% - 4px); /* Each panel takes half width minus gap */
+    font-size: clamp(7px, 2vw, 9px); /* Reduced by 1 point */
     box-shadow: inset 0 1px 0 rgba(139, 115, 85, 0.25), 0 6px 16px rgba(0, 0, 0, 0.7);
+    top: clamp(8px, 1.5vh, 12px); /* Start at top of arena */
 }
 
 .player-panel {
-    top: clamp(12px, 3vh, 20px);
-    left: clamp(8px, 2vw, 15px);
+    left: clamp(4px, 1vw, 8px);
 }
 
 .enemy-panel {
-    top: clamp(12px, 3vh, 20px);
-    right: clamp(8px, 2vw, 15px);
+    right: clamp(4px, 1vw, 8px);
 }
 
 .fighter-title {
-    font-size: clamp(10px, 2.8vw, 13px);
+    font-size: clamp(9px, 2.5vw, 12px); /* Reduced by 1 point */
     font-weight: bold;
-    margin-bottom: 6px;
+    margin-bottom: clamp(4px, 1vh, 6px);
     text-align: center;
 }
 
@@ -524,7 +525,7 @@ body {
 }
 
 .hp-bar-container {
-    margin-bottom: 8px;
+    margin-bottom: clamp(4px, 1vh, 6px);
 }
 
 .hp-bar {
@@ -552,7 +553,7 @@ body {
 
 .hp-text {
     text-align: center;
-    font-size: clamp(9px, 2.2vw, 11px);
+    font-size: clamp(8px, 2vw, 10px); /* Reduced by 1 point */
     color: var(--text-dim);
 }
 
@@ -560,19 +561,19 @@ body {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    font-size: clamp(8px, 2vw, 10px);
+    font-size: clamp(7px, 1.8vw, 9px); /* Reduced by 1 point */
     line-height: 1.4;
 }
 
 .battle-status {
     text-align: center;
-    padding: 10px;
+    padding: clamp(8px, 1.5vh, 10px);
     background: linear-gradient(180deg, rgba(42, 31, 24, 0.95) 0%, rgba(26, 19, 14, 0.95) 100%);
     border-radius: 4px;
     border: 3px solid #8b7355;
     box-shadow: inset 0 1px 0 rgba(139, 115, 85, 0.2), 0 4px 12px rgba(0, 0, 0, 0.6);
     flex-shrink: 0;
-    margin-bottom: 8px;
+    margin-bottom: clamp(6px, 1vh, 8px);
 }
 
 #battle-message {
@@ -584,13 +585,13 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 8px;
-    padding: 8px;
+    gap: clamp(6px, 1.5vw, 8px);
+    padding: clamp(6px, 1.5vh, 8px);
     background: linear-gradient(180deg, rgba(42, 31, 24, 0.95) 0%, rgba(26, 19, 14, 0.95) 100%);
     border-top: 3px solid #8b7355;
     box-shadow: inset 0 1px 0 rgba(139, 115, 85, 0.2), 0 -4px 12px rgba(0, 0, 0, 0.6);
     flex-shrink: 0;
-    margin-top: 5px;
+    margin-top: 0;
 }
 
 .battle-relic-slot {
