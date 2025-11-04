@@ -1366,13 +1366,21 @@ function updateResultScreen() {
     const slots = document.querySelectorAll('.final-relic-slot');
     const relics = game.relicManager.activeRelics;
     
+    console.log('=== UPDATING RESULT RELICS ===');
+    console.log('Active relics:', relics.length, relics.map(r => ({ name: r.name, icon: r.icon })));
+    console.log('Slots found:', slots.length);
+    
     slots.forEach((slot, index) => {
         slot.classList.remove('active', 'empty');
         slot.onclick = null;
         
         if (index < relics.length) {
             const relic = relics[index];
-            slot.textContent = relic.icon;
+            console.log(`Slot ${index}: Setting relic ${relic.name} with icon: ${relic.icon}`);
+            
+            // Ensure icon is set correctly
+            slot.textContent = '';
+            slot.innerHTML = relic.icon; // Use innerHTML instead of textContent for emoji support
             slot.classList.add('active');
             slot.title = relic.name;
             slot.onclick = () => showRelicTooltip(relic);
