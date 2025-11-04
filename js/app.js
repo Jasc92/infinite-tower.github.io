@@ -527,17 +527,57 @@ function showRelicTooltip(relic) {
     const tooltip = document.getElementById('relic-tooltip');
     const overlay = document.getElementById('relic-tooltip-overlay');
     
-    document.getElementById('tooltip-icon').textContent = relic.icon;
+    document.getElementById('tooltip-icon').innerHTML = relic.icon;
     document.getElementById('tooltip-name').textContent = relic.name;
     document.getElementById('tooltip-description').textContent = relic.description;
     
     tooltip.classList.add('visible');
     overlay.classList.add('visible');
+    
+    // Auto-hide after 5 seconds (optional, user can still close manually)
+    clearTimeout(window.tooltipTimeout);
+    window.tooltipTimeout = setTimeout(() => {
+        hideRelicTooltip();
+    }, 5000);
 }
 
 function hideRelicTooltip() {
+    clearTimeout(window.tooltipTimeout);
     document.getElementById('relic-tooltip').classList.remove('visible');
     document.getElementById('relic-tooltip-overlay').classList.remove('visible');
+}
+
+function showRelicConfirmation(relic, isReplaceMode, replaceIndex, onConfirm) {
+    const modal = document.getElementById('relic-confirmation-modal');
+    const confirmIcon = document.getElementById('confirm-icon');
+    const confirmName = document.getElementById('confirm-name');
+    const confirmDescription = document.getElementById('confirm-description');
+    const replaceInfo = document.getElementById('relic-confirm-replace-info');
+    
+    confirmIcon.innerHTML = relic.icon;
+    confirmName.textContent = relic.name;
+    confirmDescription.textContent = relic.description;
+    
+    if (isReplaceMode && replaceIndex !== null) {
+        const oldRelic = game.relicManager.activeRelics[replaceIndex];
+        replaceInfo.innerHTML = `<strong>⚠️ Replacing:</strong><br>${oldRelic.icon} ${oldRelic.name}`;
+        replaceInfo.classList.remove('hidden');
+    } else {
+        replaceInfo.classList.add('hidden');
+    }
+    
+    modal.classList.remove('hidden');
+    
+    // Store callback
+    window.relicConfirmCallback = onConfirm;
+}
+
+function showHomeConfirmation(onConfirm) {
+    const modal = document.getElementById('home-confirmation-modal');
+    modal.classList.remove('hidden');
+    
+    // Store callback
+    window.homeConfirmCallback = onConfirm;
 }
 
 function updateRelicScreen() {
@@ -669,87 +709,117 @@ function updateRelicScreen() {
                 return;
             }
             
-            isSelecting = true;
             e.preventDefault();
             e.stopPropagation();
-            console.log('Relic selected:', relic.name);
             
-            // Disable all cards
-            document.querySelectorAll('.relic-card').forEach(c => {
-                c.style.pointerEvents = 'none';
-                c.style.opacity = '0.5';
-            });
-            
-            // Apply relic (add or replace)
-            if (isReplaceModeForCards) {
-                // Remove effects of old relic first
-                const oldRelic = game.relicManager.activeRelics[selectedReplaceIndex];
-                removeRelicEffects(oldRelic);
+            // Show confirmation modal
+            showRelicConfirmation(relic, isReplaceModeForCards, selectedReplaceIndex, () => {
+                // User confirmed - proceed with selection
+                isSelecting = true;
+                console.log('Relic selected:', relic.name);
                 
-                // Replace the relic
-                game.relicManager.replaceRelic(selectedReplaceIndex, relic);
+                // Disable all cards
+                document.querySelectorAll('.relic-card').forEach(c => {
+                    c.style.pointerEvents = 'none';
+                    c.style.opacity = '0.5';
+                });
                 
-                console.log(`Replaced relic at index ${selectedReplaceIndex}: ${oldRelic.name} -> ${relic.name}`);
-            } else {
-                game.relicManager.addRelic(relic);
-            }
-            
-            // Ensure we have baseStatsWithoutRelics (stats without relic effects)
-            if (!game.baseStatsWithoutRelics) {
-                // If this is the first relic, use current player stats as base
-                game.baseStatsWithoutRelics = {
-                    attack: game.player.attack,
-                    attackSpeed: game.player.attackSpeed,
-                    critChance: game.player.critChance,
+                // Apply relic (add or replace)
+                if (isReplaceModeForCards) {
+                    // Remove effects of old relic first
+                    const oldRelic = game.relicManager.activeRelics[selectedReplaceIndex];
+                    removeRelicEffects(oldRelic);
+                    
+                    // Replace the relic
+                    game.relicManager.replaceRelic(selectedReplaceIndex, relic);
+                    
+                    console.log(`Replaced relic at index ${selectedReplaceIndex}: ${oldRelic.name} -> ${relic.name}`);
+                } else {
+                    game.relicManager.addRelic(relic);
+                }
+                
+                // Ensure we have baseStatsWithoutRelics (stats without relic effects)
+                if (!game.baseStatsWithoutRelics) {
+                    // If this is the first relic, use current player stats as base
+                    game.baseStatsWithoutRelics = {
+                        attack: game.player.attack,
+                        attackSpeed: game.player.attackSpeed,
+                        critChance: game.player.critChance,
+                        lifesteal: game.player.lifesteal,
+                        defense: game.player.defense,
+                        maxHp: game.player.maxHp
+                    };
+                }
+                
+                // Now apply ALL active relic effects (including the new/replaced one)
+                // This ensures effects are applied only once, in the correct order
+                console.log('=== APPLYING ALL RELIC EFFECTS ===');
+                console.log('Active relics:', game.relicManager.activeRelics.map(r => r.name));
+                console.log('Base stats WITHOUT relics:', game.baseStatsWithoutRelics);
+                
+                // Apply relic effects to base stats (recalculates percentage effects)
+                game.applyRelicEffectsToBaseStats();
+                
+                console.log('Player stats AFTER relic effect:', {
+                    atk: game.player.attack,
+                    hp: game.player.maxHp,
+                    def: game.player.defense,
                     lifesteal: game.player.lifesteal,
-                    defense: game.player.defense,
-                    maxHp: game.player.maxHp
-                };
-            }
-            
-            // Now apply ALL active relic effects (including the new/replaced one)
-            // This ensures effects are applied only once, in the correct order
-            console.log('=== APPLYING ALL RELIC EFFECTS ===');
-            console.log('Active relics:', game.relicManager.activeRelics.map(r => r.name));
-            console.log('Base stats WITHOUT relics:', game.baseStatsWithoutRelics);
-            
-            // Apply relic effects to base stats (recalculates percentage effects)
-            game.applyRelicEffectsToBaseStats();
-            
-            console.log('Player stats AFTER relic effect:', {
-                atk: game.player.attack,
-                hp: game.player.maxHp,
-                def: game.player.defense,
-                lifesteal: game.player.lifesteal,
-                atkSpd: game.player.attackSpeed
+                    atkSpd: game.player.attackSpeed
+                });
+                console.log('Active relics after selection:', game.relicManager.activeRelics.length);
+                console.log('Navigating to stats in 300ms...');
+                
+                // Continue to stats allocation
+                setTimeout(() => {
+                    console.log('Calling showScreen(stats)...');
+                    showScreen('stats');
+                }, 300);
             });
-            console.log('Active relics after selection:', game.relicManager.activeRelics.length);
-            console.log('Navigating to stats in 300ms...');
-            
-            // Continue to stats allocation
-            setTimeout(() => {
-                console.log('Calling showScreen(stats)...');
-                showScreen('stats');
-            }, 300);
         };
         
         // Store reference to selectRelic function for later use
         card._selectRelic = selectRelic;
+        
+        // Add hover to show tooltip (desktop)
+        card.addEventListener('mouseenter', () => {
+            if (!isSelecting) {
+                showRelicTooltip(relic);
+            }
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            // Don't auto-hide on mouse leave, let user close manually or wait for timeout
+        });
         
         // Add both touch and click events for mobile compatibility
         card.addEventListener('touchstart', (e) => {
             if (!isSelecting) {
                 console.log('Touch detected on:', relic.name);
                 card.classList.add('touching');
+                // Show tooltip on touch
+                showRelicTooltip(relic);
             }
         });
         
         card.addEventListener('touchend', (e) => {
-            card.classList.remove('touching');
-            selectRelic(e);
+            if (!isSelecting) {
+                e.preventDefault();
+                e.stopPropagation();
+                card.classList.remove('touching');
+                // Hide tooltip before selecting
+                hideRelicTooltip();
+                selectRelic(e);
+            }
         });
         
-        card.addEventListener('click', selectRelic);
+        card.addEventListener('click', (e) => {
+            if (!isSelecting) {
+                // Hide tooltip before selecting
+                hideRelicTooltip();
+                selectRelic(e);
+            }
+        });
         
         container.appendChild(card);
         console.log(`Card ${index} appended to container`);
@@ -1511,13 +1581,23 @@ function setupEventListeners() {
         showScreen('battle');
     });
     
-    document.getElementById('btn-stats-back-menu').addEventListener('click', () => {
-        showScreen('menu');
+    // Home button from stats screen
+    document.getElementById('btn-stats-home').addEventListener('click', () => {
+        showHomeConfirmation(() => {
+            showScreen('menu');
+        });
     });
     
     // Relic screen
     document.getElementById('btn-skip-relic').addEventListener('click', () => {
         showScreen('stats');
+    });
+    
+    // Home button from relic screen
+    document.getElementById('btn-relic-home').addEventListener('click', () => {
+        showHomeConfirmation(() => {
+            showScreen('menu');
+        });
     });
     
     // Relic tooltip overlay
@@ -1527,7 +1607,59 @@ function setupEventListeners() {
     
     document.getElementById('relic-tooltip').addEventListener('click', (e) => {
         e.stopPropagation();
+    });
+    
+    // Close tooltip button
+    document.getElementById('btn-close-tooltip').addEventListener('click', () => {
         hideRelicTooltip();
+    });
+    
+    // Relic confirmation modal
+    document.getElementById('btn-relic-confirm').addEventListener('click', () => {
+        const modal = document.getElementById('relic-confirmation-modal');
+        modal.classList.add('hidden');
+        if (window.relicConfirmCallback) {
+            window.relicConfirmCallback();
+            window.relicConfirmCallback = null;
+        }
+    });
+    
+    document.getElementById('btn-relic-cancel').addEventListener('click', () => {
+        const modal = document.getElementById('relic-confirmation-modal');
+        modal.classList.add('hidden');
+        window.relicConfirmCallback = null;
+    });
+    
+    // Close modal on overlay click
+    document.getElementById('relic-confirmation-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'relic-confirmation-modal') {
+            document.getElementById('relic-confirmation-modal').classList.add('hidden');
+            window.relicConfirmCallback = null;
+        }
+    });
+    
+    // Home confirmation modal
+    document.getElementById('btn-home-confirm').addEventListener('click', () => {
+        const modal = document.getElementById('home-confirmation-modal');
+        modal.classList.add('hidden');
+        if (window.homeConfirmCallback) {
+            window.homeConfirmCallback();
+            window.homeConfirmCallback = null;
+        }
+    });
+    
+    document.getElementById('btn-home-cancel').addEventListener('click', () => {
+        const modal = document.getElementById('home-confirmation-modal');
+        modal.classList.add('hidden');
+        window.homeConfirmCallback = null;
+    });
+    
+    // Close home modal on overlay click
+    document.getElementById('home-confirmation-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'home-confirmation-modal') {
+            document.getElementById('home-confirmation-modal').classList.add('hidden');
+            window.homeConfirmCallback = null;
+        }
     });
     
     // Battle screen

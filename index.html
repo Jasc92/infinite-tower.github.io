@@ -32,7 +32,7 @@
             <div class="title-container">
                 <h1 class="game-title">INFINITE TOWER</h1>
                 <div class="subtitle">Roguelike Auto-Battler</div>
-                <div class="version">v2.5.2</div>
+                <div class="version">v2.6.0</div>
             </div>
             
             <div class="menu-content">
@@ -169,13 +169,15 @@
                 </div>
             </div>
             
-            <button id="btn-start-battle" class="btn btn-primary btn-large" disabled>
-                Allocate all points first
-            </button>
-            
-            <button id="btn-stats-back-menu" class="btn btn-secondary">
-                ⬅️ Back to Menu
-            </button>
+            <div class="stats-actions">
+                <button id="btn-start-battle" class="btn btn-primary btn-large" disabled>
+                    Allocate all points first
+                </button>
+                
+                <button id="btn-stats-home" class="btn btn-abandon">
+                    🏠 Home
+                </button>
+            </div>
         </div>
         
         <!-- Relic Selection Screen -->
@@ -189,9 +191,14 @@
                     <!-- Relic cards will be inserted here -->
                 </div>
                 
-                <button id="btn-skip-relic" class="btn btn-secondary">
-                    Skip
-                </button>
+                <div class="relic-selection-actions">
+                    <button id="btn-skip-relic" class="btn btn-secondary">
+                        Skip
+                    </button>
+                    <button id="btn-relic-home" class="btn btn-abandon">
+                        🏠 Home
+                    </button>
+                </div>
             </div>
             
             <!-- Current Relics Display (at bottom, like in battle) -->
@@ -203,11 +210,45 @@
         <!-- Relic Tooltip -->
         <div id="relic-tooltip-overlay" class="relic-tooltip-overlay"></div>
         <div id="relic-tooltip" class="relic-tooltip">
+            <button id="btn-close-tooltip" class="btn-close-tooltip">✖</button>
             <div class="relic-tooltip-header">
                 <div id="tooltip-icon" class="relic-tooltip-icon"></div>
                 <div id="tooltip-name" class="relic-tooltip-name"></div>
             </div>
             <div id="tooltip-description" class="relic-tooltip-description"></div>
+        </div>
+        
+        <!-- Relic Confirmation Modal -->
+        <div id="relic-confirmation-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 id="relic-confirm-title">⚡ Confirm Relic Selection</h3>
+                <div id="relic-confirm-content">
+                    <div class="relic-confirm-header">
+                        <div id="confirm-icon" class="relic-confirm-icon"></div>
+                        <div>
+                            <div id="confirm-name" class="relic-confirm-name"></div>
+                            <div id="confirm-description" class="relic-confirm-description"></div>
+                        </div>
+                    </div>
+                    <div id="relic-confirm-replace-info" class="relic-confirm-replace-info hidden"></div>
+                </div>
+                <div class="modal-actions">
+                    <button id="btn-relic-confirm" class="btn btn-primary">Confirm</button>
+                    <button id="btn-relic-cancel" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Home Confirmation Modal -->
+        <div id="home-confirmation-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3>⚠️ Return to Menu?</h3>
+                <p>Your current progress will be lost and the run will end.</p>
+                <div class="modal-actions">
+                    <button id="btn-home-confirm" class="btn btn-primary">Yes, Return</button>
+                    <button id="btn-home-cancel" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
         </div>
         
         <!-- How to Play Modal -->
