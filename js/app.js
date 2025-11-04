@@ -213,8 +213,6 @@ function updateStatsScreen() {
         console.log('=== SNAPSHOT BASE STATS (without relics) ===', game.baseStatsSnapshot);
     }
     
-    document.getElementById('points-available').textContent = game.availablePoints;
-    
     // Update stat displays
     updateStatDisplay('attackSpeed', game.player.attackSpeed.toFixed(1), game.player.attackSpeed >= 6.0);
     updateStatDisplay('attack', game.player.attack, false);
