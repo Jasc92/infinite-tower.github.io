@@ -689,14 +689,14 @@ function updateRelicScreen() {
         const selectBtn = document.getElementById('btn-select-relic');
         const selectedNameSpan = document.getElementById('selected-relic-name');
         
+        if (!selectBtn) return; // Safety check
+        
         if (selectedRelic) {
             selectBtn.classList.remove('hidden');
-            selectBtn.style.display = 'block';
             selectedNameSpan.textContent = selectedRelic.name;
             console.log('Select button shown for:', selectedRelic.name);
         } else {
             selectBtn.classList.add('hidden');
-            selectBtn.style.display = 'none';
             console.log('Select button hidden');
         }
     }
@@ -856,10 +856,7 @@ function updateRelicScreen() {
         console.log(`Card ${index} appended to container`);
     });
     
-    // Initialize select button as hidden and ensure it starts hidden
-    const selectBtn = document.getElementById('btn-select-relic');
-    selectBtn.classList.add('hidden');
-    selectBtn.style.display = 'none';
+    // Initialize select button as hidden
     updateSelectButton();
     
     // Reset selectedReplaceIndex when screen updates
