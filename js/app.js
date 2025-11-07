@@ -1309,10 +1309,10 @@ function renderBattleUI() {
     
     if (!game.player || !game.enemy) return;
     
-    // Panel dimensions
+    // Panel dimensions - smaller height to avoid cutting character legs
     const panelPadding = 8;
     const panelWidth = (canvas.width - panelPadding * 3) / 2;
-    const panelHeight = canvas.height - panelPadding * 2;
+    const panelHeight = canvas.height * 0.35; // Reduced from full height to 35% of canvas
     const panelX1 = panelPadding;
     const panelX2 = panelWidth + panelPadding * 2;
     const panelY = panelPadding;
@@ -1512,16 +1512,10 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
         `LS: ${Math.round((fighter.lifesteal || 0) * 100)}%`
     ];
     
-    // Calculate spacing to fill available space - minimize bottom gap
-    const lineHeight = 11; // Font size (updated to match)
-    const bottomPadding = 4; // Small padding at bottom
-    const availableHeight = height - (statsY - y) - bottomPadding;
-    
-    // Calculate spacing to fill the available height
-    // If we have more space than needed, use consistent spacing
-    // Otherwise, distribute evenly
-    const totalStatsHeight = (stats.length - 1) * lineHeight;
-    const spacing = stats.length > 1 ? availableHeight / (stats.length - 1) : lineHeight;
+    // Calculate spacing - compact layout (original)
+    const lineHeight = 11; // Font size
+    const lineSpacing = 3; // Small spacing between lines
+    const spacing = lineHeight + lineSpacing;
     
     stats.forEach((stat, index) => {
         ctx.fillText(stat, x + 6, statsY + index * spacing);
