@@ -152,54 +152,64 @@ class GameManager {
 
     /**
      * Remove stat point from player
+     * NOTE: This function expects player stats to already be restored to baseStatsWithoutRelics
+     * It compares against baseStatsSnapshot to determine if a point can be removed
      */
     removeStatPoint(statType) {
-        if (!this.baseStatsSnapshot) return false;
+        if (!this.baseStatsSnapshot || !this.baseStatsWithoutRelics) return false;
+        
+        // Get snapshot value (the value when we entered stats screen)
+        let snapshotValue;
+        let currentBaseValue;
         
         switch (statType) {
             case 'attackSpeed':
-                if (this.player.attackSpeed > this.baseStatsSnapshot.attackSpeed) {
-                    this.player.attackSpeed -= 0.12;
-                    if (this.player.attackSpeed < this.baseStatsSnapshot.attackSpeed) {
-                        this.player.attackSpeed = this.baseStatsSnapshot.attackSpeed;
-                    }
+                snapshotValue = this.baseStatsSnapshot.attackSpeed;
+                currentBaseValue = this.baseStatsWithoutRelics.attackSpeed;
+                if (currentBaseValue > snapshotValue) {
+                    this.player.attackSpeed = Math.max(snapshotValue, currentBaseValue - 0.12);
                     return true;
                 }
                 break;
             case 'attack':
-                if (this.player.attack > this.baseStatsSnapshot.attack) {
-                    this.player.attack -= 2;
+                snapshotValue = this.baseStatsSnapshot.attack;
+                currentBaseValue = this.baseStatsWithoutRelics.attack;
+                if (currentBaseValue > snapshotValue) {
+                    this.player.attack = Math.max(snapshotValue, currentBaseValue - 2);
                     return true;
                 }
                 break;
             case 'crit':
-                if (this.player.critChance > this.baseStatsSnapshot.critChance) {
-                    this.player.critChance -= 0.02;
-                    if (this.player.critChance < this.baseStatsSnapshot.critChance) {
-                        this.player.critChance = this.baseStatsSnapshot.critChance;
-                    }
+                snapshotValue = this.baseStatsSnapshot.critChance;
+                currentBaseValue = this.baseStatsWithoutRelics.critChance;
+                if (currentBaseValue > snapshotValue) {
+                    this.player.critChance = Math.max(snapshotValue, currentBaseValue - 0.02);
                     return true;
                 }
                 break;
             case 'lifesteal':
-                if (this.player.lifesteal > this.baseStatsSnapshot.lifesteal) {
-                    this.player.lifesteal -= 0.02;
-                    if (this.player.lifesteal < this.baseStatsSnapshot.lifesteal) {
-                        this.player.lifesteal = this.baseStatsSnapshot.lifesteal;
-                    }
+                snapshotValue = this.baseStatsSnapshot.lifesteal;
+                currentBaseValue = this.baseStatsWithoutRelics.lifesteal;
+                if (currentBaseValue > snapshotValue) {
+                    this.player.lifesteal = Math.max(snapshotValue, currentBaseValue - 0.02);
                     return true;
                 }
                 break;
             case 'defense':
-                if (this.player.defense > this.baseStatsSnapshot.defense) {
-                    this.player.defense -= 2;
+                snapshotValue = this.baseStatsSnapshot.defense;
+                currentBaseValue = this.baseStatsWithoutRelics.defense;
+                if (currentBaseValue > snapshotValue) {
+                    this.player.defense = Math.max(snapshotValue, currentBaseValue - 2);
                     return true;
                 }
                 break;
             case 'hp':
-                if (this.player.maxHp > this.baseStatsSnapshot.maxHp) {
-                    this.player.maxHp -= 10;
-                    this.player.currentHp -= 10;
+                snapshotValue = this.baseStatsSnapshot.maxHp;
+                currentBaseValue = this.baseStatsWithoutRelics.maxHp;
+                if (currentBaseValue > snapshotValue) {
+                    const hpReduction = Math.min(10, currentBaseValue - snapshotValue);
+                    this.player.maxHp = currentBaseValue - hpReduction;
+                    this.player.currentHp = Math.max(1, this.player.currentHp - hpReduction);
                     return true;
                 }
                 break;

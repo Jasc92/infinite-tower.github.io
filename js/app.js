@@ -166,13 +166,13 @@ function updateStatsScreen() {
     updateStatsRelicsDisplay();
     
     // Ensure baseStatsWithoutRelics exists before taking snapshot
+    // CRITICAL: When entering stats screen, player stats may have relics applied
+    // We need to ensure baseStatsWithoutRelics reflects stats WITHOUT relic effects
     if (!game.baseStatsWithoutRelics) {
-        // Initialize from player stats (should already be without relics if coming from battle)
-        if (game.relicManager.activeRelics.length > 0) {
-            // Temporarily remove relics to get true base
-            const tempRelics = [...game.relicManager.activeRelics];
-            game.relicManager.activeRelics = [];
-            
+        // If basePlayerStats exists, it has relics applied, so we need to reverse-calculate
+        // Otherwise, if no relics, current stats are base
+        if (game.relicManager.activeRelics.length === 0) {
+            // No relics, current stats are base
             game.baseStatsWithoutRelics = {
                 attack: game.player.attack,
                 attackSpeed: game.player.attackSpeed,
@@ -181,12 +181,22 @@ function updateStatsScreen() {
                 defense: game.player.defense,
                 maxHp: game.player.maxHp
             };
-            
-            game.relicManager.activeRelics = tempRelics;
-            // Reapply relics to player
-            game.applyRelicEffectsToBaseStats();
         } else {
-            game.baseStatsWithoutRelics = {
+            // Has relics - need to restore player to basePlayerStats first, then remove relics
+            // Restore player to basePlayerStats (which includes relic effects)
+            if (game.basePlayerStats) {
+                game.player.attack = game.basePlayerStats.attack;
+                game.player.attackSpeed = game.basePlayerStats.attackSpeed;
+                game.player.critChance = game.basePlayerStats.critChance;
+                game.player.lifesteal = game.basePlayerStats.lifesteal;
+                game.player.defense = game.basePlayerStats.defense;
+                game.player.maxHp = game.basePlayerStats.maxHp;
+            }
+            
+            // Now calculate base by removing relic effects
+            // We'll use applyRelicEffectsToBaseStats logic in reverse
+            // Save current player stats (with relics)
+            const statsWithRelics = {
                 attack: game.player.attack,
                 attackSpeed: game.player.attackSpeed,
                 critChance: game.player.critChance,
@@ -194,6 +204,59 @@ function updateStatsScreen() {
                 defense: game.player.defense,
                 maxHp: game.player.maxHp
             };
+            
+            // Calculate multipliers from relics
+            let attackMult = 1.0;
+            let defenseMult = 1.0;
+            let maxHpMult = 1.0;
+            let attackSpeedMult = 1.0;
+            let critChanceMult = 1.0;
+            let lifestealMult = 1.0;
+            
+            game.relicManager.activeRelics.forEach(relic => {
+                if (relic.percentageEffects) {
+                    if (relic.percentageEffects.attack) attackMult *= relic.percentageEffects.attack;
+                    if (relic.percentageEffects.defense) defenseMult *= relic.percentageEffects.defense;
+                    if (relic.percentageEffects.maxHp) maxHpMult *= relic.percentageEffects.maxHp;
+                    if (relic.percentageEffects.attackSpeed) attackSpeedMult *= relic.percentageEffects.attackSpeed;
+                    if (relic.percentageEffects.critChance) critChanceMult *= relic.percentageEffects.critChance;
+                    if (relic.percentageEffects.lifesteal) lifestealMult *= relic.percentageEffects.lifesteal;
+                }
+            });
+            
+            // Reverse percentage effects first (divide)
+            let baseAfterPercent = {
+                attack: Math.round(statsWithRelics.attack / attackMult),
+                defense: Math.round(statsWithRelics.defense / defenseMult),
+                maxHp: Math.round(statsWithRelics.maxHp / maxHpMult),
+                attackSpeed: statsWithRelics.attackSpeed / attackSpeedMult,
+                critChance: statsWithRelics.critChance / critChanceMult,
+                lifesteal: statsWithRelics.lifesteal / lifestealMult
+            };
+            
+            // Then reverse flat effects (subtract)
+            game.relicManager.activeRelics.forEach(relic => {
+                if (relic.flatEffects) {
+                    if (relic.flatEffects.attack) baseAfterPercent.attack -= relic.flatEffects.attack;
+                    if (relic.flatEffects.defense) baseAfterPercent.defense -= relic.flatEffects.defense;
+                    if (relic.flatEffects.maxHp) baseAfterPercent.maxHp -= relic.flatEffects.maxHp;
+                    if (relic.flatEffects.attackSpeed) baseAfterPercent.attackSpeed = Math.max(0.1, baseAfterPercent.attackSpeed - relic.flatEffects.attackSpeed);
+                    if (relic.flatEffects.lifesteal) baseAfterPercent.lifesteal = Math.max(0, baseAfterPercent.lifesteal - relic.flatEffects.lifesteal);
+                }
+            });
+            
+            // Save base stats without relics
+            game.baseStatsWithoutRelics = {
+                attack: baseAfterPercent.attack,
+                attackSpeed: baseAfterPercent.attackSpeed,
+                critChance: baseAfterPercent.critChance,
+                lifesteal: baseAfterPercent.lifesteal,
+                defense: baseAfterPercent.defense,
+                maxHp: baseAfterPercent.maxHp
+            };
+            
+            // Restore player stats with relics applied
+            game.applyRelicEffectsToBaseStats();
         }
     }
     
@@ -213,13 +276,31 @@ function updateStatsScreen() {
         console.log('=== SNAPSHOT BASE STATS (without relics) ===', game.baseStatsSnapshot);
     }
     
-    // Update stat displays
-    updateStatDisplay('attackSpeed', game.player.attackSpeed.toFixed(1), game.player.attackSpeed >= 6.0);
-    updateStatDisplay('attack', game.player.attack, false);
-    updateStatDisplay('crit', Math.round(game.player.critChance * 100), game.player.critChance >= 0.75);
-    updateStatDisplay('lifesteal', Math.round(game.player.lifesteal * 100), game.player.lifesteal >= 0.40);
-    updateStatDisplay('defense', game.player.defense, false);
-    updateStatDisplay('hp', game.player.maxHp, false);
+    // Update stat displays (show BASE and TOTAL)
+    updateStatDisplay('attackSpeed', 
+        game.baseStatsWithoutRelics ? game.baseStatsWithoutRelics.attackSpeed.toFixed(1) : game.player.attackSpeed.toFixed(1),
+        game.player.attackSpeed.toFixed(1),
+        game.player.attackSpeed >= 6.0);
+    updateStatDisplay('attack',
+        game.baseStatsWithoutRelics ? game.baseStatsWithoutRelics.attack : game.player.attack,
+        game.player.attack,
+        false);
+    updateStatDisplay('crit',
+        game.baseStatsWithoutRelics ? Math.round(game.baseStatsWithoutRelics.critChance * 100) : Math.round(game.player.critChance * 100),
+        Math.round(game.player.critChance * 100),
+        game.player.critChance >= 0.75);
+    updateStatDisplay('lifesteal',
+        game.baseStatsWithoutRelics ? Math.round(game.baseStatsWithoutRelics.lifesteal * 100) : Math.round(game.player.lifesteal * 100),
+        Math.round(game.player.lifesteal * 100),
+        game.player.lifesteal >= 0.40);
+    updateStatDisplay('defense',
+        game.baseStatsWithoutRelics ? game.baseStatsWithoutRelics.defense : game.player.defense,
+        game.player.defense,
+        false);
+    updateStatDisplay('hp',
+        game.baseStatsWithoutRelics ? game.baseStatsWithoutRelics.maxHp : game.player.maxHp,
+        game.player.maxHp,
+        false);
     
     // Update start button
     const btn = document.getElementById('btn-start-battle');
@@ -232,11 +313,33 @@ function updateStatsScreen() {
     }
 }
 
-function updateStatDisplay(stat, value, isMax) {
-    const el = document.getElementById(`stat-${stat}`);
-    if (el) el.textContent = value;
+function updateStatDisplay(stat, baseValue, totalValue, isMax) {
+    // Update base value display
+    const baseEl = document.getElementById(`stat-${stat}-base`);
+    if (baseEl) {
+        if (stat === 'attackSpeed') {
+            baseEl.textContent = typeof baseValue === 'string' ? baseValue : baseValue.toFixed(1);
+        } else if (stat === 'crit' || stat === 'lifesteal') {
+            baseEl.textContent = baseValue;
+        } else {
+            baseEl.textContent = baseValue;
+        }
+    }
     
-    const maxEl = el.parentElement.querySelector('.stat-max');
+    // Update total value display
+    const totalEl = document.getElementById(`stat-${stat}-total`);
+    if (totalEl) {
+        if (stat === 'attackSpeed') {
+            totalEl.textContent = typeof totalValue === 'string' ? totalValue : totalValue.toFixed(1);
+        } else if (stat === 'crit' || stat === 'lifesteal') {
+            totalEl.textContent = totalValue;
+        } else {
+            totalEl.textContent = totalValue;
+        }
+    }
+    
+    // Update max indicator
+    const maxEl = document.querySelector(`[data-stat="${stat}"] .stat-max`);
     if (maxEl) {
         maxEl.textContent = isMax ? '(MAX)' : '';
     }

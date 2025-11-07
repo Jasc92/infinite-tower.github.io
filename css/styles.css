@@ -454,6 +454,15 @@ body {
 .stat-value {
     font-size: clamp(10px, 2.7vw, 13px);
     color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.stat-separator {
+    color: var(--text-dim);
+    margin: 0 2px;
 }
 
 .stat-max {

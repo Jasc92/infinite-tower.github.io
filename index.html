@@ -32,7 +32,7 @@
             <div class="title-container">
                 <h1 class="game-title">INFINITE TOWER</h1>
                 <div class="subtitle">Roguelike Auto-Battler</div>
-                <div class="version">v2.8.1</div>
+                <div class="version">v2.9.0</div>
             </div>
             
             <div class="menu-content">
@@ -87,7 +87,9 @@
                     <div class="stat-info">
                         <div class="stat-name">⚡ Attack Speed</div>
                         <div class="stat-value">
-                            <span id="stat-attackSpeed">1.0</span>/s
+                            Base: <span id="stat-attackSpeed-base">1.0</span>
+                            <span class="stat-separator">→</span>
+                            <span id="stat-attackSpeed-total">1.0</span>/s
                             <span class="stat-max"></span>
                         </div>
                     </div>
@@ -101,7 +103,9 @@
                     <div class="stat-info">
                         <div class="stat-name">⚔️ Attack</div>
                         <div class="stat-value">
-                            <span id="stat-attack">10</span>
+                            Base: <span id="stat-attack-base">10</span>
+                            <span class="stat-separator">→</span>
+                            <span id="stat-attack-total">10</span>
                         </div>
                     </div>
                     <div class="stat-buttons">
@@ -114,7 +118,9 @@
                     <div class="stat-info">
                         <div class="stat-name">💥 Critical</div>
                         <div class="stat-value">
-                            <span id="stat-crit">5</span>%
+                            Base: <span id="stat-crit-base">5</span>%
+                            <span class="stat-separator">→</span>
+                            <span id="stat-crit-total">5</span>%
                             <span class="stat-max"></span>
                         </div>
                     </div>
@@ -128,7 +134,9 @@
                     <div class="stat-info">
                         <div class="stat-name">🩸 Lifesteal</div>
                         <div class="stat-value">
-                            <span id="stat-lifesteal">0</span>%
+                            Base: <span id="stat-lifesteal-base">0</span>%
+                            <span class="stat-separator">→</span>
+                            <span id="stat-lifesteal-total">0</span>%
                             <span class="stat-max"></span>
                         </div>
                     </div>
@@ -142,7 +150,9 @@
                     <div class="stat-info">
                         <div class="stat-name">🛡️ Defense</div>
                         <div class="stat-value">
-                            <span id="stat-defense">5</span>
+                            Base: <span id="stat-defense-base">5</span>
+                            <span class="stat-separator">→</span>
+                            <span id="stat-defense-total">5</span>
                         </div>
                     </div>
                     <div class="stat-buttons">
@@ -155,7 +165,9 @@
                     <div class="stat-info">
                         <div class="stat-name">❤️ Max HP</div>
                         <div class="stat-value">
-                            <span id="stat-hp">100</span>
+                            Base: <span id="stat-hp-base">100</span>
+                            <span class="stat-separator">→</span>
+                            <span id="stat-hp-total">100</span>
                         </div>
                     </div>
                     <div class="stat-buttons">
