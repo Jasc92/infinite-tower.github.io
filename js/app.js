@@ -366,10 +366,12 @@ function updateStatDisplay(stat, baseValue, totalValue, isMax, isAffectedByRelic
         const baseEl = document.getElementById(`stat-${stat}-base`);
         const separatorEl = statValueContainer.querySelector('.stat-separator');
         const totalEl = document.getElementById(`stat-${stat}-total`);
+        const basePrefix = statValueContainer.querySelector('.stat-base-prefix');
         
-        // Hide base and separator, show only total
+        // Hide base, separator, and prefix, show only total
         if (baseEl) baseEl.style.display = 'none';
         if (separatorEl) separatorEl.style.display = 'none';
+        if (basePrefix) basePrefix.style.display = 'none';
         if (totalEl) {
             totalEl.style.display = 'inline';
             if (stat === 'attackSpeed') {
@@ -386,16 +388,17 @@ function updateStatDisplay(stat, baseValue, totalValue, isMax, isAffectedByRelic
         const separatorEl = statValueContainer.querySelector('.stat-separator');
         const totalEl = document.getElementById(`stat-${stat}-total`);
         
-        // Add "Base: " prefix before base value
-        const basePrefix = statValueContainer.querySelector('.stat-base-prefix');
+        // Add "Base: " prefix before base value if it doesn't exist
+        let basePrefix = statValueContainer.querySelector('.stat-base-prefix');
         if (!basePrefix) {
-            const prefix = document.createElement('span');
-            prefix.className = 'stat-base-prefix';
-            prefix.textContent = 'Base: ';
+            basePrefix = document.createElement('span');
+            basePrefix.className = 'stat-base-prefix';
+            basePrefix.textContent = 'Base: ';
             if (baseEl && baseEl.parentNode) {
-                baseEl.parentNode.insertBefore(prefix, baseEl);
+                baseEl.parentNode.insertBefore(basePrefix, baseEl);
             }
         }
+        basePrefix.style.display = 'inline';
         
         if (baseEl) {
             baseEl.style.display = 'inline';
