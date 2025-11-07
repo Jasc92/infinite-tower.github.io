@@ -276,31 +276,40 @@ function updateStatsScreen() {
         console.log('=== SNAPSHOT BASE STATS (without relics) ===', game.baseStatsSnapshot);
     }
     
-    // Update stat displays (show BASE and TOTAL)
+    // Check which stats are affected by relics
+    const statsAffectedByRelics = getStatsAffectedByRelics();
+    
+    // Update stat displays (show BASE and TOTAL only if affected by relics)
     updateStatDisplay('attackSpeed', 
         game.baseStatsWithoutRelics ? game.baseStatsWithoutRelics.attackSpeed.toFixed(1) : game.player.attackSpeed.toFixed(1),
         game.player.attackSpeed.toFixed(1),
-        game.player.attackSpeed >= 6.0);
+        game.player.attackSpeed >= 6.0,
+        statsAffectedByRelics.attackSpeed);
     updateStatDisplay('attack',
         game.baseStatsWithoutRelics ? game.baseStatsWithoutRelics.attack : game.player.attack,
         game.player.attack,
-        false);
+        false,
+        statsAffectedByRelics.attack);
     updateStatDisplay('crit',
         game.baseStatsWithoutRelics ? Math.round(game.baseStatsWithoutRelics.critChance * 100) : Math.round(game.player.critChance * 100),
         Math.round(game.player.critChance * 100),
-        game.player.critChance >= 0.75);
+        game.player.critChance >= 0.75,
+        statsAffectedByRelics.critChance);
     updateStatDisplay('lifesteal',
         game.baseStatsWithoutRelics ? Math.round(game.baseStatsWithoutRelics.lifesteal * 100) : Math.round(game.player.lifesteal * 100),
         Math.round(game.player.lifesteal * 100),
-        game.player.lifesteal >= 0.40);
+        game.player.lifesteal >= 0.40,
+        statsAffectedByRelics.lifesteal);
     updateStatDisplay('defense',
         game.baseStatsWithoutRelics ? game.baseStatsWithoutRelics.defense : game.player.defense,
         game.player.defense,
-        false);
+        false,
+        statsAffectedByRelics.defense);
     updateStatDisplay('hp',
         game.baseStatsWithoutRelics ? game.baseStatsWithoutRelics.maxHp : game.player.maxHp,
         game.player.maxHp,
-        false);
+        false,
+        statsAffectedByRelics.maxHp);
     
     // Update start button
     const btn = document.getElementById('btn-start-battle');
@@ -313,28 +322,101 @@ function updateStatsScreen() {
     }
 }
 
-function updateStatDisplay(stat, baseValue, totalValue, isMax) {
-    // Update base value display
-    const baseEl = document.getElementById(`stat-${stat}-base`);
-    if (baseEl) {
-        if (stat === 'attackSpeed') {
-            baseEl.textContent = typeof baseValue === 'string' ? baseValue : baseValue.toFixed(1);
-        } else if (stat === 'crit' || stat === 'lifesteal') {
-            baseEl.textContent = baseValue;
-        } else {
-            baseEl.textContent = baseValue;
-        }
-    }
+function getStatsAffectedByRelics() {
+    const affected = {
+        attack: false,
+        attackSpeed: false,
+        critChance: false,
+        lifesteal: false,
+        defense: false,
+        maxHp: false
+    };
     
-    // Update total value display
-    const totalEl = document.getElementById(`stat-${stat}-total`);
-    if (totalEl) {
-        if (stat === 'attackSpeed') {
-            totalEl.textContent = typeof totalValue === 'string' ? totalValue : totalValue.toFixed(1);
-        } else if (stat === 'crit' || stat === 'lifesteal') {
-            totalEl.textContent = totalValue;
-        } else {
-            totalEl.textContent = totalValue;
+    game.relicManager.activeRelics.forEach(relic => {
+        if (relic.flatEffects) {
+            if (relic.flatEffects.attack) affected.attack = true;
+            if (relic.flatEffects.attackSpeed) affected.attackSpeed = true;
+            if (relic.flatEffects.critChance) affected.critChance = true;
+            if (relic.flatEffects.lifesteal) affected.lifesteal = true;
+            if (relic.flatEffects.defense) affected.defense = true;
+            if (relic.flatEffects.maxHp) affected.maxHp = true;
+        }
+        if (relic.percentageEffects) {
+            if (relic.percentageEffects.attack) affected.attack = true;
+            if (relic.percentageEffects.attackSpeed) affected.attackSpeed = true;
+            if (relic.percentageEffects.critChance) affected.critChance = true;
+            if (relic.percentageEffects.lifesteal) affected.lifesteal = true;
+            if (relic.percentageEffects.defense) affected.defense = true;
+            if (relic.percentageEffects.maxHp) affected.maxHp = true;
+        }
+    });
+    
+    return affected;
+}
+
+function updateStatDisplay(stat, baseValue, totalValue, isMax, isAffectedByRelics = false) {
+    const statRow = document.querySelector(`[data-stat="${stat}"]`);
+    if (!statRow) return;
+    
+    const statValueContainer = statRow.querySelector('.stat-value');
+    if (!statValueContainer) return;
+    
+    // If not affected by relics, show simple format
+    if (!isAffectedByRelics) {
+        const baseEl = document.getElementById(`stat-${stat}-base`);
+        const separatorEl = statValueContainer.querySelector('.stat-separator');
+        const totalEl = document.getElementById(`stat-${stat}-total`);
+        
+        // Hide base and separator, show only total
+        if (baseEl) baseEl.style.display = 'none';
+        if (separatorEl) separatorEl.style.display = 'none';
+        if (totalEl) {
+            totalEl.style.display = 'inline';
+            if (stat === 'attackSpeed') {
+                totalEl.textContent = typeof totalValue === 'string' ? totalValue : totalValue.toFixed(1);
+            } else if (stat === 'crit' || stat === 'lifesteal') {
+                totalEl.textContent = totalValue;
+            } else {
+                totalEl.textContent = totalValue;
+            }
+        }
+    } else {
+        // Show base → total format
+        const baseEl = document.getElementById(`stat-${stat}-base`);
+        const separatorEl = statValueContainer.querySelector('.stat-separator');
+        const totalEl = document.getElementById(`stat-${stat}-total`);
+        
+        // Add "Base: " prefix before base value
+        const basePrefix = statValueContainer.querySelector('.stat-base-prefix');
+        if (!basePrefix) {
+            const prefix = document.createElement('span');
+            prefix.className = 'stat-base-prefix';
+            prefix.textContent = 'Base: ';
+            if (baseEl && baseEl.parentNode) {
+                baseEl.parentNode.insertBefore(prefix, baseEl);
+            }
+        }
+        
+        if (baseEl) {
+            baseEl.style.display = 'inline';
+            if (stat === 'attackSpeed') {
+                baseEl.textContent = typeof baseValue === 'string' ? baseValue : baseValue.toFixed(1);
+            } else if (stat === 'crit' || stat === 'lifesteal') {
+                baseEl.textContent = baseValue;
+            } else {
+                baseEl.textContent = baseValue;
+            }
+        }
+        if (separatorEl) separatorEl.style.display = 'inline';
+        if (totalEl) {
+            totalEl.style.display = 'inline';
+            if (stat === 'attackSpeed') {
+                totalEl.textContent = typeof totalValue === 'string' ? totalValue : totalValue.toFixed(1);
+            } else if (stat === 'crit' || stat === 'lifesteal') {
+                totalEl.textContent = totalValue;
+            } else {
+                totalEl.textContent = totalValue;
+            }
         }
     }
     
