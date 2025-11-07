@@ -7,6 +7,17 @@
 
 ---
 
+### Unlock & Selection Flow
+- **Starting state**: Player begins the run without an active ability equipped.
+- **Acquisition cadence**: After completing every 15th floor (15, 30, 45, …) the game presents an ability selection screen, similar to relic selection.
+  - Offer 3 random abilities (excluding the currently equipped one) pulled from the ability pool.
+  - Player must choose **one** ability (no skip) — the chosen ability becomes the equipped active.
+- **Swapping**: Every subsequent 15-floor interval the player may replace the current ability with a new pick; this enables adapting the build mid-run.
+- **UI Integration**: The ability selection screen reuses relic card patterns (icon, name, description), but enforces single-slot ownership.
+- **Persistence**: Store the currently equipped ability ID in run state so battles know which effect to trigger.
+
+---
+
 ### Balancing Considerations
 - Ability effects intentionally sound potent, but their power is gated behind moderate/long cooldowns and short durations.
 - During implementation, we should:
@@ -14,6 +25,7 @@
   - Prevent stacking abuse (one ability at a time, no relic chains that reset cooldown infinitely).
   - Ensure ability buffs respect existing caps (attack speed max 6.0, crit max 75%, lifesteal max 40%).
   - Provide VFX feedback without overloading the player (clear indicator when active vs. on cooldown).
+  - Respect time-multiplier scaling: cooldowns and effect timers must tick properly at 1x / 3x / 5x battle speeds (tie timers to `deltaTime` rather than frame count).
 
 ---
 
@@ -91,49 +103,57 @@ Each ability includes a suggested cooldown, effect, and a short note on intended
     id: 'arcane_surge',
     name: 'Arcane Surge',
     cooldown: 12,
+    effectDuration: 4,
     icon: '🪄',
     description: 'Gain +50% attack speed and +30% damage for 4s.',
     onActivate(player, enemy, context) { ... }
   }
   ```
-- Store base cooldown, icon, effect handler (function or scriptable trigger), and optional relic modifiers.
+- Store base cooldown, effect duration, icon, effect handler (function or scriptable trigger), and optional relic modifiers.
 - Extend `GameManager` with:
   - `activeAbilityId`
   - `abilityCooldownRemaining`
   - `abilityEffectRemaining`
   - `abilityState` (ready, active, cooldown)
-  - `abilityHistory` (for analytics / debugging).
+  - `abilityHistory` (for analytics / debugging)
+  - `nextAbilityFloor` (track next floor threshold for ability selection).
 
 #### 2. UI Changes
 - In `index.html`, inside the battle HUD:
   - Add a new button container left of the relic slots, respecting existing flex layout.
   - **Visual states**:
-    - *Ready*: normal style.
+    - *Ready*: normal style (tooltips show ability details).
     - *Active*: button glows/pulses (CSS animation). Inside the button, show the remaining effect duration (counting down each second).
     - *Cooldown*: glow stops; display cooldown timer text inside the button until it reaches 0.
     - *Disabled*: grayscale state when no ability is equipped/unlocked.
   - Provide accessible tooltip describing the equipped ability (name, cooldown, short description).
-- In `css/styles.css`:
-  - Create `.ability-button`, `.ability-button.active`, `.ability-button.cooldown`, `.ability-button.disabled`.
-  - Define keyframes for glow pulse (`@keyframes abilityGlow`).
-  - Style inner text span for countdown numbers.
 
-#### 3. Input Handling
+#### 3. Ability Selection Screen
+- Reuse the relic-selection scaffolding:
+  - `updateAbilitySelectionScreen()` to populate 3 cards.
+  - Display ability icon, name, cooldown, duration, effect summary, synergy tags.
+  - Confirm button “Equip [Ability]” similar to relic flow.
+  - Ability is mandatory once the screen appears (no skip button).
+- Add navigation to show this screen at floor 15 increments via `game.nextFloor()`.
+- Track already owned ability to avoid offering the same one (unless we want duplicates to allow “keep current ability” choice).
+
+#### 4. Input Handling
 - Add event listener in `js/app.js` to handle click/tap on the ability button.
 - Integrate keyboard shortcut (optional, e.g., `Space` or `A`).
 - Guard against re-activation while in `active` or `cooldown` state.
 
-#### 4. Game Loop Integration
+#### 5. Game Loop Integration
 - Update combat loop (`combat.js` / `GameManager.updateBattle`) to tick:
   - `abilityEffectRemaining` (while > 0, apply ability modifiers)
   - `abilityCooldownRemaining` (starts once effect ends)
+- Tie timers to `deltaTime * battleSpeed`, so they behave correctly at 1x / 3x / 5x speed.
 - Trigger state transitions:
   - `ready → active` on button press (if no cooldown).
   - `active → cooldown` when effect duration elapses.
   - `cooldown → ready` when cooldown reaches 0.
 - Emit events/hooks so UI can update button text/glow based on state.
 
-#### 5. Ability Effects
+#### 6. Ability Effects
 - Reuse existing combat modifiers where possible:
   - Attack speed/damage boosts -> apply to `player.attackSpeed`, `player.damageMultiplier` with timed rollback.
   - Shields -> same logic as `Diamond Shield` but flagged as ability-generated.
@@ -141,14 +161,20 @@ Each ability includes a suggested cooldown, effect, and a short note on intended
   - Crowd control (slow, debuff) -> extend enemy state to support temporary modifiers.
 - Add a generic `registerTimedEffect({ apply, rollback, duration })` utility to centralize start/end logic.
 
-#### 6. Persistence & Unlocks
+#### 7. Persistence & Unlocks
 - Initially unlocked by default.
-- Future-ready: store chosen ability in save data, allow unlocking via relics or milestones.
+- Save data should track:
+  - `activeAbilityId`
+  - `abilityCooldownRemaining`
+  - `abilityEffectRemaining`
+  - `nextAbilityFloor`
+  - `abilityPool` (to avoid duplicates if desired).
 
-#### 7. Testing Strategy
-- Unit tests for ability cooldown/effect timers and state transitions.
+#### 8. Testing Strategy
+- Unit tests for ability cooldown/effect timers and state transitions (ensure timers respect speed multipliers).
 - Simulation tests ensuring ability effects stack correctly with relics (e.g., `Arcane Surge` + `Rage Combo`).
 - UI tests for button glow, countdown text, state transitions on mobile and desktop.
+- Progression tests verifying ability selection opens at floors 15/30/45… and swapping works.
 
 ---
 
@@ -157,8 +183,8 @@ Each ability includes a suggested cooldown, effect, and a short note on intended
 | Criteria | Assessment |
 | --- | --- |
 | **Gameplay Value** | Adds a skill expression layer without overwhelming players; one-button design keeps the flow accessible. |
-| **Complexity** | Moderate. Biggest tasks are UI integration, combat hooks, and ability script architecture. Our existing relic and buff systems provide many reusable patterns. |
-| **Risks** | Balancing ability power vs. relic combos; ensuring cooldown/effect visuals remain clear on small screens; need to avoid ability spam breaking auto-battler pacing. |
+| **Complexity** | Moderate. Biggest tasks are UI integration, combat hooks, ability selection UI, and ability script architecture. Our existing relic and buff systems provide many reusable patterns. |
+| **Risks** | Balancing ability power vs. relic combos; ensuring cooldown/effect visuals remain clear on small screens; need to avoid ability spam breaking auto-battler pacing; maintaining timer correctness across speed multipliers. |
 | **Extensibility** | High. The proposed data-driven approach enables future abilities, relic synergies (e.g., relic reduces ability cooldown), or even enemy abilities. |
 | **Performance** | Negligible impact if effects are pooled and modifiers are cleaned up promptly. |
 
