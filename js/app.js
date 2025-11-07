@@ -1309,10 +1309,10 @@ function renderBattleUI() {
     
     if (!game.player || !game.enemy) return;
     
-    // Panel dimensions - smaller height to avoid cutting character legs
+    // Panel dimensions
     const panelPadding = 8;
     const panelWidth = (canvas.width - panelPadding * 3) / 2;
-    const panelHeight = canvas.height * 0.35; // Reduced from full height to 35% of canvas
+    const panelHeight = canvas.height - panelPadding * 2;
     const panelX1 = panelPadding;
     const panelX2 = panelWidth + panelPadding * 2;
     const panelY = panelPadding;
