@@ -1780,6 +1780,7 @@ function setupEventListeners() {
     // Menu screen
     document.getElementById('btn-play').addEventListener('click', () => {
         game.resetRun();
+        game.pendingScreens = ['stats'];
         showScreen('relic'); // Start with relic selection first
     });
     
