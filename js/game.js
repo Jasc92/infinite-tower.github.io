@@ -9,6 +9,7 @@ class GameManager {
         this.combat = new CombatEngine();
         this.enemyGen = new EnemyGenerator();
         this.relicManager = new RelicManager();
+        this.abilityManager = new AbilityManager();
         
         // Game state
         this.difficulty = 'normal';
@@ -48,6 +49,27 @@ class GameManager {
             enemy: null,
             background: null
         };
+
+        // Pending screens queue
+        this.pendingScreens = [];
+        
+        // Ability state
+        this.activeAbilityId = null;
+        this.abilityCooldownRemaining = 0;
+        this.abilityEffectRemaining = 0;
+        this.abilityState = 'locked'; // locked, ready, active, cooldown
+        this.abilityModifiers = {
+            player: this.createEmptyAbilityModifiers(),
+            enemy: this.createEmptyEnemyAbilityModifiers()
+        };
+        this.nextAbilityFloor = 15;
+        this.abilityStacks = {
+            critGuarantee: 0
+        };
+        this.abilityHealing = {
+            healPerSecond: 0,
+            remaining: 0
+        };
     }
 
     /**
@@ -67,6 +89,29 @@ class GameManager {
         };
     }
 
+    createEmptyAbilityModifiers() {
+        return {
+            attackMult: 1,
+            attackSpeedMult: 1,
+            damageMult: 1,
+            dodgeBonus: 0,
+            defenseFlat: 0,
+            reflectPercent: 0,
+            ignoreShield: false,
+            applyBleed: false,
+            bleedPercent: 0,
+            shieldPercent: 0,
+            invulnerable: false
+        };
+    }
+
+    createEmptyEnemyAbilityModifiers() {
+        return {
+            attackSpeedMult: 1,
+            damageMult: 1
+        };
+    }
+
     /**
      * Reset game state for new run
      */
@@ -81,6 +126,18 @@ class GameManager {
         this.battleSpeed = 1.0;
         this.battleActive = false;
         this.relicManager.reset();
+        this.pendingScreens = [];
+        
+        // Ability reset
+        this.activeAbilityId = null;
+        this.abilityCooldownRemaining = 0;
+        this.abilityEffectRemaining = 0;
+        this.abilityState = 'locked';
+        this.nextAbilityFloor = 15;
+        this.abilityModifiers.player = this.createEmptyAbilityModifiers();
+        this.abilityModifiers.enemy = this.createEmptyEnemyAbilityModifiers();
+        this.abilityStacks = { critGuarantee: 0 };
+        this.abilityHealing = { healPerSecond: 0, remaining: 0 };
         
         // Save base stats (before any relic effects) for clean relic application
         this.basePlayerStats = {
@@ -352,8 +409,10 @@ class GameManager {
         // They are applied ONCE when relics are selected, and basePlayerStats is updated
         // Only combat effects (critMultiplier, armorPierce, etc.) are checked in combat.js
         
+        // Reset ability timers when entering battle (cooldowns carry over)
         this.combat.reset();
         this.combat.relics = this.relicManager.activeRelics; // Pass relics to combat engine
+        this.applyAbilityStateToCombat();
         console.log('Relics passed to combat engine:', this.combat.relics.length);
         
         this.battleActive = true;
@@ -370,7 +429,9 @@ class GameManager {
         const deltaTime = (timestamp - this.lastFrameTime) / 1000 * this.battleSpeed;
         this.lastFrameTime = timestamp;
 
+        this.updateAbilityTimers(deltaTime);
         const result = this.combat.update(this.player, this.enemy, deltaTime);
+        this.abilityStacks.critGuarantee = this.combat.abilityPlayerMods.critGuarantee;
         
         if (result === 'player_win') {
             this.battleActive = false;
@@ -388,6 +449,7 @@ class GameManager {
      */
     nextFloor() {
         this.currentFloor++;
+        const actions = [];
         
         // Check for archetype change (every 3 floors)
         this.floorsUntilArchetypeCheck--;
@@ -400,40 +462,242 @@ class GameManager {
         this.player.currentHp = this.player.maxHp;
         
         // Boss floor bonus points (11, 21, 31, ...)
-        // Boss floors: every 10 floors + 1 (11, 21, 31...)
         if ((this.currentFloor - 1) % 10 === 0 && this.currentFloor > 1) {
-            this.availablePoints += 3; // Bonus points from boss
+            this.availablePoints += 3;
         }
         
-        // STAT ALLOCATION: Every 5 floors (after completing floor 5, 10, 15, 20, 25, 30...)
-        // RELIC SELECTION: Floor 1 (start), then after completing floors 10, 20, 30...
-        
-        // Check if we just completed a floor that was a multiple of 10 (10, 20, 30...)
-        // After completing floor 10, currentFloor is now 11, so check if (11-1) % 10 === 0
         const isRelicFloor = this.currentFloor === 1 || ((this.currentFloor - 1) % 10 === 0 && this.currentFloor > 1);
-        // Check if we just completed a floor that was a multiple of 5 (5, 10, 15, 20, 25, 30...)
-        // After completing floor 5, currentFloor is now 6, so check if (6-1) % 5 === 0
         const isStatFloor = (this.currentFloor - 1) % 5 === 0 && this.currentFloor > 1;
+        const isAbilityFloor = (this.currentFloor - 1) % 15 === 0 && this.currentFloor > 1;
         
         if (isRelicFloor) {
-            // Relic floor: add stat points and show relic selection
             if (this.currentFloor === 1) {
-                this.availablePoints = 5; // Start with 5 points
+                this.availablePoints = 5;
             } else {
-                // Floor 10, 20, 30... also get stat points
                 this.availablePoints += 5;
             }
             this.baseStatsSnapshot = null;
-            return 'relic'; // Relic selection (then stats after)
-        } else if (isStatFloor) {
-            // Stat floor only (5, 15, 25, 35...)
-            this.availablePoints += 5;
-            this.baseStatsSnapshot = null;
-            return 'stats'; // Stat allocation
+            actions.push('relic');
         }
         
-        // No stat allocation, no relic selection - continue to battle
-        return 'battle';
+        if (isAbilityFloor) {
+            actions.push('ability');
+        }
+        
+        if (isStatFloor) {
+            this.availablePoints += 5;
+            this.baseStatsSnapshot = null;
+            actions.push('stats');
+        }
+        
+        if (actions.length === 0) {
+            this.pendingScreens = [];
+            return 'battle';
+        }
+        
+        this.pendingScreens = actions.slice(1);
+        return actions[0];
+    }
+
+    getNextPendingScreen() {
+        if (this.pendingScreens.length === 0) {
+            return 'battle';
+        }
+        return this.pendingScreens.shift();
+    }
+
+    equipAbility(abilityId) {
+        this.activeAbilityId = abilityId;
+        this.abilityCooldownRemaining = 0;
+        this.abilityEffectRemaining = 0;
+        this.abilityState = abilityId ? 'ready' : 'locked';
+        this.abilityModifiers.player = this.createEmptyAbilityModifiers();
+        this.abilityModifiers.enemy = this.createEmptyEnemyAbilityModifiers();
+        this.abilityStacks = { critGuarantee: 0 };
+        this.abilityHealing = { healPerSecond: 0, remaining: 0 };
+        this.applyAbilityStateToCombat();
+    }
+
+    getActiveAbility() {
+        return this.activeAbilityId ? this.abilityManager.getAbilityById(this.activeAbilityId) : null;
+    }
+
+    hasPendingScreens() {
+        return this.pendingScreens.length > 0;
+    }
+
+    applyAbilityStateToCombat() {
+        this.combat.setAbilityModifiers(
+            { ...this.abilityModifiers.player, critGuarantee: this.abilityStacks.critGuarantee },
+            { ...this.abilityModifiers.enemy }
+        );
+    }
+
+    activateAbility() {
+        if (this.abilityState !== 'ready' || !this.activeAbilityId) return false;
+        const ability = this.abilityManager.getAbilityById(this.activeAbilityId);
+        if (!ability) return false;
+        console.log('Activating ability:', ability.name);
+        this.abilityState = ability.duration > 0 ? 'active' : 'cooldown';
+        this.abilityEffectRemaining = ability.duration || 0;
+        this.abilityCooldownRemaining = ability.cooldown;
+        this.applyAbility(ability);
+        this.applyAbilityStateToCombat();
+        return true;
+    }
+
+    applyAbility(ability) {
+        const data = ability.data || {};
+        const playerMods = this.abilityModifiers.player;
+        const enemyMods = this.abilityModifiers.enemy;
+
+        switch (ability.type) {
+            case 'buff':
+                if (data.attackSpeedMult) playerMods.attackSpeedMult *= data.attackSpeedMult;
+                if (data.damageMult) playerMods.damageMult *= data.damageMult;
+                if (data.attackMult) playerMods.attackMult *= data.attackMult;
+                if (data.dodgeBonus) playerMods.dodgeBonus += data.dodgeBonus;
+                if (data.defenseFlat) playerMods.defenseFlat += data.defenseFlat;
+                if (data.reflectPercent) playerMods.reflectPercent += data.reflectPercent;
+                if (data.refreshEnergySurge) {
+                    this.combat.energySurgeTimer = 0;
+                    this.combat.energySurgeReady = true;
+                }
+                if (data.resetEnemyCombos) {
+                    this.combat.rageComboHits = 0;
+                    this.combat.weakPointHits = 0;
+                }
+                break;
+            case 'shield':
+                const shieldAmount = Math.round(this.player.maxHp * data.shieldPercent);
+                this.player.shield = Math.max(this.player.shield || 0, shieldAmount);
+                this.player.maxShield = Math.max(this.player.maxShield || 0, this.player.shield);
+                playerMods.shieldPercent = data.shieldPercent;
+                break;
+            case 'heal_over_time':
+                const cost = Math.round(this.player.currentHp * data.costPercentCurrent);
+                this.player.currentHp = Math.max(1, this.player.currentHp - cost);
+                const missingHp = Math.max(0, this.player.maxHp - this.player.currentHp);
+                const totalHeal = Math.round(missingHp * data.healPercentMissing);
+                const duration = data.duration || 5;
+                this.abilityHealing.healPerSecond = totalHeal / duration;
+                this.abilityHealing.remaining = duration;
+                break;
+            case 'enemy_debuff':
+                if (data.enemyAttackSpeedMult) enemyMods.attackSpeedMult *= data.enemyAttackSpeedMult;
+                if (data.enemyDamageMult) enemyMods.damageMult *= data.enemyDamageMult;
+                break;
+            case 'execute_buff':
+                playerMods.damageMult *= data.damageMult || 1;
+                playerMods.executeThreshold = data.threshold || 0.35;
+                playerMods.executeDamageMult = data.damageMult || 3;
+                break;
+            case 'burst_damage':
+                this.performBurstDamage(data);
+                break;
+            case 'crit_buff':
+                this.abilityStacks.critGuarantee = data.critHits || 5;
+                playerMods.critDamageMult = data.critDamageMult || 1;
+                break;
+            case 'invulnerability':
+                playerMods.invulnerable = true;
+                if (data.healPercentMax) {
+                    const healAmt = Math.round(this.player.maxHp * data.healPercentMax);
+                    this.player.currentHp = Math.min(this.player.maxHp, this.player.currentHp + healAmt);
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    performBurstDamage(data) {
+        const enemy = this.enemy;
+        if (!enemy) return;
+        let totalDamage = 0;
+        const hits = data.hits || 1;
+        for (let i = 0; i < hits; i++) {
+            const damage = Math.round(this.player.attack * (data.damagePercent || 1));
+            let effectiveDamage = damage;
+            if (!data.ignoreShield && enemy.shield && enemy.shield > 0) {
+                const shieldAbsorb = Math.min(enemy.shield, effectiveDamage);
+                enemy.shield -= shieldAbsorb;
+                effectiveDamage -= shieldAbsorb;
+            }
+            if (effectiveDamage > 0) {
+                const defenseFactor = data.defenseIgnore ? (1 - data.defenseIgnore) : 1;
+                const defense = Math.round(enemy.defense * defenseFactor);
+                const finalDamage = Math.max(1, effectiveDamage - defense);
+                enemy.currentHp -= finalDamage;
+                totalDamage += finalDamage;
+                enemy.lastDamageTime = this.combat.combatTime;
+                enemy.lastDamageAmount = finalDamage;
+                enemy.lastDamageIsCrit = false;
+            }
+        }
+        if (data.applyBleed) {
+            enemy.bleedDamage = Math.round(enemy.maxHp * (data.bleedPercent || 0.05));
+            enemy.bleedDuration = 3;
+        }
+        if (totalDamage > 0) {
+            this.combat.addFloatingText({
+                damage: totalDamage,
+                isMiss: false,
+                isCrit: false,
+                isHeal: false,
+                text: `${totalDamage}`
+            }, 'enemy');
+        }
+        if (enemy.currentHp <= 0) {
+            enemy.currentHp = 0;
+        }
+    }
+
+    expireAbility(ability) {
+        const playerMods = this.abilityModifiers.player;
+        const enemyMods = this.abilityModifiers.enemy;
+
+        this.abilityModifiers.player = this.createEmptyAbilityModifiers();
+        this.abilityModifiers.enemy = this.createEmptyEnemyAbilityModifiers();
+        this.abilityStacks.critGuarantee = 0;
+        this.abilityHealing = { healPerSecond: 0, remaining: 0 };
+        this.applyAbilityStateToCombat();
+    }
+
+    updateAbilityTimers(deltaTime) {
+        if (!this.activeAbilityId || this.abilityState === 'locked') return;
+
+        const ability = this.abilityManager.getAbilityById(this.activeAbilityId);
+        if (!ability) return;
+
+        if (this.abilityState === 'active') {
+            if (this.abilityHealing.remaining > 0 && this.abilityHealing.healPerSecond > 0) {
+                const healTick = Math.min(this.abilityHealing.healPerSecond * deltaTime, this.abilityHealing.healPerSecond * this.abilityHealing.remaining);
+                this.player.currentHp = Math.min(this.player.maxHp, this.player.currentHp + healTick);
+                this.abilityHealing.remaining = Math.max(0, this.abilityHealing.remaining - deltaTime);
+            }
+
+            this.abilityEffectRemaining -= deltaTime;
+            if (this.abilityEffectRemaining <= 0) {
+                this.expireAbility(ability);
+                this.abilityState = 'cooldown';
+                this.abilityEffectRemaining = 0;
+            }
+        }
+
+        if (this.abilityState === 'cooldown') {
+            this.abilityCooldownRemaining -= deltaTime;
+            if (this.abilityCooldownRemaining <= 0) {
+                this.abilityCooldownRemaining = 0;
+                this.abilityState = 'ready';
+            }
+        }
+
+        if (this.abilityState === 'active' || this.abilityState === 'cooldown') {
+            if (this.abilityState !== 'active') {
+                this.abilityModifiers.player.invulnerable = false;
+            }
+        }
     }
 
     /**
@@ -453,7 +717,8 @@ class GameManager {
             crit: parseFloat(this.player.critChance.toFixed(2)),
             lifesteal: parseFloat(this.player.lifesteal.toFixed(2)),
             def: this.player.defense,
-            hp: this.player.maxHp
+            hp: this.player.maxHp,
+            ability: this.activeAbilityId
         };
     }
 

@@ -24,6 +24,41 @@ class CombatEngine {
         this.energySurgeReady = false; // Energy Surge: ready state
         this.recycleBoostTimer = 0; // Recycle: speed boost timer
         this.recycleBoostActive = false; // Recycle: boost active state
+
+        // Ability modifiers
+        this.abilityPlayerMods = this.getDefaultPlayerAbilityMods();
+        this.abilityEnemyMods = this.getDefaultEnemyAbilityMods();
+    }
+
+    getDefaultPlayerAbilityMods() {
+        return {
+            attackMult: 1,
+            attackSpeedMult: 1,
+            damageMult: 1,
+            dodgeBonus: 0,
+            defenseFlat: 0,
+            reflectPercent: 0,
+            critDamageMult: 1,
+            executeThreshold: null,
+            executeDamageMult: null,
+            invulnerable: false,
+            critGuarantee: 0,
+            ignoreShield: false,
+            applyBleed: false,
+            bleedPercent: 0
+        };
+    }
+
+    getDefaultEnemyAbilityMods() {
+        return {
+            attackSpeedMult: 1,
+            damageMult: 1
+        };
+    }
+
+    setAbilityModifiers(playerMods, enemyMods) {
+        this.abilityPlayerMods = Object.assign(this.getDefaultPlayerAbilityMods(), playerMods || {});
+        this.abilityEnemyMods = Object.assign(this.getDefaultEnemyAbilityMods(), enemyMods || {});
     }
 
     reset() {
@@ -59,6 +94,10 @@ class CombatEngine {
             if (relic.id === 'second_wind') relic.used = false;
             if (relic.id === 'last_stand') relic.survived = false;
         });
+
+        // Reset ability modifiers
+        this.abilityPlayerMods = this.getDefaultPlayerAbilityMods();
+        this.abilityEnemyMods = this.getDefaultEnemyAbilityMods();
     }
     
     /**
@@ -164,7 +203,7 @@ class CombatEngine {
         // Player attacks
         if (this.playerAttackTimer <= 0) {
             // Check Adrenaline for attack speed boost
-            let effectivePlayerSpeed = player.attackSpeed;
+            let effectivePlayerSpeed = player.attackSpeed * this.abilityPlayerMods.attackSpeedMult;
             const adrenaline = this.relics.find(r => r.id === 'adrenaline');
             if (adrenaline && (player.currentHp / player.maxHp) < adrenaline.threshold) {
                 effectivePlayerSpeed *= (1 + adrenaline.speedBoost);
@@ -307,10 +346,11 @@ class CombatEngine {
 
         // Enemy attacks
         if (this.enemyAttackTimer <= 0) {
+            let effectiveEnemySpeed = enemy.attackSpeed * this.abilityEnemyMods.attackSpeedMult;
             let damageInfo = this.calculateDamage(
                 enemy.attack,
                 enemy.critChance,
-                player.defense,
+                player.defense + this.abilityPlayerMods.defenseFlat,
                 enemy,
                 player,
                 false // enemy attacking
@@ -340,6 +380,10 @@ class CombatEngine {
                     this.recycleBoostActive = true;
                     this.recycleBoostTimer = recycle.boostDuration;
                 }
+            } else if (!damageInfo.isMiss && this.abilityPlayerMods.dodgeBonus > 0 && Math.random() < this.abilityPlayerMods.dodgeBonus) {
+                damageInfo.damage = 0;
+                damageInfo.isMiss = true;
+                damageInfo.text = 'DODGE!';
             }
             
             // Thick Skin (damage reduction) - check if player has this relic
@@ -497,7 +541,7 @@ class CombatEngine {
             this.addFloatingText(damageInfo, 'player');
 
             // Reset timer: 1 / attackSpeed
-            this.enemyAttackTimer = 1 / enemy.attackSpeed;
+            this.enemyAttackTimer = 1 / effectiveEnemySpeed;
 
             // Check loss condition AFTER damage application (accounting for speed multiplier)
             if (player.currentHp <= 0) {
@@ -545,12 +589,16 @@ class CombatEngine {
         let critMultiplier = 2.0;
         
         if (isPlayerAttacking) {
+            // Apply ability attack multiplier
+            modifiedAttack *= this.abilityPlayerMods.attackMult;
+            modifiedAttack *= this.abilityPlayerMods.damageMult;
+            
             // Momentum: +1% damage per second of combat (max 30%)
             const momentum = this.relics.find(r => r.id === 'momentum');
             if (momentum) {
                 const stacks = Math.min(momentum.maxStacks, Math.floor(this.combatTime));
                 const bonus = stacks * momentum.damagePerSecond;
-                modifiedAttack = Math.round(attack * (1 + bonus));
+                modifiedAttack = Math.round(modifiedAttack * (1 + bonus));
                 if (stacks > 0) {
                     console.log(`📈 Momentum: +${Math.round(bonus * 100)}% (${stacks}s)`);
                 }
@@ -574,10 +622,21 @@ class CombatEngine {
             if (firstBlood && this.firstHit) {
                 modifiedCritChance = 1.0;
             }
+
+            if (this.abilityPlayerMods.critGuarantee > 0) {
+                modifiedCritChance = 1.0;
+            }
+        } else {
+            // Enemy ability debuffs
+            modifiedAttack *= this.abilityEnemyMods.damageMult;
         }
         
         // Critical check
-        const isCrit = Math.random() < modifiedCritChance;
+        let isCrit = Math.random() < modifiedCritChance;
+        if (isPlayerAttacking && this.abilityPlayerMods.critGuarantee > 0) {
+            isCrit = true;
+            this.abilityPlayerMods.critGuarantee = Math.max(0, this.abilityPlayerMods.critGuarantee - 1);
+        }
         
         // Armor Piercing: ignore 30% of defense
         let effectiveDefense = targetDefense;
@@ -632,7 +691,7 @@ class CombatEngine {
         }
         
         const rawDamage = isCrit 
-            ? (modifiedAttack * critMultiplier) - effectiveDefense 
+            ? (modifiedAttack * critMultiplier * this.abilityPlayerMods.critDamageMult) - effectiveDefense 
             : modifiedAttack - effectiveDefense;
 
             // Execute: 3x damage to enemies below 20% HP

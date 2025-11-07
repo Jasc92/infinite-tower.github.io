@@ -122,6 +122,9 @@ function showScreen(screenName) {
             case 'relic':
                 updateRelicScreen();
                 break;
+            case 'ability':
+                updateAbilityScreen();
+                break;
             case 'battle':
                 startBattleScreen();
                 break;
@@ -164,6 +167,7 @@ function updateStatsScreen() {
     
     // Update active relics display
     updateStatsRelicsDisplay();
+    updateStatsAbilityDisplay();
     
     // Ensure baseStatsWithoutRelics exists before taking snapshot
     // CRITICAL: When entering stats screen, player stats may have relics applied
@@ -1016,7 +1020,7 @@ function updateRelicScreen() {
         // Continue to stats allocation
         setTimeout(() => {
             console.log('Calling showScreen(stats)...');
-            showScreen('stats');
+            advancePendingScreens();
         }, 300);
     }
     
@@ -1264,6 +1268,7 @@ function battleLoop() {
     if (game.battleResult) {
         renderBattle();
         renderBattleUI();
+        updateAbilityButton();
         animationFrame = requestAnimationFrame(battleLoop);
         return;
     }
@@ -1273,6 +1278,7 @@ function battleLoop() {
     updateBattleUI();
     renderBattle();
     renderBattleUI();
+    updateAbilityButton();
     
     if (result === 'win') {
         // Set battle result and show overlay, keep rendering for 2 seconds
@@ -1561,7 +1567,7 @@ function renderBattle() {
     // Position sprites centered horizontally and vertically
     const heroXPos = canvas.width * 0.25;  // 25% from left (más centrado)
     const enemyXPos = canvas.width * 0.75; // 75% from left (más centrado)
-    const verticalCenter = canvas.height * 0.85; // Personajes más abajo (donde estaba el mensaje)
+    const verticalCenter = canvas.height * 0.78; // Slightly higher to show legs
     
     // Determine which sprites to use (alive or dead)
     const heroSprite = game.player.currentHp <= 0 ? game.sprites.heroDead : game.sprites.hero;
@@ -1672,17 +1678,18 @@ function handleBattleWin() {
     cancelAnimationFrame(animationFrame);
     
     const nextAction = game.nextFloor();
-    
-    if (nextAction === 'relic') {
-        // Relic selection (Floor 1, or every 10 floors: 10, 20, 30...)
-        setTimeout(() => showScreen('relic'), 500);
-    } else if (nextAction === 'stats') {
-        // Stat allocation (every 5 floors: 5, 10, 15, 20, 25, 30...)
-        setTimeout(() => showScreen('stats'), 500);
-    } else {
-        // Continue to next floor (no stat allocation, no relic selection)
+    if (nextAction === 'battle') {
         setTimeout(() => startBattleScreen(), 500);
+        return;
     }
+    
+    setTimeout(() => {
+        if (nextAction === 'relic' || nextAction === 'ability' || nextAction === 'stats') {
+            showScreen(nextAction);
+        } else {
+            startBattleScreen();
+        }
+    }, 500);
 }
 
 function handleBattleLoss() {
@@ -1750,60 +1757,19 @@ function updateResultScreen() {
         <div>Defense: ${build.def}</div>
         <div>HP: ${build.hp}</div>
     `;
-    
-    // Show final relics
-    const slotsContainer = document.getElementById('final-relics-slots');
-    const relics = game.relicManager.activeRelics;
-    
-    console.log('=== UPDATING RESULT RELICS ===');
-    console.log('Active relics:', relics.length, relics.map(r => ({ name: r.name, icon: r.icon })));
-    console.log('Slots container found:', slotsContainer ? 'YES' : 'NO');
-    
-    if (!slotsContainer) {
-        console.error('final-relics-slots container not found!');
-        return;
+
+    const abilityContainer = document.getElementById('final-ability-display');
+    abilityContainer.innerHTML = '';
+    const ability = build.ability ? game.abilityManager.getAbilityById(build.ability) : null;
+    if (ability) {
+        abilityContainer.innerHTML = `
+            <div class="ability-icon">${ability.icon}</div>
+            <div class="ability-name">${ability.name}</div>
+            <div class="ability-description">${ability.description}</div>
+        `;
+    } else {
+        abilityContainer.textContent = 'No active ability equipped';
     }
-    
-    // Clear existing slots
-    slotsContainer.innerHTML = '';
-    
-    // Create 3 slots
-    for (let i = 0; i < 3; i++) {
-        const slot = document.createElement('div');
-        slot.className = 'final-relic-slot';
-        
-        if (i < relics.length) {
-            const relic = relics[i];
-            console.log(`Slot ${i}: Setting relic ${relic.name} with icon: ${relic.icon}`);
-            
-            // Set icon using innerHTML for emoji support
-            slot.innerHTML = relic.icon;
-            slot.classList.add('active');
-            slot.title = relic.name;
-            
-            // Add click/touch handlers for tooltip
-            slot.onclick = (e) => {
-                e.stopPropagation();
-                showRelicTooltip(relic);
-            };
-            
-            // Touch support for mobile
-            slot.addEventListener('touchstart', (e) => {
-                e.stopPropagation();
-            });
-            
-            slot.addEventListener('touchend', (e) => {
-                e.stopPropagation();
-                showRelicTooltip(relic);
-            });
-        } else {
-            slot.classList.add('empty');
-        }
-        
-        slotsContainer.appendChild(slot);
-    }
-    
-    console.log('Result screen updated');
 }
 
 // ========================================
@@ -1875,7 +1841,7 @@ function setupEventListeners() {
     
     // Relic screen
     document.getElementById('btn-skip-relic').addEventListener('click', () => {
-        showScreen('stats');
+        advancePendingScreens();
     });
     
     // Home button from relic screen
@@ -1999,6 +1965,67 @@ function setupEventListeners() {
             renderBattleUI();
         }
     });
+    
+    // Ability screen
+    document.getElementById('btn-ability-home').addEventListener('click', () => {
+        showHomeConfirmation(() => {
+            showScreen('menu');
+        });
+    });
+
+    const abilityButton = document.getElementById('btn-ability');
+    abilityButton.addEventListener('click', () => {
+        if (abilityButton.disabled) return;
+        if (game.activateAbility()) {
+            updateAbilityButton();
+        }
+    });
+}
+
+function updateAbilityButton() {
+    const button = document.getElementById('btn-ability');
+    if (!button) return;
+
+    const abilityIconEl = button.querySelector('.ability-icon');
+    const timerEl = button.querySelector('.ability-timer');
+    const ability = game.activeAbilityId ? game.abilityManager.getAbilityById(game.activeAbilityId) : null;
+
+    button.classList.remove('disabled', 'ready', 'active', 'cooldown');
+
+    if (!ability) {
+        button.classList.add('disabled');
+        abilityIconEl.textContent = '✖';
+        timerEl.textContent = '--';
+        button.title = 'No ability equipped';
+        return;
+    }
+
+    abilityIconEl.textContent = ability.icon;
+    button.title = `${ability.name}
+${ability.description}`;
+
+    switch (game.abilityState) {
+        case 'ready':
+            button.classList.add('ready');
+            timerEl.textContent = 'READY';
+            button.disabled = false;
+            break;
+        case 'active':
+            button.classList.add('active');
+            timerEl.textContent = `${Math.max(0, Math.ceil(game.abilityEffectRemaining))}s`;
+            button.disabled = true;
+            break;
+        case 'cooldown':
+            button.classList.add('cooldown');
+            timerEl.textContent = `${Math.max(0, Math.ceil(game.abilityCooldownRemaining))}s`;
+            button.disabled = true;
+            break;
+        default:
+            button.classList.add('disabled');
+            timerEl.textContent = '--';
+            button.disabled = true;
+            break;
+    }
 }
 
 // ========================================
@@ -2049,5 +2076,129 @@ function capitalize(str) {
         'hard': 'Hard'
     };
     return map[str] || str;
+}
+
+function updateStatsAbilityDisplay() {
+    const container = document.getElementById('stats-ability');
+    if (!container) return;
+
+    container.innerHTML = '';
+    const ability = game.activeAbilityId ? game.abilityManager.getAbilityById(game.activeAbilityId) : null;
+
+    if (!ability) {
+        container.textContent = 'No active ability equipped';
+        return;
+    }
+
+    const slot = document.createElement('div');
+    slot.className = 'ability-slot';
+
+    const icon = document.createElement('div');
+    icon.className = 'ability-icon';
+    icon.textContent = ability.icon;
+
+    const info = document.createElement('div');
+    info.className = 'ability-info';
+    const name = document.createElement('div');
+    name.className = 'ability-name';
+    name.textContent = ability.name;
+
+    const durationText = ability.duration ? `${ability.duration}s` : 'Instant';
+    const meta = document.createElement('div');
+    meta.className = 'ability-meta';
+    meta.textContent = `CD: ${ability.cooldown}s | Duration: ${durationText}`;
+
+    const desc = document.createElement('div');
+    desc.className = 'ability-description';
+    desc.textContent = ability.description;
+
+    info.appendChild(name);
+    info.appendChild(meta);
+    info.appendChild(desc);
+
+    slot.appendChild(icon);
+    slot.appendChild(info);
+    container.appendChild(slot);
+}
+
+function updateAbilityScreen() {
+    const container = document.getElementById('ability-options');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const abilityOptions = game.abilityManager.getRandomAbilities(3, game.activeAbilityId ? [game.activeAbilityId] : []);
+    let selectedAbility = null;
+
+    const selectBtn = document.getElementById('btn-select-ability');
+    const selectedNameSpan = document.getElementById('selected-ability-name');
+    const currentAbilityEl = document.getElementById('ability-current');
+
+    const currentAbility = game.getActiveAbility();
+    if (currentAbility) {
+        currentAbilityEl.innerHTML = `
+            <div class="ability-name">Current Ability: ${currentAbility.name}</div>
+            <div class="ability-description">${currentAbility.description}</div>
+        `;
+    } else {
+        currentAbilityEl.textContent = 'No ability equipped yet. Choose wisely!';
+    }
+
+    abilityOptions.forEach(ability => {
+        const card = document.createElement('div');
+        card.className = 'ability-card';
+        card.innerHTML = `
+            <div class="ability-card-header">
+                <div class="ability-icon">${ability.icon}</div>
+                <div class="ability-name">${ability.name}</div>
+            </div>
+            <div class="ability-meta">CD: ${ability.cooldown}s | Duration: ${ability.duration ? `${ability.duration}s` : 'Instant'}</div>
+            <div class="ability-description">${ability.description}</div>
+        `;
+
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.ability-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            selectedAbility = ability;
+            updateSelectButton();
+        });
+
+        card.addEventListener('touchstart', () => {
+            card.classList.add('touching');
+        });
+
+        card.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            card.classList.remove('touching');
+            card.click();
+        });
+
+        container.appendChild(card);
+    });
+
+    updateSelectButton();
+
+    // Replace select button listener
+    const newSelectBtn = selectBtn.cloneNode(true);
+    selectBtn.parentNode.replaceChild(newSelectBtn, selectBtn);
+    newSelectBtn.addEventListener('click', () => {
+        if (!selectedAbility) return;
+        game.equipAbility(selectedAbility.id);
+        updateAbilityButton();
+        updateStatsAbilityDisplay();
+        advancePendingScreens();
+    });
+}
+
+function advancePendingScreens() {
+    if (game.hasPendingScreens()) {
+        const next = game.getNextPendingScreen();
+        if (next === 'battle') {
+            startBattleScreen();
+        } else {
+            showScreen(next);
+        }
+    } else {
+        startBattleScreen();
+    }
 }
 

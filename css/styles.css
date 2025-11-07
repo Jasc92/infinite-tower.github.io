@@ -375,6 +375,50 @@ body {
     box-shadow: inset 0 1px 0 rgba(139, 115, 85, 0.2), 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
+.stats-ability {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: clamp(10px, 2vh, 15px);
+    padding: clamp(8px, 1.5vh, 12px);
+    background: linear-gradient(180deg, rgba(26, 19, 14, 0.95) 0%, rgba(10, 10, 20, 0.95) 100%);
+    border-radius: 4px;
+    border: 2px solid #6b5a3a;
+    box-shadow: inset 0 1px 0 rgba(139, 115, 85, 0.15), 0 4px 12px rgba(0, 0, 0, 0.5);
+    min-height: clamp(60px, 12vh, 80px);
+    text-align: center;
+    font-size: clamp(10px, 2.5vw, 12px);
+    color: var(--text-dim);
+}
+
+.stats-ability .ability-slot {
+    display: flex;
+    align-items: center;
+    gap: clamp(8px, 2vw, 10px);
+}
+
+.stats-ability .ability-icon {
+    font-size: clamp(28px, 8vw, 40px);
+}
+
+.stats-ability .ability-info {
+    text-align: left;
+    max-width: 240px;
+}
+
+.stats-ability .ability-name {
+    color: #d4af37;
+    font-size: clamp(11px, 3vw, 13px);
+    margin-bottom: 4px;
+}
+
+.stats-ability .ability-description {
+    font-size: clamp(9px, 2.5vw, 11px);
+    color: var(--text-light);
+    line-height: 1.4;
+}
+
 .stats-relics h4 {
     font-size: clamp(10px, 2.5vw, 12px);
     color: #d4af37;
@@ -671,6 +715,86 @@ body {
     margin-bottom: clamp(6px, 1vh, 8px);
 }
 
+.battle-bottom-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: clamp(10px, 2vw, 16px);
+    padding: clamp(6px, 1.5vh, 8px);
+    background: linear-gradient(180deg, rgba(42, 31, 24, 0.95) 0%, rgba(26, 19, 14, 0.95) 100%);
+    border-top: 3px solid #8b7355;
+    box-shadow: inset 0 1px 0 rgba(139, 115, 85, 0.2), 0 -4px 12px rgba(0, 0, 0, 0.6);
+    flex-shrink: 0;
+    width: 100%;
+}
+
+.battle-bottom-bar .battle-relics {
+    border-top: none;
+    box-shadow: none;
+    background: transparent;
+    padding: 0;
+}
+
+.ability-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: clamp(56px, 15vw, 72px);
+    height: clamp(56px, 15vw, 72px);
+    border: 3px solid #8b7355;
+    border-radius: 8px;
+    background: linear-gradient(180deg, rgba(35, 28, 22, 0.95) 0%, rgba(18, 14, 10, 0.95) 100%);
+    color: #f4e4c1;
+    font-size: clamp(12px, 3vw, 14px);
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(139, 115, 85, 0.3), 0 4px 12px rgba(0, 0, 0, 0.6);
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ability-button.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(0.6);
+}
+
+.ability-button.ready:hover {
+    transform: translateY(-2px);
+    box-shadow: inset 0 1px 0 rgba(212, 175, 55, 0.3), 0 6px 16px rgba(212, 175, 55, 0.4);
+}
+
+.ability-button .ability-icon {
+    font-size: clamp(22px, 6vw, 32px);
+    line-height: 1;
+}
+
+.ability-button .ability-timer {
+    font-size: clamp(10px, 2.5vw, 12px);
+    margin-top: 6px;
+    color: var(--text-dim);
+}
+
+.ability-button.active {
+    border-color: #d4af37;
+    box-shadow: inset 0 1px 0 rgba(212, 175, 55, 0.4), 0 0 12px rgba(212, 175, 55, 0.3), 0 0 18px rgba(212, 175, 55, 0.5);
+    animation: abilityGlow 1.2s infinite ease-in-out;
+}
+
+.ability-button.cooldown {
+    border-color: #6b5a3a;
+    color: var(--text-dim);
+}
+
+@keyframes abilityGlow {
+    0%, 100% {
+        box-shadow: inset 0 1px 0 rgba(212, 175, 55, 0.3), 0 0 10px rgba(212, 175, 55, 0.4);
+    }
+    50% {
+        box-shadow: inset 0 1px 0 rgba(212, 175, 55, 0.5), 0 0 18px rgba(255, 215, 0, 0.6);
+    }
+}
+
 #battle-message {
     font-size: 14px;
     color: var(--text-dim);
@@ -686,7 +810,7 @@ body {
     border-top: 3px solid #8b7355;
     box-shadow: inset 0 1px 0 rgba(139, 115, 85, 0.2), 0 -4px 12px rgba(0, 0, 0, 0.6);
     flex-shrink: 0;
-    margin-top: 0;
+    border-radius: 8px;
 }
 
 .battle-relic-slot {
@@ -1511,5 +1635,27 @@ canvas {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+}
+
+.ability-current {
+    text-align: center;
+    padding: clamp(8px, 1.5vh, 12px);
+    background: linear-gradient(180deg, rgba(26, 19, 14, 0.9) 0%, rgba(12, 9, 6, 0.9) 100%);
+    border: 2px solid #6b5a3a;
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-size: clamp(9px, 2.4vw, 11px);
+}
+
+.ability-current .ability-name {
+    color: #d4af37;
+    font-size: clamp(11px, 2.8vw, 13px);
+    margin-bottom: 4px;
+}
+
+.ability-current .ability-description {
+    font-size: clamp(9px, 2.4vw, 11px);
+    color: var(--text-light);
+    line-height: 1.4;
 }
 

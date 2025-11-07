@@ -32,7 +32,7 @@
             <div class="title-container">
                 <h1 class="game-title">INFINITE TOWER</h1>
                 <div class="subtitle">Roguelike Auto-Battler</div>
-                <div class="version">v2.10.4</div>
+                <div class="version">v2.11.0</div>
             </div>
             
             <div class="menu-content">
@@ -80,6 +80,11 @@
             <!-- Active Relics Display -->
             <div id="stats-relics" class="stats-relics">
                 <!-- Relic slots will be populated here -->
+            </div>
+
+            <!-- Active Ability Display -->
+            <div id="stats-ability" class="stats-ability">
+                <!-- Ability slot populated via JS -->
             </div>
             
             <div class="stats-content">
@@ -341,6 +346,31 @@
             </div>
         </div>
         
+        <!-- Ability Selection Screen -->
+        <div id="screen-ability" class="screen">
+            <div class="screen-header">
+                <h2>🔥 Choose an Ability</h2>
+            </div>
+
+            <div class="ability-selection-content">
+                <div id="ability-current" class="ability-current">
+                    <!-- Current ability info -->
+                </div>
+                <div id="ability-options" class="ability-options">
+                    <!-- Ability cards inserted here -->
+                </div>
+
+                <div class="ability-selection-actions">
+                    <button id="btn-select-ability" class="btn btn-primary btn-large hidden">
+                        Equip <span id="selected-ability-name"></span>
+                    </button>
+                    <button id="btn-ability-home" class="btn btn-abandon">
+                        🏠 Home
+                    </button>
+                </div>
+            </div>
+        </div>
+        
         <!-- Battle Screen -->
         <div id="screen-battle" class="screen">
             <div class="battle-header">
@@ -377,12 +407,18 @@
             <div class="battle-status">
                 <div id="battle-message">Auto-battle in progress...</div>
             </div>
-            
-            <!-- Relic Display in Battle -->
-            <div id="battle-relics" class="battle-relics">
-                <div class="battle-relic-slot empty"></div>
-                <div class="battle-relic-slot empty"></div>
-                <div class="battle-relic-slot empty"></div>
+
+            <div class="battle-bottom-bar">
+                <button id="btn-ability" class="ability-button disabled" title="No ability equipped">
+                    <span class="ability-icon">?</span>
+                    <span class="ability-timer">--</span>
+                </button>
+                <!-- Relic Display in Battle -->
+                <div id="battle-relics" class="battle-relics">
+                    <div class="battle-relic-slot empty"></div>
+                    <div class="battle-relic-slot empty"></div>
+                    <div class="battle-relic-slot empty"></div>
+                </div>
             </div>
         </div>
         
@@ -415,7 +451,12 @@
                 <div class="final-build">
                     <h3>Final Build</h3>
                     <div class="build-stats" id="final-build-stats"></div>
-                    
+
+                    <!-- Active Ability Display -->
+                    <div class="final-ability" id="final-ability-display">
+                        <!-- Populated in JS -->
+                    </div>
+
                     <!-- Relics Display -->
                     <div class="final-relics">
                         <h4 style="font-size: clamp(10px, 3vw, 14px); color: #d4af37; margin-bottom: 8px;">⚡ Relics</h4>
@@ -455,6 +496,7 @@
     <script src="js/combat.js"></script>
     <script src="js/enemy.js"></script>
     <script src="js/relics.js"></script>
+    <script src="js/abilities.js"></script>
     <script src="js/game.js"></script>
     <script src="js/app.js"></script>
 </body>
