@@ -1427,12 +1427,16 @@ function drawFighterPanel(ctx, x, y, width, height, fighter, title, titleColor) 
         `LS: ${Math.round((fighter.lifesteal || 0) * 100)}%`
     ];
     
-    // Calculate spacing to minimize empty space - tighter spacing
+    // Calculate spacing to fill available space - minimize bottom gap
     const lineHeight = 11; // Font size (updated to match)
-    const lineSpacing = 3; // Small spacing between lines
-    const totalStatsHeight = (stats.length - 1) * (lineHeight + lineSpacing) + lineHeight;
-    const availableHeight = height - (statsY - y);
-    const spacing = availableHeight > totalStatsHeight ? lineHeight + lineSpacing : Math.floor(availableHeight / stats.length);
+    const bottomPadding = 4; // Small padding at bottom
+    const availableHeight = height - (statsY - y) - bottomPadding;
+    
+    // Calculate spacing to fill the available height
+    // If we have more space than needed, use consistent spacing
+    // Otherwise, distribute evenly
+    const totalStatsHeight = (stats.length - 1) * lineHeight;
+    const spacing = stats.length > 1 ? availableHeight / (stats.length - 1) : lineHeight;
     
     stats.forEach((stat, index) => {
         ctx.fillText(stat, x + 6, statsY + index * spacing);
