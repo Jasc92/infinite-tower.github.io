@@ -165,9 +165,8 @@ function updateStatsScreen() {
     const title = document.getElementById('stats-title');
     title.textContent = game.currentFloor === 1 ? 'Initial Build' : `Floor ${game.currentFloor} - Level Up!`;
     
-    // Update active relics display
+    // Update active relics display (includes ability)
     updateStatsRelicsDisplay();
-    updateStatsAbilityDisplay();
     
     // Ensure baseStatsWithoutRelics exists before taking snapshot
     // CRITICAL: When entering stats screen, player stats may have relics applied
@@ -488,12 +487,53 @@ function updateStatsRelicsDisplay() {
     
     const relics = game.relicManager.activeRelics;
     
+    const appendAbilitySlot = () => {
+        const ability = game.getActiveAbility();
+        const abilitySlot = document.createElement('div');
+        abilitySlot.className = 'stats-ability-slot';
+
+        if (ability) {
+            const durationText = ability.duration ? `${ability.duration}s` : 'Instant';
+            abilitySlot.innerHTML = `
+                <div class="ability-icon">${ability.icon}</div>
+                <div class="ability-details">
+                    <div class="ability-name">${ability.name}</div>
+                    <div class="ability-meta">CD: ${ability.cooldown}s | Duration: ${durationText}</div>
+                    <div class="ability-description">${ability.description}</div>
+                </div>
+            `;
+
+            const showAbilityInfo = (e) => {
+                e.stopPropagation();
+                showRelicTooltip(ability);
+            };
+
+            abilitySlot.addEventListener('click', showAbilityInfo);
+            abilitySlot.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+                abilitySlot.classList.add('touching');
+            });
+            abilitySlot.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                abilitySlot.classList.remove('touching');
+                showAbilityInfo(e);
+            });
+        } else {
+            abilitySlot.classList.add('empty');
+            abilitySlot.textContent = 'No active ability equipped';
+        }
+
+        relicsContainer.appendChild(abilitySlot);
+    };
+    
     if (relics.length === 0) {
         // Show empty state
         const emptyMsg = document.createElement('div');
         emptyMsg.style.cssText = 'font-size: clamp(9px, 2.2vw, 11px); color: var(--text-dim); text-align: center; padding: 8px;';
         emptyMsg.textContent = 'No relics equipped';
         relicsContainer.appendChild(emptyMsg);
+        appendAbilitySlot();
         return;
     }
     
@@ -542,6 +582,7 @@ function updateStatsRelicsDisplay() {
     }
     
     relicsContainer.appendChild(slotsContainer);
+    appendAbilitySlot();
 }
 
 function allocateStatPoint(statType) {
@@ -2079,49 +2120,6 @@ function capitalize(str) {
     return map[str] || str;
 }
 
-function updateStatsAbilityDisplay() {
-    const container = document.getElementById('stats-ability');
-    if (!container) return;
-
-    container.innerHTML = '';
-    const ability = game.activeAbilityId ? game.abilityManager.getAbilityById(game.activeAbilityId) : null;
-
-    if (!ability) {
-        container.textContent = 'No active ability equipped';
-        return;
-    }
-
-    const slot = document.createElement('div');
-    slot.className = 'ability-slot';
-
-    const icon = document.createElement('div');
-    icon.className = 'ability-icon';
-    icon.textContent = ability.icon;
-
-    const info = document.createElement('div');
-    info.className = 'ability-info';
-    const name = document.createElement('div');
-    name.className = 'ability-name';
-    name.textContent = ability.name;
-
-    const durationText = ability.duration ? `${ability.duration}s` : 'Instant';
-    const meta = document.createElement('div');
-    meta.className = 'ability-meta';
-    meta.textContent = `CD: ${ability.cooldown}s | Duration: ${durationText}`;
-
-    const desc = document.createElement('div');
-    desc.className = 'ability-description';
-    desc.textContent = ability.description;
-
-    info.appendChild(name);
-    info.appendChild(meta);
-    info.appendChild(desc);
-
-    slot.appendChild(icon);
-    slot.appendChild(info);
-    container.appendChild(slot);
-}
-
 function updateAbilityScreen() {
     const container = document.getElementById('ability-options');
     if (!container) return;
@@ -2133,6 +2131,17 @@ function updateAbilityScreen() {
     let selectBtn = document.getElementById('btn-select-ability');
     let selectedNameSpan = document.getElementById('selected-ability-name');
     const currentAbilityEl = document.getElementById('ability-current');
+
+    function updateAbilitySelectButton() {
+        if (!selectBtn) return;
+        if (selectedAbility) {
+            selectBtn.classList.remove('hidden');
+            selectedNameSpan.textContent = selectedAbility.name;
+        } else {
+            selectBtn.classList.add('hidden');
+            selectedNameSpan.textContent = '';
+        }
+    }
 
     const currentAbility = game.getActiveAbility();
     if (currentAbility) {
@@ -2170,7 +2179,7 @@ function updateAbilityScreen() {
             document.querySelectorAll('.ability-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
             selectedAbility = ability;
-            updateSelectButton();
+            updateAbilitySelectButton();
         });
 
         card.addEventListener('touchstart', () => {
@@ -2186,7 +2195,7 @@ function updateAbilityScreen() {
         container.appendChild(card);
     });
 
-    updateSelectButton();
+    updateAbilitySelectButton();
 
     if (abilityOptions.length === 0) {
         container.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:20px;">No new abilities available</div>';
@@ -2203,7 +2212,7 @@ function updateAbilityScreen() {
         if (!selectedAbility) return;
         game.equipAbility(selectedAbility.id);
         updateAbilityButton();
-        updateStatsAbilityDisplay();
+        updateStatsRelicsDisplay();
         advancePendingScreens();
     });
 }

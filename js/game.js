@@ -461,6 +461,16 @@ class GameManager {
         // Restore player HP
         this.player.currentHp = this.player.maxHp;
         
+        // Reset ability state each floor
+        this.abilityCooldownRemaining = 0;
+        this.abilityEffectRemaining = 0;
+        this.abilityState = this.activeAbilityId ? 'ready' : 'locked';
+        this.abilityModifiers.player = this.createEmptyAbilityModifiers();
+        this.abilityModifiers.enemy = this.createEmptyEnemyAbilityModifiers();
+        this.abilityStacks = { critGuarantee: 0 };
+        this.abilityHealing = { healPerSecond: 0, remaining: 0 };
+        this.applyAbilityStateToCombat();
+        
         // Boss floor bonus points (11, 21, 31, ...)
         if ((this.currentFloor - 1) % 10 === 0 && this.currentFloor > 1) {
             this.availablePoints += 3;

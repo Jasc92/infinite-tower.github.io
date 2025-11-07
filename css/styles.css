@@ -375,47 +375,57 @@ body {
     box-shadow: inset 0 1px 0 rgba(139, 115, 85, 0.2), 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
-.stats-ability {
+.stats-ability-slot {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 8px;
-    margin-bottom: clamp(10px, 2vh, 15px);
+    gap: clamp(8px, 2vw, 12px);
+    margin-top: clamp(12px, 2vh, 16px);
     padding: clamp(8px, 1.5vh, 12px);
     background: linear-gradient(180deg, rgba(26, 19, 14, 0.95) 0%, rgba(10, 10, 20, 0.95) 100%);
     border-radius: 4px;
     border: 2px solid #6b5a3a;
     box-shadow: inset 0 1px 0 rgba(139, 115, 85, 0.15), 0 4px 12px rgba(0, 0, 0, 0.5);
-    min-height: clamp(60px, 12vh, 80px);
-    text-align: center;
-    font-size: clamp(10px, 2.5vw, 12px);
+    font-size: clamp(10px, 2.4vw, 12px);
+    color: var(--text-light);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stats-ability-slot.empty {
+    justify-content: center;
     color: var(--text-dim);
+    cursor: default;
 }
 
-.stats-ability .ability-slot {
-    display: flex;
-    align-items: center;
-    gap: clamp(8px, 2vw, 10px);
+.stats-ability-slot:hover:not(.empty) {
+    transform: translateY(-1px);
+    box-shadow: inset 0 1px 0 rgba(212, 175, 55, 0.2), 0 4px 14px rgba(212, 175, 55, 0.25);
 }
 
-.stats-ability .ability-icon {
+.stats-ability-slot .ability-icon {
     font-size: clamp(28px, 8vw, 40px);
 }
 
-.stats-ability .ability-info {
+.stats-ability-slot .ability-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     text-align: left;
-    max-width: 240px;
+    max-width: 260px;
 }
 
-.stats-ability .ability-name {
+.stats-ability-slot .ability-name {
     color: #d4af37;
     font-size: clamp(11px, 3vw, 13px);
-    margin-bottom: 4px;
 }
 
-.stats-ability .ability-description {
-    font-size: clamp(9px, 2.5vw, 11px);
-    color: var(--text-light);
+.stats-ability-slot .ability-meta {
+    font-size: clamp(9px, 2.2vw, 10px);
+    color: var(--text-dim);
+}
+
+.stats-ability-slot .ability-description {
+    font-size: clamp(9px, 2.4vw, 11px);
     line-height: 1.4;
 }
 
@@ -1676,6 +1686,27 @@ canvas {
     margin-top: clamp(6px, 1vh, 8px);
 }
 
+.ability-card .ability-meta {
+    font-size: clamp(8px, 1.8vw, 10px);
+    color: var(--text-dim);
+    margin-top: 4px;
+}
+
+.ability-selection-actions {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.5vh, 10px);
+    max-width: 500px;
+    margin: clamp(10px, 2vh, 14px) auto 0;
+    width: 100%;
+    flex-shrink: 0;
+    align-items: stretch;
+}
+
+.ability-selection-actions .btn {
+    width: 100%;
+}
+
 .ability-current-card {
     background: linear-gradient(180deg, rgba(52, 41, 34, 0.95) 0%, rgba(36, 29, 24, 0.95) 100%);
     border: 3px solid #8b7355;
@@ -1684,6 +1715,7 @@ canvas {
     box-shadow: inset 0 1px 0 rgba(139, 115, 85, 0.2), 0 4px 12px rgba(0, 0, 0, 0.6);
     max-width: 500px;
     margin: 0 auto clamp(12px, 2vh, 16px);
+    width: 100%;
 }
 
 .ability-current-card.empty {
