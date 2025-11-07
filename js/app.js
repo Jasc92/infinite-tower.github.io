@@ -1567,7 +1567,7 @@ function renderBattle() {
     // Position sprites centered horizontally and vertically
     const heroXPos = canvas.width * 0.25;  // 25% from left (más centrado)
     const enemyXPos = canvas.width * 0.75; // 75% from left (más centrado)
-    const verticalCenter = canvas.height * 0.78; // Slightly higher to show legs
+    const verticalCenter = canvas.height * 0.74; // Slightly higher to show legs
     
     // Determine which sprites to use (alive or dead)
     const heroSprite = game.player.currentHp <= 0 ? game.sprites.heroDead : game.sprites.hero;
@@ -1780,7 +1780,7 @@ function setupEventListeners() {
     // Menu screen
     document.getElementById('btn-play').addEventListener('click', () => {
         game.resetRun();
-        game.pendingScreens = ['stats'];
+        game.pendingScreens = ['ability', 'stats'];
         showScreen('relic'); // Start with relic selection first
     });
     
@@ -2130,8 +2130,8 @@ function updateAbilityScreen() {
     const abilityOptions = game.abilityManager.getRandomAbilities(3, game.activeAbilityId ? [game.activeAbilityId] : []);
     let selectedAbility = null;
 
-    const selectBtn = document.getElementById('btn-select-ability');
-    const selectedNameSpan = document.getElementById('selected-ability-name');
+    let selectBtn = document.getElementById('btn-select-ability');
+    let selectedNameSpan = document.getElementById('selected-ability-name');
     const currentAbilityEl = document.getElementById('ability-current');
 
     const currentAbility = game.getActiveAbility();
@@ -2178,10 +2178,18 @@ function updateAbilityScreen() {
 
     updateSelectButton();
 
-    // Replace select button listener
+    if (abilityOptions.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:20px;">No new abilities available</div>';
+        selectBtn.classList.add('hidden');
+        setTimeout(() => advancePendingScreens(), 800);
+        return;
+    }
+
     const newSelectBtn = selectBtn.cloneNode(true);
     selectBtn.parentNode.replaceChild(newSelectBtn, selectBtn);
-    newSelectBtn.addEventListener('click', () => {
+    selectBtn = newSelectBtn;
+    selectedNameSpan = document.getElementById('selected-ability-name');
+    selectBtn.addEventListener('click', () => {
         if (!selectedAbility) return;
         game.equipAbility(selectedAbility.id);
         updateAbilityButton();
