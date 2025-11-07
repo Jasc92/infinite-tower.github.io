@@ -1478,7 +1478,7 @@ function renderBattle() {
     // Position sprites centered horizontally and vertically
     const heroXPos = canvas.width * 0.25;  // 25% from left (más centrado)
     const enemyXPos = canvas.width * 0.75; // 75% from left (más centrado)
-    const verticalCenter = canvas.height * 0.55; // Un poco abajo del centro
+    const verticalCenter = canvas.height * 0.85; // Personajes más abajo (donde estaba el mensaje)
     
     // Determine which sprites to use (alive or dead)
     const heroSprite = game.player.currentHp <= 0 ? game.sprites.heroDead : game.sprites.hero;
@@ -1524,8 +1524,8 @@ function renderBattle() {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Position text at 85% down (más abajo para no tapar personajes)
-        const textY = canvas.height * 0.85;
+        // Position text above battle field (justo arriba del campo de batalla)
+        const textY = canvas.height * 0.22;
         
         // Text outline (más grueso para mejor visibilidad)
         ctx.lineWidth = 10;

@@ -458,10 +458,16 @@ class GameManager {
     }
 
     /**
-     * Toggle battle speed
+     * Toggle battle speed: 1x -> 3x -> 5x -> 1x
      */
     toggleSpeed() {
-        this.battleSpeed = this.battleSpeed === 1.0 ? 3.0 : 1.0;
+        if (this.battleSpeed === 1.0) {
+            this.battleSpeed = 3.0;
+        } else if (this.battleSpeed === 3.0) {
+            this.battleSpeed = 5.0;
+        } else {
+            this.battleSpeed = 1.0;
+        }
         return this.battleSpeed;
     }
 }
