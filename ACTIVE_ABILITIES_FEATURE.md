@@ -7,6 +7,16 @@
 
 ---
 
+### Balancing Considerations
+- Ability effects intentionally sound potent, but their power is gated behind moderate/long cooldowns and short durations.
+- During implementation, we should:
+  - Start with conservative numbers (e.g., trim % bonuses by 10-15%) and iterate with playtesting.
+  - Prevent stacking abuse (one ability at a time, no relic chains that reset cooldown infinitely).
+  - Ensure ability buffs respect existing caps (attack speed max 6.0, crit max 75%, lifesteal max 40%).
+  - Provide VFX feedback without overloading the player (clear indicator when active vs. on cooldown).
+
+---
+
 ### Proposed Active Abilities (12 concepts)
 Each ability includes a suggested cooldown, effect, and a short note on intended synergies.
 
@@ -90,34 +100,45 @@ Each ability includes a suggested cooldown, effect, and a short note on intended
 - Extend `GameManager` with:
   - `activeAbilityId`
   - `abilityCooldownRemaining`
-  - `abilityState` (ready, casting, onCooldown)
+  - `abilityEffectRemaining`
+  - `abilityState` (ready, active, cooldown)
   - `abilityHistory` (for analytics / debugging).
 
 #### 2. UI Changes
 - In `index.html`, inside the battle HUD:
   - Add a new button container left of the relic slots, respecting existing flex layout.
-  - Button states: `ready`, `cooldown`, `disabled` (when ability not unlocked).
-  - Display remaining cooldown as overlay text or radial fill.
+  - **Visual states**:
+    - *Ready*: normal style.
+    - *Active*: button glows/pulses (CSS animation). Inside the button, show the remaining effect duration (counting down each second).
+    - *Cooldown*: glow stops; display cooldown timer text inside the button until it reaches 0.
+    - *Disabled*: grayscale state when no ability is equipped/unlocked.
+  - Provide accessible tooltip describing the equipped ability (name, cooldown, short description).
 - In `css/styles.css`:
-  - Create `.ability-button`, `.ability-button.cooldown`, `.ability-button.disabled`.
-  - Ensure hover/tap feedback consistent with existing style.
+  - Create `.ability-button`, `.ability-button.active`, `.ability-button.cooldown`, `.ability-button.disabled`.
+  - Define keyframes for glow pulse (`@keyframes abilityGlow`).
+  - Style inner text span for countdown numbers.
 
 #### 3. Input Handling
 - Add event listener in `js/app.js` to handle click/tap on the ability button.
 - Integrate keyboard shortcut (optional, e.g., `Space` or `A`).
-- Debounce to prevent double triggers while state updates propagate.
+- Guard against re-activation while in `active` or `cooldown` state.
 
 #### 4. Game Loop Integration
-- Update combat loop (`combat.js` / `GameManager.updateBattle`) to tick ability cooldown: `cooldownRemaining = Math.max(0, cooldown - delta)`.
-- When ability fires, push temporary modifiers into combat engine (e.g., `player.tempBuffs` array with expiration).
-- Provide hooks for effects that need to run per frame (e.g., damage over time).
+- Update combat loop (`combat.js` / `GameManager.updateBattle`) to tick:
+  - `abilityEffectRemaining` (while > 0, apply ability modifiers)
+  - `abilityCooldownRemaining` (starts once effect ends)
+- Trigger state transitions:
+  - `ready → active` on button press (if no cooldown).
+  - `active → cooldown` when effect duration elapses.
+  - `cooldown → ready` when cooldown reaches 0.
+- Emit events/hooks so UI can update button text/glow based on state.
 
 #### 5. Ability Effects
 - Reuse existing combat modifiers where possible:
   - Attack speed/damage boosts -> apply to `player.attackSpeed`, `player.damageMultiplier` with timed rollback.
   - Shields -> same logic as `Diamond Shield` but flagged as ability-generated.
   - Direct damage -> call `combat.applyDamage(enemy, amount, { source: 'ability' })`.
-  - Crowd control (slow, stun) -> extend enemy state to support temporary debuffs.
+  - Crowd control (slow, debuff) -> extend enemy state to support temporary modifiers.
 - Add a generic `registerTimedEffect({ apply, rollback, duration })` utility to centralize start/end logic.
 
 #### 6. Persistence & Unlocks
@@ -125,9 +146,9 @@ Each ability includes a suggested cooldown, effect, and a short note on intended
 - Future-ready: store chosen ability in save data, allow unlocking via relics or milestones.
 
 #### 7. Testing Strategy
-- Unit tests for ability cooldown logic.
-- Simulation tests ensuring ability effects stack correctly with relics (e.g., double buff stacking).
-- UI tests for button state transitions.
+- Unit tests for ability cooldown/effect timers and state transitions.
+- Simulation tests ensuring ability effects stack correctly with relics (e.g., `Arcane Surge` + `Rage Combo`).
+- UI tests for button glow, countdown text, state transitions on mobile and desktop.
 
 ---
 
@@ -137,7 +158,7 @@ Each ability includes a suggested cooldown, effect, and a short note on intended
 | --- | --- |
 | **Gameplay Value** | Adds a skill expression layer without overwhelming players; one-button design keeps the flow accessible. |
 | **Complexity** | Moderate. Biggest tasks are UI integration, combat hooks, and ability script architecture. Our existing relic and buff systems provide many reusable patterns. |
-| **Risks** | Balancing ability power vs. relic combos; ensuring cooldown visuals remain clear on small screens; need to avoid ability spam breaking auto-battler pacing. |
+| **Risks** | Balancing ability power vs. relic combos; ensuring cooldown/effect visuals remain clear on small screens; need to avoid ability spam breaking auto-battler pacing. |
 | **Extensibility** | High. The proposed data-driven approach enables future abilities, relic synergies (e.g., relic reduces ability cooldown), or even enemy abilities. |
 | **Performance** | Negligible impact if effects are pooled and modifiers are cleaned up promptly. |
 
