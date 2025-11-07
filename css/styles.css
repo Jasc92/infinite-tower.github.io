@@ -1659,3 +1659,35 @@ canvas {
     line-height: 1.4;
 }
 
+.ability-options {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.5vh, 12px);
+    max-width: 500px;
+    margin: 0 auto;
+    width: 100%;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    padding-bottom: clamp(6px, 1vh, 10px);
+}
+
+.ability-card .relic-description {
+    margin-top: clamp(6px, 1vh, 8px);
+}
+
+.ability-current-card {
+    background: linear-gradient(180deg, rgba(52, 41, 34, 0.95) 0%, rgba(36, 29, 24, 0.95) 100%);
+    border: 3px solid #8b7355;
+    border-radius: 8px;
+    padding: clamp(10px, 2vh, 14px);
+    box-shadow: inset 0 1px 0 rgba(139, 115, 85, 0.2), 0 4px 12px rgba(0, 0, 0, 0.6);
+    max-width: 500px;
+    margin: 0 auto clamp(12px, 2vh, 16px);
+}
+
+.ability-current-card.empty {
+    text-align: center;
+    color: var(--text-dim);
+}
+

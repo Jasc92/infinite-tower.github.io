@@ -2137,23 +2137,33 @@ function updateAbilityScreen() {
     const currentAbility = game.getActiveAbility();
     if (currentAbility) {
         currentAbilityEl.innerHTML = `
-            <div class="ability-name">Current Ability: ${currentAbility.name}</div>
-            <div class="ability-description">${currentAbility.description}</div>
+            <div class="ability-current-card">
+                <div class="relic-card-header">
+                    <div class="relic-icon">${currentAbility.icon}</div>
+                    <div>
+                        <div class="relic-name">${currentAbility.name}</div>
+                        <div class="ability-meta">CD: ${currentAbility.cooldown}s | Duration: ${currentAbility.duration ? `${currentAbility.duration}s` : 'Instant'}</div>
+                    </div>
+                </div>
+                <div class="relic-description">${currentAbility.description}</div>
+            </div>
         `;
     } else {
-        currentAbilityEl.textContent = 'No ability equipped yet. Choose wisely!';
+        currentAbilityEl.innerHTML = '<div class="ability-current-card empty">No ability equipped yet. Choose wisely!</div>';
     }
 
     abilityOptions.forEach(ability => {
         const card = document.createElement('div');
-        card.className = 'ability-card';
+        card.className = 'relic-card ability-card';
         card.innerHTML = `
-            <div class="ability-card-header">
-                <div class="ability-icon">${ability.icon}</div>
-                <div class="ability-name">${ability.name}</div>
+            <div class="relic-card-header">
+                <div class="relic-icon">${ability.icon}</div>
+                <div>
+                    <div class="relic-name">${ability.name}</div>
+                    <div class="ability-meta">CD: ${ability.cooldown}s | Duration: ${ability.duration ? `${ability.duration}s` : 'Instant'}</div>
+                </div>
             </div>
-            <div class="ability-meta">CD: ${ability.cooldown}s | Duration: ${ability.duration ? `${ability.duration}s` : 'Instant'}</div>
-            <div class="ability-description">${ability.description}</div>
+            <div class="relic-description">${ability.description}</div>
         `;
 
         card.addEventListener('click', () => {
