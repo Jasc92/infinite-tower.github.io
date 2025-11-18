@@ -126,6 +126,7 @@ function showScreen(screenName) {
                 updateAbilityScreen();
                 break;
             case 'battle':
+                console.log('showScreen(battle) called');
                 startBattleScreen();
                 break;
             case 'result':
@@ -1366,6 +1367,23 @@ function removeRelicEffects(relic) {
 // ========================================
 
 function startBattleScreen() {
+    console.log('=== START BATTLE SCREEN ===');
+    console.log('Current floor:', game.currentFloor);
+    console.log('Current screen before:', currentScreen);
+    
+    // CRITICAL: Ensure battle screen is shown
+    const battleScreen = document.getElementById('screen-battle');
+    if (!battleScreen) {
+        console.error('❌ Battle screen element not found!');
+        return;
+    }
+    
+    // Hide all screens and show battle screen
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    battleScreen.classList.add('active');
+    currentScreen = 'battle';
+    console.log('Battle screen activated, currentScreen:', currentScreen);
+    
     // Setup canvas size
     resizeCanvas();
     
@@ -1395,7 +1413,9 @@ function startBattleScreen() {
     
     // Start animation loop
     if (animationFrame) cancelAnimationFrame(animationFrame);
+    console.log('Starting battleLoop...');
     battleLoop();
+    console.log('Battle screen should now be visible');
 }
 
 function updateBattleRelicDisplay() {
@@ -1432,6 +1452,15 @@ function battleLoop() {
         return;
     }
     
+    // Check if battle screen is actually visible
+    const battleScreen = document.getElementById('screen-battle');
+    const isBattleScreenVisible = battleScreen && battleScreen.classList.contains('active');
+    if (!isBattleScreenVisible && game.battleActive) {
+        console.error('⚠️ WARNING: Battle is active but battle screen is not visible!');
+        console.error('Current screen:', currentScreen);
+        console.error('Battle screen classes:', battleScreen?.className);
+    }
+    
     const result = game.updateBattle(performance.now());
     
     updateBattleUI();
@@ -1440,6 +1469,7 @@ function battleLoop() {
     updateAbilityButton();
     
     if (result === 'win') {
+        console.log('🏆 Battle won, showing result overlay');
         // Set battle result and show overlay, keep rendering for 2 seconds
         game.battleResult = 'win';
         setTimeout(() => {
@@ -1448,6 +1478,7 @@ function battleLoop() {
         handleBattleWin();
         }, 2000);
     } else if (result === 'loss') {
+        console.error('💀 Battle lost, showing result overlay');
         // Set battle result and show overlay, keep rendering for 2 seconds
         game.battleResult = 'lose';
         setTimeout(() => {
@@ -2397,14 +2428,22 @@ function updateAbilityScreen() {
 }
 
 function advancePendingScreens() {
+    console.log('=== ADVANCE PENDING SCREENS ===');
+    console.log('Pending screens:', game.pendingScreens);
+    console.log('Has pending screens:', game.hasPendingScreens());
+    
     if (game.hasPendingScreens()) {
         const next = game.getNextPendingScreen();
+        console.log('Next screen:', next);
         if (next === 'battle') {
+            console.log('Calling startBattleScreen() directly');
             startBattleScreen();
         } else {
+            console.log('Calling showScreen(', next, ')');
             showScreen(next);
         }
     } else {
+        console.log('No pending screens, going to battle');
         startBattleScreen();
     }
 }
