@@ -881,6 +881,73 @@ function showHomeConfirmation(onConfirm) {
 function updateRelicScreen() {
     console.log('=== UPDATE RELIC SCREEN ===');
     console.log('Active relics:', game.relicManager.activeRelics.length);
+    console.log('baseStatsWithoutRelics exists:', !!game.baseStatsWithoutRelics);
+    
+    // CRITICAL: Ensure baseStatsWithoutRelics exists if we already have relics
+    // This prevents issues when selecting the second relic
+    if (game.relicManager.activeRelics.length > 0 && !game.baseStatsWithoutRelics) {
+        console.log('⚠️ No baseStatsWithoutRelics but we have relics - calculating...');
+        // Calculate base stats by removing relic effects from current player stats
+        const statsWithRelics = {
+            attack: game.player.attack,
+            attackSpeed: game.player.attackSpeed,
+            critChance: game.player.critChance,
+            lifesteal: game.player.lifesteal,
+            defense: game.player.defense,
+            maxHp: game.player.maxHp
+        };
+        
+        // Calculate multipliers from existing relics
+        let attackMult = 1.0;
+        let defenseMult = 1.0;
+        let maxHpMult = 1.0;
+        let attackSpeedMult = 1.0;
+        let critChanceMult = 1.0;
+        let lifestealMult = 1.0;
+        
+        game.relicManager.activeRelics.forEach(relic => {
+            if (relic.percentageEffects) {
+                if (relic.percentageEffects.attack) attackMult *= relic.percentageEffects.attack;
+                if (relic.percentageEffects.defense) defenseMult *= relic.percentageEffects.defense;
+                if (relic.percentageEffects.maxHp) maxHpMult *= relic.percentageEffects.maxHp;
+                if (relic.percentageEffects.attackSpeed) attackSpeedMult *= relic.percentageEffects.attackSpeed;
+                if (relic.percentageEffects.critChance) critChanceMult *= relic.percentageEffects.critChance;
+                if (relic.percentageEffects.lifesteal) lifestealMult *= relic.percentageEffects.lifesteal;
+            }
+        });
+        
+        // Reverse percentage effects first (divide)
+        let baseAfterPercent = {
+            attack: Math.round(statsWithRelics.attack / attackMult),
+            defense: Math.round(statsWithRelics.defense / defenseMult),
+            maxHp: Math.round(statsWithRelics.maxHp / maxHpMult),
+            attackSpeed: statsWithRelics.attackSpeed / attackSpeedMult,
+            critChance: statsWithRelics.critChance / critChanceMult,
+            lifesteal: statsWithRelics.lifesteal / lifestealMult
+        };
+        
+        // Then reverse flat effects (subtract)
+        game.relicManager.activeRelics.forEach(relic => {
+            if (relic.flatEffects) {
+                if (relic.flatEffects.attack) baseAfterPercent.attack -= relic.flatEffects.attack;
+                if (relic.flatEffects.defense) baseAfterPercent.defense -= relic.flatEffects.defense;
+                if (relic.flatEffects.maxHp) baseAfterPercent.maxHp -= relic.flatEffects.maxHp;
+                if (relic.flatEffects.attackSpeed) baseAfterPercent.attackSpeed = Math.max(0.1, baseAfterPercent.attackSpeed - relic.flatEffects.attackSpeed);
+                if (relic.flatEffects.lifesteal) baseAfterPercent.lifesteal = Math.max(0, baseAfterPercent.lifesteal - relic.flatEffects.lifesteal);
+            }
+        });
+        
+        // Save base stats without relics
+        game.baseStatsWithoutRelics = {
+            attack: Math.max(1, baseAfterPercent.attack),
+            attackSpeed: Math.max(0.1, baseAfterPercent.attackSpeed),
+            critChance: Math.max(0, Math.min(1, baseAfterPercent.critChance)),
+            lifesteal: Math.max(0, baseAfterPercent.lifesteal),
+            defense: Math.max(0, baseAfterPercent.defense),
+            maxHp: Math.max(1, baseAfterPercent.maxHp)
+        };
+        console.log('✅ Calculated baseStatsWithoutRelics in updateRelicScreen:', game.baseStatsWithoutRelics);
+    }
     
     // Show current relics at bottom (like in battle)
     const currentRelicsContainer = document.getElementById('current-relics');
@@ -1125,9 +1192,10 @@ function updateRelicScreen() {
         console.log('Active relics after selection:', game.relicManager.activeRelics.length);
         console.log('Navigating to stats in 300ms...');
         
-        // Continue to stats allocation
+        // Reset selecting flag after a delay to allow navigation
         setTimeout(() => {
-            console.log('Calling showScreen(stats)...');
+            isSelecting = false;
+            console.log('Calling advancePendingScreens...');
             advancePendingScreens();
         }, 300);
     }
