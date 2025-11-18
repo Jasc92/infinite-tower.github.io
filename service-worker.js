@@ -11,9 +11,16 @@ const urlsToCache = [
     '/js/enemy.js',
     '/js/game.js',
     '/js/app.js',
+    '/js/abilities.js',
+    '/js/relics.js',
     '/manifest.json',
+    '/assets/icon.png',
     '/assets/hero.png',
+    '/assets/hero-dead.png',
     '/assets/enemy.png',
+    '/assets/enemy-dead.png',
+    '/assets/boss.png',
+    '/assets/boss-dead.png',
     '/assets/background.png'
 ];
 
