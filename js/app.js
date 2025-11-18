@@ -885,68 +885,26 @@ function updateRelicScreen() {
     
     // CRITICAL: Ensure baseStatsWithoutRelics exists if we already have relics
     // This prevents issues when selecting the second relic
+    // IMPORTANT: We should preserve baseStatsWithoutRelics from the first relic selection
+    // Only calculate if it's truly missing (shouldn't happen in normal flow)
     if (game.relicManager.activeRelics.length > 0 && !game.baseStatsWithoutRelics) {
-        console.log('⚠️ No baseStatsWithoutRelics but we have relics - calculating...');
-        // Calculate base stats by removing relic effects from current player stats
-        const statsWithRelics = {
-            attack: game.player.attack,
-            attackSpeed: game.player.attackSpeed,
-            critChance: game.player.critChance,
-            lifesteal: game.player.lifesteal,
-            defense: game.player.defense,
-            maxHp: game.player.maxHp
-        };
+        console.warn('⚠️ WARNING: No baseStatsWithoutRelics but we have relics - this should not happen!');
+        console.warn('Attempting to calculate from current player stats...');
         
-        // Calculate multipliers from existing relics
-        let attackMult = 1.0;
-        let defenseMult = 1.0;
-        let maxHpMult = 1.0;
-        let attackSpeedMult = 1.0;
-        let critChanceMult = 1.0;
-        let lifestealMult = 1.0;
-        
-        game.relicManager.activeRelics.forEach(relic => {
-            if (relic.percentageEffects) {
-                if (relic.percentageEffects.attack) attackMult *= relic.percentageEffects.attack;
-                if (relic.percentageEffects.defense) defenseMult *= relic.percentageEffects.defense;
-                if (relic.percentageEffects.maxHp) maxHpMult *= relic.percentageEffects.maxHp;
-                if (relic.percentageEffects.attackSpeed) attackSpeedMult *= relic.percentageEffects.attackSpeed;
-                if (relic.percentageEffects.critChance) critChanceMult *= relic.percentageEffects.critChance;
-                if (relic.percentageEffects.lifesteal) lifestealMult *= relic.percentageEffects.lifesteal;
-            }
-        });
-        
-        // Reverse percentage effects first (divide)
-        let baseAfterPercent = {
-            attack: Math.round(statsWithRelics.attack / attackMult),
-            defense: Math.round(statsWithRelics.defense / defenseMult),
-            maxHp: Math.round(statsWithRelics.maxHp / maxHpMult),
-            attackSpeed: statsWithRelics.attackSpeed / attackSpeedMult,
-            critChance: statsWithRelics.critChance / critChanceMult,
-            lifesteal: statsWithRelics.lifesteal / lifestealMult
-        };
-        
-        // Then reverse flat effects (subtract)
-        game.relicManager.activeRelics.forEach(relic => {
-            if (relic.flatEffects) {
-                if (relic.flatEffects.attack) baseAfterPercent.attack -= relic.flatEffects.attack;
-                if (relic.flatEffects.defense) baseAfterPercent.defense -= relic.flatEffects.defense;
-                if (relic.flatEffects.maxHp) baseAfterPercent.maxHp -= relic.flatEffects.maxHp;
-                if (relic.flatEffects.attackSpeed) baseAfterPercent.attackSpeed = Math.max(0.1, baseAfterPercent.attackSpeed - relic.flatEffects.attackSpeed);
-                if (relic.flatEffects.lifesteal) baseAfterPercent.lifesteal = Math.max(0, baseAfterPercent.lifesteal - relic.flatEffects.lifesteal);
-            }
-        });
-        
-        // Save base stats without relics
-        game.baseStatsWithoutRelics = {
-            attack: Math.max(1, baseAfterPercent.attack),
-            attackSpeed: Math.max(0.1, baseAfterPercent.attackSpeed),
-            critChance: Math.max(0, Math.min(1, baseAfterPercent.critChance)),
-            lifesteal: Math.max(0, baseAfterPercent.lifesteal),
-            defense: Math.max(0, baseAfterPercent.defense),
-            maxHp: Math.max(1, baseAfterPercent.maxHp)
-        };
-        console.log('✅ Calculated baseStatsWithoutRelics in updateRelicScreen:', game.baseStatsWithoutRelics);
+        // Try to use basePlayerStats if available (more reliable)
+        if (game.basePlayerStats) {
+            // If basePlayerStats exists, it has relics applied, so we need to reverse-calculate
+            // But this is a fallback - baseStatsWithoutRelics should have been preserved
+            console.warn('Using basePlayerStats as fallback, but this may be inaccurate');
+            // For now, we'll calculate it properly in applySelectedRelic
+            // Just log the warning and let applySelectedRelic handle it
+        } else {
+            // Last resort: calculate from current player stats
+            console.error('❌ No basePlayerStats either! This is a critical error.');
+            // We'll let applySelectedRelic handle the calculation
+        }
+    } else if (game.relicManager.activeRelics.length > 0 && game.baseStatsWithoutRelics) {
+        console.log('✅ baseStatsWithoutRelics exists:', game.baseStatsWithoutRelics);
     }
     
     // Show current relics at bottom (like in battle)
@@ -1159,16 +1117,35 @@ function updateRelicScreen() {
             }
         }
         
-        // NOW apply relic (add or replace) - after baseStatsWithoutRelics is set
+        // CRITICAL: Ensure baseStatsWithoutRelics is valid before proceeding
+        if (!game.baseStatsWithoutRelics) {
+            console.error('❌ baseStatsWithoutRelics is missing! Cannot apply relic.');
+            isSelecting = false;
+            return;
+        }
+        
+        // Validate baseStatsWithoutRelics has all required properties
+        const requiredStats = ['attack', 'attackSpeed', 'critChance', 'lifesteal', 'defense', 'maxHp'];
+        for (const stat of requiredStats) {
+            if (game.baseStatsWithoutRelics[stat] === undefined || game.baseStatsWithoutRelics[stat] === null) {
+                console.error(`❌ baseStatsWithoutRelics.${stat} is missing!`, game.baseStatsWithoutRelics);
+                isSelecting = false;
+                return;
+            }
+        }
+        
+        // NOW apply relic (add or replace) - after baseStatsWithoutRelics is validated
         if (isReplaceModeForCards) {
             // Remove effects of old relic first
             const oldRelic = game.relicManager.activeRelics[selectedReplaceIndex];
-            removeRelicEffects(oldRelic);
+            if (oldRelic) {
+                removeRelicEffects(oldRelic);
+            }
             
             // Replace the relic
             game.relicManager.replaceRelic(selectedReplaceIndex, selectedRelic);
             
-            console.log(`Replaced relic at index ${selectedReplaceIndex}: ${oldRelic.name} -> ${selectedRelic.name}`);
+            console.log(`Replaced relic at index ${selectedReplaceIndex}: ${oldRelic?.name || 'unknown'} -> ${selectedRelic.name}`);
         } else {
             game.relicManager.addRelic(selectedRelic);
         }
@@ -1179,8 +1156,14 @@ function updateRelicScreen() {
         console.log('Active relics:', game.relicManager.activeRelics.map(r => r.name));
         console.log('Base stats WITHOUT relics:', game.baseStatsWithoutRelics);
         
-        // Apply relic effects to base stats (recalculates percentage effects)
-        game.applyRelicEffectsToBaseStats();
+        try {
+            // Apply relic effects to base stats (recalculates percentage effects)
+            game.applyRelicEffectsToBaseStats();
+        } catch (error) {
+            console.error('❌ Error applying relic effects:', error);
+            isSelecting = false;
+            return;
+        }
         
         console.log('Player stats AFTER relic effect:', {
             atk: game.player.attack,

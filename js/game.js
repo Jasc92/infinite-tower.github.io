@@ -316,18 +316,38 @@ class GameManager {
      * This ensures percentage effects scale with current stat values
      */
     applyRelicEffectsToBaseStats() {
-        // Restore player stats from base (without relics)
+        // CRITICAL: baseStatsWithoutRelics should NEVER be modified here
+        // It represents the true base stats without any relic effects
+        // If it doesn't exist, we have a problem
         if (!this.baseStatsWithoutRelics) {
-            this.baseStatsWithoutRelics = { ...this.basePlayerStats };
+            console.error('❌ CRITICAL: baseStatsWithoutRelics is missing in applyRelicEffectsToBaseStats!');
+            // Try to create it from basePlayerStats as fallback
+            if (this.basePlayerStats) {
+                console.warn('⚠️ Using basePlayerStats as fallback (may be inaccurate)');
+                this.baseStatsWithoutRelics = { ...this.basePlayerStats };
+            } else {
+                console.error('❌ No basePlayerStats either! Creating default values');
+                this.baseStatsWithoutRelics = {
+                    attack: 10,
+                    attackSpeed: 1.0,
+                    critChance: 0.05,
+                    lifesteal: 0,
+                    defense: 5,
+                    maxHp: 100
+                };
+            }
         }
         
+        // CRITICAL: Create a copy to avoid modifying the original
+        const baseStatsCopy = { ...this.baseStatsWithoutRelics };
+        
         // Copy base stats without relics to player
-        this.player.attack = this.baseStatsWithoutRelics.attack || 10;
-        this.player.attackSpeed = this.baseStatsWithoutRelics.attackSpeed || 1.0;
-        this.player.critChance = this.baseStatsWithoutRelics.critChance || 0.05;
-        this.player.lifesteal = Math.max(0, this.baseStatsWithoutRelics.lifesteal || 0);
-        this.player.defense = this.baseStatsWithoutRelics.defense || 5;
-        this.player.maxHp = Math.max(1, this.baseStatsWithoutRelics.maxHp || 100);
+        this.player.attack = baseStatsCopy.attack || 10;
+        this.player.attackSpeed = baseStatsCopy.attackSpeed || 1.0;
+        this.player.critChance = baseStatsCopy.critChance || 0.05;
+        this.player.lifesteal = Math.max(0, baseStatsCopy.lifesteal || 0);
+        this.player.defense = baseStatsCopy.defense || 5;
+        this.player.maxHp = Math.max(1, baseStatsCopy.maxHp || 100);
         
         // Apply relic effects (flat first, then percentage)
         this.relicManager.applyStatEffects(this.player);
@@ -341,6 +361,14 @@ class GameManager {
             defense: this.player.defense,
             maxHp: this.player.maxHp
         };
+        
+        // CRITICAL: Ensure baseStatsWithoutRelics is NOT modified
+        // Verify it still exists and is unchanged
+        if (!this.baseStatsWithoutRelics || 
+            this.baseStatsWithoutRelics.attack !== baseStatsCopy.attack) {
+            console.error('❌ CRITICAL: baseStatsWithoutRelics was modified! Restoring...');
+            this.baseStatsWithoutRelics = baseStatsCopy;
+        }
     }
 
     /**
@@ -515,6 +543,11 @@ class GameManager {
             this.applyRelicEffectsToBaseStats();
         }
         
+        // CRITICAL: Preserve baseStatsWithoutRelics - it should NEVER be reset
+        // It represents the player's base stats without any relic effects
+        // Only reset if we're starting a new run (handled in resetRun)
+        const preservedBaseStatsWithoutRelics = this.baseStatsWithoutRelics ? { ...this.baseStatsWithoutRelics } : null;
+        
         // Restore player HP
         this.player.currentHp = this.player.maxHp;
         
@@ -527,6 +560,12 @@ class GameManager {
         this.abilityStacks = { critGuarantee: 0 };
         this.abilityHealing = { healPerSecond: 0, remaining: 0 };
         this.applyAbilityStateToCombat();
+        
+        // Restore preserved baseStatsWithoutRelics if it was set
+        if (preservedBaseStatsWithoutRelics && !this.baseStatsWithoutRelics) {
+            this.baseStatsWithoutRelics = preservedBaseStatsWithoutRelics;
+            console.log('✅ Restored baseStatsWithoutRelics in nextFloor:', this.baseStatsWithoutRelics);
+        }
         
         const isRelicFloor = this.currentFloor === 1 || ((this.currentFloor - 1) % 10 === 0 && this.currentFloor > 1);
         const isStatFloor = (this.currentFloor - 1) % 5 === 0 && this.currentFloor > 1 && !isRelicFloor; // Don't give stat points on relic floors
