@@ -318,6 +318,7 @@ body {
 
 .relics-guide {
     margin-top: 15px;
+    margin-bottom: 20px; /* Extra margin at bottom for better scroll visibility */
 }
 
 .relics-guide p {
@@ -1444,6 +1445,7 @@ body {
     overflow-y: auto;
     text-align: left;
     position: relative;
+    padding-bottom: 40px; /* Extra padding at bottom for scroll visibility */
 }
 
 .modal-guide h2 {
@@ -1480,6 +1482,7 @@ body {
 .guide-content {
     font-size: clamp(10px, 2.8vw, 13px);
     line-height: 1.7;
+    padding-bottom: 20px; /* Ensure content is fully visible when scrolling */
 }
 
 .guide-content h4 {
