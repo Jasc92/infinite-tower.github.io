@@ -382,7 +382,7 @@ class RelicManager {
                     player.attackSpeed = Math.min(6.0, player.attackSpeed + relic.flatEffects.attackSpeed);
                 }
                 if (relic.flatEffects.lifesteal) {
-                    player.lifesteal = Math.min(0.40, player.lifesteal + relic.flatEffects.lifesteal);
+                    player.lifesteal = Math.max(0, Math.min(0.40, (player.lifesteal || 0) + relic.flatEffects.lifesteal));
                 }
             }
         });

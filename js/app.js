@@ -1012,7 +1012,87 @@ function updateRelicScreen() {
             c.style.opacity = '0.5';
         });
         
-        // Apply relic (add or replace)
+        // CRITICAL: Calculate baseStatsWithoutRelics BEFORE adding the new relic
+        // If baseStatsWithoutRelics doesn't exist, we need to calculate it
+        // by removing effects from currently active relics (before adding the new one)
+        if (!game.baseStatsWithoutRelics) {
+            if (game.relicManager.activeRelics.length > 0) {
+                // We have relics but no base stats - calculate base by removing relic effects
+                // Save current stats (with relics)
+                const statsWithRelics = {
+                    attack: game.player.attack,
+                    attackSpeed: game.player.attackSpeed,
+                    critChance: game.player.critChance,
+                    lifesteal: game.player.lifesteal,
+                    defense: game.player.defense,
+                    maxHp: game.player.maxHp
+                };
+                
+                // Calculate multipliers from existing relics
+                let attackMult = 1.0;
+                let defenseMult = 1.0;
+                let maxHpMult = 1.0;
+                let attackSpeedMult = 1.0;
+                let critChanceMult = 1.0;
+                let lifestealMult = 1.0;
+                
+                game.relicManager.activeRelics.forEach(relic => {
+                    if (relic.percentageEffects) {
+                        if (relic.percentageEffects.attack) attackMult *= relic.percentageEffects.attack;
+                        if (relic.percentageEffects.defense) defenseMult *= relic.percentageEffects.defense;
+                        if (relic.percentageEffects.maxHp) maxHpMult *= relic.percentageEffects.maxHp;
+                        if (relic.percentageEffects.attackSpeed) attackSpeedMult *= relic.percentageEffects.attackSpeed;
+                        if (relic.percentageEffects.critChance) critChanceMult *= relic.percentageEffects.critChance;
+                        if (relic.percentageEffects.lifesteal) lifestealMult *= relic.percentageEffects.lifesteal;
+                    }
+                });
+                
+                // Reverse percentage effects first (divide)
+                let baseAfterPercent = {
+                    attack: Math.round(statsWithRelics.attack / attackMult),
+                    defense: Math.round(statsWithRelics.defense / defenseMult),
+                    maxHp: Math.round(statsWithRelics.maxHp / maxHpMult),
+                    attackSpeed: statsWithRelics.attackSpeed / attackSpeedMult,
+                    critChance: statsWithRelics.critChance / critChanceMult,
+                    lifesteal: statsWithRelics.lifesteal / lifestealMult
+                };
+                
+                // Then reverse flat effects (subtract)
+                game.relicManager.activeRelics.forEach(relic => {
+                    if (relic.flatEffects) {
+                        if (relic.flatEffects.attack) baseAfterPercent.attack -= relic.flatEffects.attack;
+                        if (relic.flatEffects.defense) baseAfterPercent.defense -= relic.flatEffects.defense;
+                        if (relic.flatEffects.maxHp) baseAfterPercent.maxHp -= relic.flatEffects.maxHp;
+                        if (relic.flatEffects.attackSpeed) baseAfterPercent.attackSpeed = Math.max(0.1, baseAfterPercent.attackSpeed - relic.flatEffects.attackSpeed);
+                        if (relic.flatEffects.lifesteal) baseAfterPercent.lifesteal = Math.max(0, baseAfterPercent.lifesteal - relic.flatEffects.lifesteal);
+                    }
+                });
+                
+                // Save base stats without relics
+                game.baseStatsWithoutRelics = {
+                    attack: Math.max(1, baseAfterPercent.attack),
+                    attackSpeed: Math.max(0.1, baseAfterPercent.attackSpeed),
+                    critChance: Math.max(0, Math.min(1, baseAfterPercent.critChance)),
+                    lifesteal: Math.max(0, baseAfterPercent.lifesteal),
+                    defense: Math.max(0, baseAfterPercent.defense),
+                    maxHp: Math.max(1, baseAfterPercent.maxHp)
+                };
+                console.log('⚠️ Calculated baseStatsWithoutRelics from existing relics:', game.baseStatsWithoutRelics);
+            } else {
+                // First relic, use current player stats as base
+                game.baseStatsWithoutRelics = {
+                    attack: game.player.attack || 10,
+                    attackSpeed: game.player.attackSpeed || 1.0,
+                    critChance: game.player.critChance || 0.05,
+                    lifesteal: Math.max(0, game.player.lifesteal || 0),
+                    defense: game.player.defense || 5,
+                    maxHp: game.player.maxHp || 100
+                };
+                console.log('✅ First relic - created baseStatsWithoutRelics:', game.baseStatsWithoutRelics);
+            }
+        }
+        
+        // NOW apply relic (add or replace) - after baseStatsWithoutRelics is set
         if (isReplaceModeForCards) {
             // Remove effects of old relic first
             const oldRelic = game.relicManager.activeRelics[selectedReplaceIndex];
@@ -1024,19 +1104,6 @@ function updateRelicScreen() {
             console.log(`Replaced relic at index ${selectedReplaceIndex}: ${oldRelic.name} -> ${selectedRelic.name}`);
         } else {
             game.relicManager.addRelic(selectedRelic);
-        }
-        
-        // Ensure we have baseStatsWithoutRelics (stats without relic effects)
-        if (!game.baseStatsWithoutRelics) {
-            // If this is the first relic, use current player stats as base
-            game.baseStatsWithoutRelics = {
-                attack: game.player.attack,
-                attackSpeed: game.player.attackSpeed,
-                critChance: game.player.critChance,
-                lifesteal: game.player.lifesteal,
-                defense: game.player.defense,
-                maxHp: game.player.maxHp
-            };
         }
         
         // Now apply ALL active relic effects (including the new/replaced one)

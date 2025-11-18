@@ -322,12 +322,12 @@ class GameManager {
         }
         
         // Copy base stats without relics to player
-        this.player.attack = this.baseStatsWithoutRelics.attack;
-        this.player.attackSpeed = this.baseStatsWithoutRelics.attackSpeed;
-        this.player.critChance = this.baseStatsWithoutRelics.critChance;
-        this.player.lifesteal = this.baseStatsWithoutRelics.lifesteal;
-        this.player.defense = this.baseStatsWithoutRelics.defense;
-        this.player.maxHp = this.baseStatsWithoutRelics.maxHp;
+        this.player.attack = this.baseStatsWithoutRelics.attack || 10;
+        this.player.attackSpeed = this.baseStatsWithoutRelics.attackSpeed || 1.0;
+        this.player.critChance = this.baseStatsWithoutRelics.critChance || 0.05;
+        this.player.lifesteal = Math.max(0, this.baseStatsWithoutRelics.lifesteal || 0);
+        this.player.defense = this.baseStatsWithoutRelics.defense || 5;
+        this.player.maxHp = Math.max(1, this.baseStatsWithoutRelics.maxHp || 100);
         
         // Apply relic effects (flat first, then percentage)
         this.relicManager.applyStatEffects(this.player);
@@ -361,13 +361,23 @@ class GameManager {
         
         // Restore base stats (which already include relic stat effects applied once)
         if (this.basePlayerStats) {
-            this.player.attack = this.basePlayerStats.attack;
-            this.player.attackSpeed = this.basePlayerStats.attackSpeed;
-            this.player.critChance = this.basePlayerStats.critChance;
-            this.player.lifesteal = this.basePlayerStats.lifesteal;
-            this.player.defense = this.basePlayerStats.defense;
-            this.player.maxHp = this.basePlayerStats.maxHp;
-            this.player.currentHp = this.player.maxHp; // Full HP for new battle
+            this.player.attack = this.basePlayerStats.attack || 10;
+            this.player.attackSpeed = this.basePlayerStats.attackSpeed || 1.0;
+            this.player.critChance = this.basePlayerStats.critChance || 0.05;
+            this.player.lifesteal = Math.max(0, this.basePlayerStats.lifesteal || 0);
+            this.player.defense = this.basePlayerStats.defense || 5;
+            this.player.maxHp = Math.max(1, this.basePlayerStats.maxHp || 100);
+            this.player.currentHp = Math.max(1, this.player.maxHp); // Full HP for new battle, ensure at least 1
+        } else {
+            // Fallback: ensure player has valid stats even if basePlayerStats is missing
+            console.warn('⚠️ basePlayerStats missing, using fallback values');
+            this.player.attack = this.player.attack || 10;
+            this.player.attackSpeed = this.player.attackSpeed || 1.0;
+            this.player.critChance = this.player.critChance || 0.05;
+            this.player.lifesteal = Math.max(0, this.player.lifesteal || 0);
+            this.player.defense = this.player.defense || 5;
+            this.player.maxHp = Math.max(1, this.player.maxHp || 100);
+            this.player.currentHp = Math.max(1, this.player.maxHp);
         }
         
         // Reset shield for new battle
@@ -418,10 +428,33 @@ class GameManager {
         this.abilityStacks = { critGuarantee: 0 };
         this.abilityHealing = { healPerSecond: 0, remaining: 0 };
         
+        // Validate player stats before starting battle
+        if (!this.player || !this.enemy) {
+            console.error('❌ Cannot start battle: player or enemy is missing');
+            console.error('Player:', this.player);
+            console.error('Enemy:', this.enemy);
+            return;
+        }
+        
+        // Ensure player has valid HP
+        if (this.player.currentHp <= 0 || this.player.maxHp <= 0) {
+            console.error('❌ Invalid player HP:', this.player.currentHp, '/', this.player.maxHp);
+            this.player.currentHp = Math.max(1, this.player.maxHp || 100);
+            this.player.maxHp = Math.max(1, this.player.maxHp || 100);
+        }
+        
+        // Ensure player stats are valid
+        this.player.attack = Math.max(1, this.player.attack || 10);
+        this.player.attackSpeed = Math.max(0.1, this.player.attackSpeed || 1.0);
+        this.player.defense = Math.max(0, this.player.defense || 5);
+        this.player.critChance = Math.max(0, Math.min(1, this.player.critChance || 0.05));
+        this.player.lifesteal = Math.max(0, Math.min(0.40, this.player.lifesteal || 0));
+        
         this.combat.reset();
         this.combat.relics = this.relicManager.activeRelics; // Pass relics to combat engine
         this.applyAbilityStateToCombat();
-        console.log('Relics passed to combat engine:', this.combat.relics.length);
+        console.log('✅ Battle starting - Player HP:', this.player.currentHp, '/', this.player.maxHp);
+        console.log('✅ Relics passed to combat engine:', this.combat.relics.length);
         
         this.battleActive = true;
         this.battleResult = null; // Reset battle result
