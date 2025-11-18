@@ -1716,6 +1716,20 @@ canvas {
     max-width: 500px;
     margin: 0 auto clamp(12px, 2vh, 16px);
     width: 100%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ability-current-card:hover {
+    border-color: #c9a961;
+    box-shadow: inset 0 1px 0 rgba(201, 169, 97, 0.3), 0 6px 16px rgba(0, 0, 0, 0.7);
+    transform: translateY(-2px);
+}
+
+.ability-current-card.selected {
+    border-color: #d4af37;
+    box-shadow: inset 0 1px 0 rgba(212, 175, 55, 0.4), 0 6px 20px rgba(212, 175, 55, 0.3);
+    background: linear-gradient(180deg, rgba(60, 50, 40, 0.98) 0%, rgba(44, 36, 30, 0.98) 100%);
 }
 
 .ability-current-card.empty {

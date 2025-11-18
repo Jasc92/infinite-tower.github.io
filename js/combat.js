@@ -705,6 +705,9 @@ class CombatEngine {
                 }
             }
         
+        // Ensure all damage values are integers (floor to prevent decimals from ability modifiers)
+        finalDamage = Math.floor(finalDamage);
+        
         // Precision Strike: cannot miss
         let isMiss = false;
         if (isPlayerAttacking) {

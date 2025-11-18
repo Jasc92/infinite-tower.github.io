@@ -55,9 +55,9 @@ class GameManager {
         
         // Ability state
         this.activeAbilityId = null;
-        this.abilityCooldownRemaining = 0;
+        this.abilityUsed = false; // Single-use per combat flag
         this.abilityEffectRemaining = 0;
-        this.abilityState = 'locked'; // locked, ready, active, cooldown
+        this.abilityState = 'locked'; // locked, ready, active, used
         this.abilityModifiers = {
             player: this.createEmptyAbilityModifiers(),
             enemy: this.createEmptyEnemyAbilityModifiers()
@@ -130,7 +130,7 @@ class GameManager {
         
         // Ability reset
         this.activeAbilityId = null;
-        this.abilityCooldownRemaining = 0;
+        this.abilityUsed = false;
         this.abilityEffectRemaining = 0;
         this.abilityState = 'locked';
         this.nextAbilityFloor = 15;
@@ -409,7 +409,15 @@ class GameManager {
         // They are applied ONCE when relics are selected, and basePlayerStats is updated
         // Only combat effects (critMultiplier, armorPierce, etc.) are checked in combat.js
         
-        // Reset ability timers when entering battle (cooldowns carry over)
+        // Reset ability state for new battle (single-use per combat)
+        this.abilityUsed = false;
+        this.abilityEffectRemaining = 0;
+        this.abilityState = this.activeAbilityId ? 'ready' : 'locked';
+        this.abilityModifiers.player = this.createEmptyAbilityModifiers();
+        this.abilityModifiers.enemy = this.createEmptyEnemyAbilityModifiers();
+        this.abilityStacks = { critGuarantee: 0 };
+        this.abilityHealing = { healPerSecond: 0, remaining: 0 };
+        
         this.combat.reset();
         this.combat.relics = this.relicManager.activeRelics; // Pass relics to combat engine
         this.applyAbilityStateToCombat();
@@ -461,8 +469,8 @@ class GameManager {
         // Restore player HP
         this.player.currentHp = this.player.maxHp;
         
-        // Reset ability state each floor
-        this.abilityCooldownRemaining = 0;
+        // Reset ability state each floor (abilities reset per floor, not per combat)
+        this.abilityUsed = false;
         this.abilityEffectRemaining = 0;
         this.abilityState = this.activeAbilityId ? 'ready' : 'locked';
         this.abilityModifiers.player = this.createEmptyAbilityModifiers();
@@ -471,20 +479,17 @@ class GameManager {
         this.abilityHealing = { healPerSecond: 0, remaining: 0 };
         this.applyAbilityStateToCombat();
         
-        // Boss floor bonus points (11, 21, 31, ...)
-        if ((this.currentFloor - 1) % 10 === 0 && this.currentFloor > 1) {
-            this.availablePoints += 3;
-        }
-        
         const isRelicFloor = this.currentFloor === 1 || ((this.currentFloor - 1) % 10 === 0 && this.currentFloor > 1);
-        const isStatFloor = (this.currentFloor - 1) % 5 === 0 && this.currentFloor > 1;
+        const isStatFloor = (this.currentFloor - 1) % 5 === 0 && this.currentFloor > 1 && !isRelicFloor; // Don't give stat points on relic floors
         const isAbilityFloor = (this.currentFloor - 1) % 15 === 0 && this.currentFloor > 1;
         
         if (isRelicFloor) {
             if (this.currentFloor === 1) {
                 this.availablePoints = 5;
             } else {
+                // Boss floor: 5 (relic) + 3 (boss bonus) = 8 total
                 this.availablePoints += 5;
+                this.availablePoints += 3; // Boss floor bonus
             }
             this.baseStatsSnapshot = null;
             actions.push('relic');
@@ -518,7 +523,7 @@ class GameManager {
 
     equipAbility(abilityId) {
         this.activeAbilityId = abilityId;
-        this.abilityCooldownRemaining = 0;
+        this.abilityUsed = false;
         this.abilityEffectRemaining = 0;
         this.abilityState = abilityId ? 'ready' : 'locked';
         this.abilityModifiers.player = this.createEmptyAbilityModifiers();
@@ -544,13 +549,13 @@ class GameManager {
     }
 
     activateAbility() {
-        if (this.abilityState !== 'ready' || !this.activeAbilityId) return false;
+        if (this.abilityState !== 'ready' || !this.activeAbilityId || this.abilityUsed) return false;
         const ability = this.abilityManager.getAbilityById(this.activeAbilityId);
         if (!ability) return false;
         console.log('Activating ability:', ability.name);
-        this.abilityState = ability.duration > 0 ? 'active' : 'cooldown';
+        this.abilityUsed = true;
+        this.abilityState = ability.duration > 0 ? 'active' : 'used';
         this.abilityEffectRemaining = ability.duration || 0;
-        this.abilityCooldownRemaining = ability.cooldown;
         this.applyAbility(ability);
         this.applyAbilityStateToCombat();
         return true;
@@ -637,7 +642,7 @@ class GameManager {
             if (effectiveDamage > 0) {
                 const defenseFactor = data.defenseIgnore ? (1 - data.defenseIgnore) : 1;
                 const defense = Math.round(enemy.defense * defenseFactor);
-                const finalDamage = Math.max(1, effectiveDamage - defense);
+                const finalDamage = Math.floor(Math.max(1, effectiveDamage - defense));
                 enemy.currentHp -= finalDamage;
                 totalDamage += finalDamage;
                 enemy.lastDamageTime = this.combat.combatTime;
@@ -675,7 +680,7 @@ class GameManager {
     }
 
     updateAbilityTimers(deltaTime) {
-        if (!this.activeAbilityId || this.abilityState === 'locked') return;
+        if (!this.activeAbilityId || this.abilityState === 'locked' || this.abilityState === 'used') return;
 
         const ability = this.abilityManager.getAbilityById(this.activeAbilityId);
         if (!ability) return;
@@ -690,23 +695,14 @@ class GameManager {
             this.abilityEffectRemaining -= deltaTime;
             if (this.abilityEffectRemaining <= 0) {
                 this.expireAbility(ability);
-                this.abilityState = 'cooldown';
+                this.abilityState = 'used';
                 this.abilityEffectRemaining = 0;
             }
         }
 
-        if (this.abilityState === 'cooldown') {
-            this.abilityCooldownRemaining -= deltaTime;
-            if (this.abilityCooldownRemaining <= 0) {
-                this.abilityCooldownRemaining = 0;
-                this.abilityState = 'ready';
-            }
-        }
-
-        if (this.abilityState === 'active' || this.abilityState === 'cooldown') {
-            if (this.abilityState !== 'active') {
-                this.abilityModifiers.player.invulnerable = false;
-            }
+        // Clear invulnerability when ability effect expires
+        if (this.abilityState !== 'active') {
+            this.abilityModifiers.player.invulnerable = false;
         }
     }
 

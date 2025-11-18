@@ -2057,9 +2057,9 @@ ${ability.description}`;
             timerEl.textContent = `${Math.max(0, Math.ceil(game.abilityEffectRemaining))}s`;
             button.disabled = true;
             break;
-        case 'cooldown':
-            button.classList.add('cooldown');
-            timerEl.textContent = `${Math.max(0, Math.ceil(game.abilityCooldownRemaining))}s`;
+        case 'used':
+            button.classList.add('cooldown'); // Use cooldown styling for visual feedback
+            timerEl.textContent = 'USED';
             button.disabled = true;
             break;
         default:
@@ -2145,18 +2145,39 @@ function updateAbilityScreen() {
 
     const currentAbility = game.getActiveAbility();
     if (currentAbility) {
-        currentAbilityEl.innerHTML = `
-            <div class="ability-current-card">
-                <div class="relic-card-header">
-                    <div class="relic-icon">${currentAbility.icon}</div>
-                    <div>
-                        <div class="relic-name">${currentAbility.name}</div>
-                        <div class="ability-meta">CD: ${currentAbility.cooldown}s | Duration: ${currentAbility.duration ? `${currentAbility.duration}s` : 'Instant'}</div>
-                    </div>
+        const currentCard = document.createElement('div');
+        currentCard.className = 'ability-current-card relic-card';
+        currentCard.innerHTML = `
+            <div class="relic-card-header">
+                <div class="relic-icon">${currentAbility.icon}</div>
+                <div>
+                    <div class="relic-name">${currentAbility.name} <span style="color: var(--text-dim); font-size: 0.9em;">(Current)</span></div>
+                    <div class="ability-meta">Single-use per combat | Duration: ${currentAbility.duration ? `${currentAbility.duration}s` : 'Instant'}</div>
                 </div>
-                <div class="relic-description">${currentAbility.description}</div>
             </div>
+            <div class="relic-description">${currentAbility.description}</div>
         `;
+        
+        // Make current ability selectable
+        currentCard.addEventListener('click', () => {
+            document.querySelectorAll('.ability-card, .ability-current-card').forEach(c => c.classList.remove('selected'));
+            currentCard.classList.add('selected');
+            selectedAbility = currentAbility; // Keep current ability
+            updateAbilitySelectButton();
+        });
+        
+        currentCard.addEventListener('touchstart', () => {
+            currentCard.classList.add('touching');
+        });
+        
+        currentCard.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            currentCard.classList.remove('touching');
+            currentCard.click();
+        });
+        
+        currentAbilityEl.innerHTML = '';
+        currentAbilityEl.appendChild(currentCard);
     } else {
         currentAbilityEl.innerHTML = '<div class="ability-current-card empty">No ability equipped yet. Choose wisely!</div>';
     }
@@ -2169,14 +2190,14 @@ function updateAbilityScreen() {
                 <div class="relic-icon">${ability.icon}</div>
                 <div>
                     <div class="relic-name">${ability.name}</div>
-                    <div class="ability-meta">CD: ${ability.cooldown}s | Duration: ${ability.duration ? `${ability.duration}s` : 'Instant'}</div>
+                    <div class="ability-meta">Single-use per combat | Duration: ${ability.duration ? `${ability.duration}s` : 'Instant'}</div>
                 </div>
             </div>
             <div class="relic-description">${ability.description}</div>
         `;
 
         card.addEventListener('click', () => {
-            document.querySelectorAll('.ability-card').forEach(c => c.classList.remove('selected'));
+            document.querySelectorAll('.ability-card, .ability-current-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
             selectedAbility = ability;
             updateAbilitySelectButton();
@@ -2210,6 +2231,7 @@ function updateAbilityScreen() {
     selectedNameSpan = document.getElementById('selected-ability-name');
     selectBtn.addEventListener('click', () => {
         if (!selectedAbility) return;
+        // Equip the selected ability (equipAbility resets state, so it works for both new and current)
         game.equipAbility(selectedAbility.id);
         updateAbilityButton();
         updateStatsRelicsDisplay();
