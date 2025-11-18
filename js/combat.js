@@ -214,6 +214,12 @@ class CombatEngine {
                 enemy,
                 true // isPlayer attacking
             );
+            
+            // Log first few player attacks for debugging
+            if (this.combatTime < 0.5) {
+                console.log(`[Player Attack] Damage: ${damageInfo.damage}${damageInfo.isCrit ? ' CRIT!' : ''}${damageInfo.isMiss ? ' MISS!' : ''} | Enemy HP: ${enemy.currentHp} -> ${enemy.currentHp - damageInfo.damage}`);
+            }
+            
             enemy.currentHp -= damageInfo.damage;
             
             // Track damage for visual feedback (shake effect)
@@ -464,6 +470,11 @@ class CombatEngine {
                         player.lastDamageAmount = damageInfo.damage;
                         player.lastDamageIsCrit = damageInfo.isCrit; // Track if it was a crit
                         
+                        // Log first few enemy attacks for debugging
+                        if (this.combatTime < 0.5) {
+                            console.log(`[Enemy Attack] Damage: ${damageInfo.damage}${damageInfo.isCrit ? ' CRIT!' : ''} | Player HP: ${player.currentHp}/${player.maxHp}`);
+                        }
+                        
                         // Frenzy: reset on taking damage
                         const frenzy = this.relics.find(r => r.id === 'frenzy');
                         if (frenzy) {
@@ -546,6 +557,11 @@ class CombatEngine {
 
             // Check loss condition AFTER damage application (accounting for speed multiplier)
             if (player.currentHp <= 0) {
+                console.error('💀 PLAYER DIED!');
+                console.error('Player HP:', player.currentHp, '/', player.maxHp);
+                console.error('Enemy HP:', enemy.currentHp, '/', enemy.maxHp);
+                console.error('Combat time:', this.combatTime.toFixed(3), 'seconds');
+                console.error('Last damage received:', damageInfo);
                 player.currentHp = 0; // Clamp to 0
                 return 'player_loss';
             }

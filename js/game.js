@@ -481,8 +481,26 @@ class GameManager {
         this.combat.reset();
         this.combat.relics = this.relicManager.activeRelics; // Pass relics to combat engine
         this.applyAbilityStateToCombat();
-        console.log('✅ Battle starting - Player HP:', this.player.currentHp, '/', this.player.maxHp);
-        console.log('✅ Relics passed to combat engine:', this.combat.relics.length);
+        
+        console.log('=== BATTLE START DETAILS ===');
+        console.log('Player stats:', {
+            HP: `${this.player.currentHp}/${this.player.maxHp}`,
+            Attack: this.player.attack,
+            AttackSpeed: this.player.attackSpeed,
+            Defense: this.player.defense,
+            CritChance: this.player.critChance,
+            Lifesteal: this.player.lifesteal
+        });
+        console.log('Enemy stats:', {
+            HP: `${this.enemy.currentHp}/${this.enemy.maxHp}`,
+            Attack: this.enemy.attack,
+            AttackSpeed: this.enemy.attackSpeed,
+            Defense: this.enemy.defense,
+            CritChance: this.enemy.critChance
+        });
+        console.log('Active relics:', this.relicManager.activeRelics.length);
+        console.log('basePlayerStats:', this.basePlayerStats);
+        console.log('baseStatsWithoutRelics:', this.baseStatsWithoutRelics);
         
         this.battleActive = true;
         this.battleResult = null; // Reset battle result
@@ -498,14 +516,24 @@ class GameManager {
         const deltaTime = (timestamp - this.lastFrameTime) / 1000 * this.battleSpeed;
         this.lastFrameTime = timestamp;
 
+        // Log first few updates to debug immediate loss
+        if (this.combat.combatTime < 0.5) {
+            console.log(`[Battle Update] Time: ${this.combat.combatTime.toFixed(3)}s | Player HP: ${this.player.currentHp}/${this.player.maxHp} | Enemy HP: ${this.enemy.currentHp}/${this.enemy.maxHp}`);
+        }
+
         this.updateAbilityTimers(deltaTime);
         const result = this.combat.update(this.player, this.enemy, deltaTime);
         this.abilityStacks.critGuarantee = this.combat.abilityPlayerMods.critGuarantee;
         
         if (result === 'player_win') {
+            console.log('🏆 Battle result: PLAYER WIN');
+            console.log('Final stats - Player HP:', this.player.currentHp, '/', this.player.maxHp, '| Enemy HP:', this.enemy.currentHp, '/', this.enemy.maxHp);
             this.battleActive = false;
             return 'win';
         } else if (result === 'player_loss') {
+            console.error('💀 Battle result: PLAYER LOSS');
+            console.error('Final stats - Player HP:', this.player.currentHp, '/', this.player.maxHp, '| Enemy HP:', this.enemy.currentHp, '/', this.enemy.maxHp);
+            console.error('Combat time:', this.combat.combatTime.toFixed(3), 'seconds');
             this.battleActive = false;
             return 'loss';
         }
