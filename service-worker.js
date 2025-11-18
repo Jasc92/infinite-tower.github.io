@@ -2,7 +2,7 @@
 // SERVICE WORKER - Offline Support
 // ========================================
 
-const CACHE_NAME = 'infinite-tower-v1';
+const CACHE_NAME = 'infinite-tower-v2.19.2';
 const urlsToCache = [
     './',
     './index.html',
