@@ -574,10 +574,6 @@ class GameManager {
                 if (data.dodgeBonus) playerMods.dodgeBonus += data.dodgeBonus;
                 if (data.defenseFlat) playerMods.defenseFlat += data.defenseFlat;
                 if (data.reflectPercent) playerMods.reflectPercent += data.reflectPercent;
-                if (data.refreshEnergySurge) {
-                    this.combat.energySurgeTimer = 0;
-                    this.combat.energySurgeReady = true;
-                }
                 if (data.resetEnemyCombos) {
                     this.combat.rageComboHits = 0;
                     this.combat.weakPointHits = 0;

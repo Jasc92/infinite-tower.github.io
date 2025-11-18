@@ -309,17 +309,6 @@ class RelicManager {
                 icon: '🔄',
                 speedBoost: 0.15,
                 boostDuration: 3.0
-            },
-            {
-                id: 'energy_surge',
-                name: 'Energy Surge',
-                description: 'Every 4 seconds, next attack deals 2.5x damage and cannot miss. -15% attack speed',
-                icon: '⚡',
-                surgeInterval: 4.0,
-                surgeMultiplier: 2.5,
-                percentageEffects: {
-                    attackSpeed: 0.85
-                }
             }
         ];
         

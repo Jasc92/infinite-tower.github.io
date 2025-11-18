@@ -20,8 +20,6 @@ class CombatEngine {
         this.battleHardenedHits = 0; // Battle Hardened: defense stacking
         this.retaliateCount = 0; // Retaliate: counter-attack count
         this.shieldRegenTimer = 0; // Shield Battery: shield regeneration timer
-        this.energySurgeTimer = 0; // Energy Surge: cooldown timer
-        this.energySurgeReady = false; // Energy Surge: ready state
         this.recycleBoostTimer = 0; // Recycle: speed boost timer
         this.recycleBoostActive = false; // Recycle: boost active state
 
@@ -76,16 +74,6 @@ class CombatEngine {
         this.battleHardenedHits = 0;
         this.retaliateCount = 0;
         this.shieldRegenTimer = 0;
-        
-        // Energy Surge: Initialize timer to interval so it waits 4 seconds before first surge
-        const energySurge = this.relics.find(r => r.id === 'energy_surge');
-        if (energySurge) {
-            this.energySurgeTimer = energySurge.surgeInterval; // Start with full interval (4.0)
-        } else {
-            this.energySurgeTimer = 0;
-        }
-        this.energySurgeReady = false;
-        
         this.recycleBoostTimer = 0;
         this.recycleBoostActive = false;
         
@@ -135,7 +123,6 @@ class CombatEngine {
         this.bleedDamageTimer -= deltaTime;
         this.regenTimer -= deltaTime;
         this.shieldRegenTimer -= deltaTime;
-        this.energySurgeTimer -= deltaTime;
         this.recycleBoostTimer -= deltaTime;
         
         // Regeneration relic (heal 2% max HP per second)
@@ -181,13 +168,6 @@ class CombatEngine {
                 console.log(`🔄 Shield Battery: Regenerated ${player.shield} shield`);
             }
             this.shieldRegenTimer = shieldBattery.shieldRegenInterval;
-        }
-        
-        // Energy Surge: cooldown timer (every 4 seconds)
-        const energySurge = this.relics.find(r => r.id === 'energy_surge');
-        if (energySurge && this.energySurgeTimer <= 0) {
-            this.energySurgeReady = true;
-            this.energySurgeTimer = energySurge.surgeInterval;
         }
         
         // Recycle: speed boost timer (3 seconds)
@@ -682,12 +662,6 @@ class CombatEngine {
                 modifiedAttack = Math.round(modifiedAttack * (1 - precisionStrike.damageReduction));
             }
             
-            // Energy Surge: 2.5x damage if ready
-            const energySurge = this.relics.find(r => r.id === 'energy_surge');
-            if (energySurge && this.energySurgeReady) {
-                modifiedAttack = Math.round(modifiedAttack * energySurge.surgeMultiplier);
-                this.energySurgeReady = false; // Consume the surge
-            }
         }
         
         const rawDamage = isCrit 
@@ -713,14 +687,6 @@ class CombatEngine {
         if (isPlayerAttacking) {
             const precisionStrike = this.relics.find(r => r.id === 'precision_strike');
             if (precisionStrike) {
-                isMiss = false; // Cannot miss
-            }
-        }
-        
-        // Energy Surge: cannot miss when ready
-        if (isPlayerAttacking) {
-            const energySurge = this.relics.find(r => r.id === 'energy_surge');
-            if (energySurge && this.energySurgeReady) {
                 isMiss = false; // Cannot miss
             }
         }

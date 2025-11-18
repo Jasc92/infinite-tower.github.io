@@ -86,11 +86,11 @@ class AbilityManager {
                 icon: '💥',
                 cooldown: 14,
                 duration: 4,
-                description: 'Refills Energy Surge and grants +20% dodge for 4s.',
+                description: 'Grants +20% dodge and +25% attack speed for 4s.',
                 type: 'buff',
                 data: {
                     dodgeBonus: 0.20,
-                    refreshEnergySurge: true
+                    attackSpeedMult: 1.25
                 }
             },
             {
