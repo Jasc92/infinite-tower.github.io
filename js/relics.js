@@ -309,6 +309,22 @@ class RelicManager {
                 icon: '🔄',
                 speedBoost: 0.15,
                 boostDuration: 3.0
+            },
+            {
+                id: 'soul_collector',
+                name: 'Soul Collector',
+                description: 'Each floor completed, gain +1 Attack and +5 Max HP permanently',
+                icon: '👻',
+                attackPerFloor: 1,
+                hpPerFloor: 5
+            },
+            {
+                id: 'frenzy',
+                name: 'Frenzy',
+                description: 'Each successful hit increases attack speed by 5% (max +50%, resets on taking damage)',
+                icon: '⚡',
+                speedPerHit: 0.05,
+                maxSpeedBoost: 0.50
             }
         ];
         

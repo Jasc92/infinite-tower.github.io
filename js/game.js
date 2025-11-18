@@ -466,6 +466,22 @@ class GameManager {
             this.floorsUntilArchetypeCheck = 3;
         }
         
+        // Soul Collector: permanent stat gain per floor completed
+        const soulCollector = this.relicManager.activeRelics.find(r => r.id === 'soul_collector');
+        if (soulCollector && this.currentFloor > 1) {
+            // Apply permanent bonus to base stats (before relic effects)
+            if (!this.baseStatsWithoutRelics) {
+                this.baseStatsWithoutRelics = { ...this.basePlayerStats };
+            }
+            this.baseStatsWithoutRelics.attack += soulCollector.attackPerFloor;
+            this.baseStatsWithoutRelics.maxHp += soulCollector.hpPerFloor;
+            // Also update player stats directly (will be recalculated with relics below)
+            this.player.attack = this.baseStatsWithoutRelics.attack;
+            this.player.maxHp = this.baseStatsWithoutRelics.maxHp;
+            // Reapply relic effects to get final stats
+            this.applyRelicEffectsToBaseStats();
+        }
+        
         // Restore player HP
         this.player.currentHp = this.player.maxHp;
         

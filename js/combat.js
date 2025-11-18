@@ -22,6 +22,7 @@ class CombatEngine {
         this.shieldRegenTimer = 0; // Shield Battery: shield regeneration timer
         this.recycleBoostTimer = 0; // Recycle: speed boost timer
         this.recycleBoostActive = false; // Recycle: boost active state
+        this.frenzyHits = 0; // Frenzy: consecutive hits for speed boost
 
         // Ability modifiers
         this.abilityPlayerMods = this.getDefaultPlayerAbilityMods();
@@ -76,6 +77,7 @@ class CombatEngine {
         this.shieldRegenTimer = 0;
         this.recycleBoostTimer = 0;
         this.recycleBoostActive = false;
+        this.frenzyHits = 0;
         
         // Reset relic states
         this.relics.forEach(relic => {
@@ -197,6 +199,13 @@ class CombatEngine {
                 }
             }
             
+            // Frenzy: speed boost based on consecutive hits
+            const frenzy = this.relics.find(r => r.id === 'frenzy');
+            if (frenzy) {
+                const frenzyBoost = Math.min(this.frenzyHits * frenzy.speedPerHit, frenzy.maxSpeedBoost);
+                effectivePlayerSpeed *= (1 + frenzyBoost);
+            }
+            
             const damageInfo = this.calculateDamage(
                 player.attack,
                 player.critChance,
@@ -223,6 +232,12 @@ class CombatEngine {
                 const weakPoint = this.relics.find(r => r.id === 'weak_point');
                 if (weakPoint) {
                     this.weakPointHits++;
+                }
+                
+                // Frenzy: increment hits on successful hit
+                const frenzy = this.relics.find(r => r.id === 'frenzy');
+                if (frenzy) {
+                    this.frenzyHits++;
                 }
             } else if (damageInfo.isMiss) {
                 // Rage Combo: reset on miss
@@ -448,6 +463,12 @@ class CombatEngine {
                         player.lastDamageTime = this.combatTime;
                         player.lastDamageAmount = damageInfo.damage;
                         player.lastDamageIsCrit = damageInfo.isCrit; // Track if it was a crit
+                        
+                        // Frenzy: reset on taking damage
+                        const frenzy = this.relics.find(r => r.id === 'frenzy');
+                        if (frenzy) {
+                            this.frenzyHits = 0;
+                        }
                     }
                 }
             }

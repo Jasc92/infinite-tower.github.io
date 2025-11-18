@@ -1262,7 +1262,7 @@ function startBattleScreen() {
         document.getElementById('archetype-name').textContent = '⚔️ BOSS FLOOR ⚔️';
         document.getElementById('archetype-name').style.color = '#ffd700'; // Gold
     } else {
-        document.getElementById('archetype-name').textContent = game.enemyGen.getArchetypeName(game.currentArchetype);
+    document.getElementById('archetype-name').textContent = game.enemyGen.getArchetypeName(game.currentArchetype);
         document.getElementById('archetype-name').style.color = ''; // Reset
     }
     
@@ -1327,7 +1327,7 @@ function battleLoop() {
         setTimeout(() => {
             cancelAnimationFrame(animationFrame);
             game.battleResult = null;
-            handleBattleWin();
+        handleBattleWin();
         }, 2000);
     } else if (result === 'loss') {
         // Set battle result and show overlay, keep rendering for 2 seconds
@@ -1335,11 +1335,11 @@ function battleLoop() {
         setTimeout(() => {
             cancelAnimationFrame(animationFrame);
             game.battleResult = null;
-            handleBattleLoss();
+        handleBattleLoss();
         }, 2000);
     }
     
-    animationFrame = requestAnimationFrame(battleLoop);
+        animationFrame = requestAnimationFrame(battleLoop);
 }
 
 function updateBattleUI() {
@@ -1727,9 +1727,9 @@ function handleBattleWin() {
     setTimeout(() => {
         if (nextAction === 'relic' || nextAction === 'ability' || nextAction === 'stats') {
             showScreen(nextAction);
-        } else {
+    } else {
             startBattleScreen();
-        }
+    }
     }, 500);
 }
 
@@ -1810,6 +1810,45 @@ function updateResultScreen() {
         `;
     } else {
         abilityContainer.textContent = 'No active ability equipped';
+    }
+    
+    // Update final relics display
+    const relicsContainer = document.getElementById('final-relics-slots');
+    relicsContainer.innerHTML = '';
+    
+    // Create slots for up to 3 relics
+    for (let i = 0; i < 3; i++) {
+        const slotDiv = document.createElement('div');
+        slotDiv.className = 'final-relic-slot';
+        
+        if (i < game.relicManager.activeRelics.length) {
+            const relic = game.relicManager.activeRelics[i];
+            slotDiv.textContent = relic.icon;
+            slotDiv.classList.add('active');
+            slotDiv.title = relic.name;
+            
+            // Show tooltip on click/tap
+            slotDiv.onclick = (e) => {
+                e.stopPropagation();
+                showRelicTooltip(relic);
+            };
+            
+            // Touch support
+            slotDiv.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+                slotDiv.classList.add('touching');
+            });
+            
+            slotDiv.addEventListener('touchend', (e) => {
+                e.stopPropagation();
+                slotDiv.classList.remove('touching');
+                showRelicTooltip(relic);
+            });
+        } else {
+            slotDiv.classList.add('empty');
+        }
+        
+        relicsContainer.appendChild(slotDiv);
     }
 }
 
