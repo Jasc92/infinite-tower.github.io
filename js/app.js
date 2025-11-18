@@ -2009,7 +2009,7 @@ function setupEventListeners() {
     // Menu screen
     document.getElementById('btn-play').addEventListener('click', () => {
         game.resetRun();
-        game.pendingScreens = ['stats']; // After relic selection, go to stats screen (ability unlocks at floor 15)
+        game.pendingScreens = ['ability', 'stats']; // After relic selection: ability → stats
         showScreen('relic'); // Start with relic selection first
     });
     
@@ -2180,7 +2180,7 @@ function setupEventListeners() {
     // Result screen
     document.getElementById('btn-restart').addEventListener('click', () => {
         game.resetRun();
-        game.pendingScreens = ['stats']; // After relic selection, go to stats screen
+        game.pendingScreens = ['ability', 'stats']; // After relic selection: ability → stats
         showScreen('relic'); // Start with relic selection first
     });
     

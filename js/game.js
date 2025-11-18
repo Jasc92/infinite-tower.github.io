@@ -132,7 +132,7 @@ class GameManager {
         this.activeAbilityId = null;
         this.abilityUsed = false;
         this.abilityEffectRemaining = 0;
-        this.abilityState = 'locked';
+        this.abilityState = 'locked'; // Will be set to 'ready' when ability is selected
         this.nextAbilityFloor = 15;
         this.abilityModifiers.player = this.createEmptyAbilityModifiers();
         this.abilityModifiers.enemy = this.createEmptyEnemyAbilityModifiers();
