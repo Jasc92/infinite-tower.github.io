@@ -715,7 +715,7 @@ class GameManager {
                 if (data.enemyDamageMult) enemyMods.damageMult *= data.enemyDamageMult;
                 break;
             case 'execute_buff':
-                playerMods.damageMult *= data.damageMult || 1;
+                // playerMods.damageMult *= data.damageMult || 1; // REMOVED: This was applying damage globally!
                 playerMods.executeThreshold = data.threshold || 0.35;
                 playerMods.executeDamageMult = data.damageMult || 3;
                 break;
